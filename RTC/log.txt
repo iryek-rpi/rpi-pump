@@ -1,0 +1,47 @@
+  hwan@rpi-w:~/RPi/rpi-ex/rpi$ timedatectl
+               Local time: Wed 2022-05-25 17:49:31 UTC
+           Universal time: Wed 2022-05-25 17:49:31 UTC
+                 RTC time: Wed 2022-05-25 17:49:31
+                Time zone: Etc/UTC (UTC, +0000)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no
+
+
+
+  hwan@rpi-w:~/RPi/rpi-ex/rpi$ timedatectl set-timezone Asia/Seoul
+
+
+hwan@rpi-w:~/RPi/rpi-ex/rpi$ timedatectl
+               Local time: Thu 2022-05-26 02:51:36 KST
+           Universal time: Wed 2022-05-25 17:51:36 UTC
+                 RTC time: Wed 2022-05-25 17:51:37      # RTC가 UTC와 동일
+                Time zone: Asia/Seoul (KST, +0900)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no
+
+
+hwan@rpi-w:~/RPi/rpi-ex/rpi$ hwclock -r
+2022-05-26 02:52:38.894307+09:00
+
+
+
+hwan@rpi-w:~/RPi/rpi-ex/rpi$ sudo timedatectl set-local-rtc TRUE
+
+hwan@rpi-w:~/RPi/rpi-ex/rpi$ timedatectl
+               Local time: Thu 2022-05-26 02:54:07 KST
+           Universal time: Wed 2022-05-25 17:54:07 UTC
+                 RTC time: Thu 2022-05-26 02:54:07      # RTC가 Local time과 동일
+                Time zone: Asia/Seoul (KST, +0900)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: yes
+
+Warning: The system is configured to read the RTC time in the local time zone.
+         This mode cannot be fully supported. It will create various problems
+         with time zone changes and daylight saving time adjustments. The RTC
+         time is never updated, it relies on external facilities to maintain it.
+         If at all possible, use RTC in UTC by calling
+         'timedatectl set-local-rtc 0'.
+hwan@rpi-w:~/RPi/rpi-ex/rpi$ 

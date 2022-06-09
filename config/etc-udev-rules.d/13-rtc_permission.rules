@@ -1,0 +1,2 @@
+KERNEL=="rtc", OWNER="root", GROUP="i2c", MODE="0660"
+KERNEL=="rtc0", OWNER="root", GROUP="i2c", MODE="0660"

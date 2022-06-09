@@ -1,0 +1,77 @@
+Code	Command to LCD Instruction Register
+
+01	Clear display screen
+02	Return home
+04	Decrement cursor (shift cursor to left)
+05	Shift display right
+06	Increment cursor (shift cursor to right)
+07	Shift display left
+
+08	Display OFF, cursor OFF
+0A	Display off, cursor on
+0C	Display on, cursor off
+0E	Display on, cursor underline
+0F	Display on, cursor blinking
+
+10	Shift cursor position to left
+14	Shift cursor position to right
+18	Shift the entire display to the left
+1C	Shift the entire display to the right
+
+38	2 lines and 5×7 matrix
+
+3C	Activate second line
+80	Move Cursor to beginning of 1st line
+83	Cursor line 1 position 3
+C0	Move cursor to beginning of 2nd line
+C1	Jump to 2nd line, position 1
+C2	Jump to 2nd line, position 2
+
+LCD_CLEAR_DISPLAY   = 0x01 # 0000 0001 other commands
+LCD_RETURN_HOME     = 0x02 # 0000 0010
+
+LCD_ENTRY_MODE      = 0x04 # 0000 0100 1. Entry Mode
+LCD_DISPLAY_CONTROL = 0x08 # 0000 1000 2. Display Control
+LCD_CURSOR_SHIFT    = 0x10 # 0001 0000 3. Cursor Shift
+LCD_FUNCTION_SET    = 0x20 # 0010 0000 4. Function Set
+LCD_SET_CGRAM_ADDR  = 0x40 # 0100 0000 5. Custom Graphics RAM
+LCD_SET_DDRAM_ADDR1 = 0x80 # 1000 0000 6. Display Data RAM
+LCD_SET_DDRAM_ADDR2 = 0xC0 # 1100 0000
+
+# 1. flags for display entry mode
+LCD_ENTRY_SHIFT_DEC = 0x00 # 0000 0000
+LCD_ENTRY_SHIFT_INC = 0x01 # 0000 0001
+LCD_ENTRY_RIGHT     = 0x00 # 0000 0000
+LCD_ENTRY_LEFT      = 0x02 # 0000 0010
+
+# 2. flags for display on/off control
+LCD_DISPLAY_OFF     = 0x00 # 0000 0000
+LCD_DISPLAY_ON      = 0x04 # 0000 0100
+
+LCD_CURSOR_OFF      = 0x00 # 0000 0000
+LCD_CURSOR_ON       = 0x02 # 0000 0010
+
+LCD_CURSOR_BLINK_OFF= 0x00 # 0000 0000
+LCD_CURSOR_BLINK_ON = 0x01 # 0000 0001
+
+# 3. flags for display/cursor shift
+LCD_CURSOR_MOVE     = 0x00 # 0000 0000
+LCD_DISPLAY_MOVE    = 0x08 # 0000 1000
+LCD_MOVE_LEFT       = 0x00 # 0000 0000
+LCD_MOVE_RIGHT      = 0x04 # 0000 0100
+
+# 4. flags for function set
+LCD_4BIT_MODE       = 0x00 # 0000 0000
+LCD_8BIT_MODE       = 0x10 # 0001 0000
+LCD_1LINE           = 0x00 # 0000 0000
+LCD_2LINE           = 0x08 # 0000 1000
+LCD_5x8DOTS         = 0x00 # 0000 0000
+LCD_5x10DOTS        = 0x04 # 0000 0100
+
+# flags for backlight control
+LCD_BACKLIGHT_NONE  = 0x00 # 0000 0000
+LCD_BACKLIGHT       = 0x08 # 0000 1000
+
+En = 0b00000100  # Enable bit
+Rw = 0b00000010  # Read/Write bit
+Rs = 0b00000001  # Register select bit

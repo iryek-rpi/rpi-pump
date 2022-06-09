@@ -1,0 +1,1 @@
+KERNEL=="ttyAMA1", SYMLINK+="serial2", GROUP="hwan", MODE="0660"

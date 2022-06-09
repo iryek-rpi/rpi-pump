@@ -1,0 +1,13 @@
+[Unit]
+After=network.service
+Description=RPi LCD Test
+
+[Service]
+Type=simple
+#WorkingDirectory=/home/hwan/RPi/rpi-ex/rpi/LCD-Btn
+ExecStart=/home/hwan/RPi/rpi-ex/rpi/systemd/rpi-lcd.sh
+# User=do-user
+
+[Install]
+WantedBy=multi-user.target
+# WantedBy=default.target

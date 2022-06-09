@@ -1,0 +1,85 @@
+[pi4]
+max_framebuffers=2
+
+[all]
+kernel=vmlinuz
+cmdline=cmdline.txt
+initramfs initrd.img followkernel
+
+# Enable the audio output, I2C and SPI interfaces on the GPIO header
+dtparam=audio=on
+dtparam=spi=on
+
+# Enable the serial pins
+enable_uart=1
+
+# Comment out the following line if the edges of the desktop appear outside
+# the edges of your display
+disable_overscan=1
+
+# If you have issues with audio, you may try uncommenting the following line
+# which forces the HDMI output into HDMI mode instead of DVI (which doesn't
+# support audio output)
+#hdmi_drive=2
+
+# If you have a CM4, uncomment the following line to enable the USB2 outputs
+# on the IO board (assuming your CM4 is plugged into such a board)
+#dtoverlay=dwc2,dr_mode=host
+
+# Config settings specific to arm64
+arm_64bit=1
+#dtoverlay=dwc2
+
+#==============================================================================
+# use hardware uart for serial
+# Device names are assigned in the order of creation
+#       TXD RXD CTS RTS   Board Pins       Device Name
+# uart0  14  15            8  10            ttyAMAn
+# uart1  14  15            8  10            ttyS0
+# uart2  0   1   2   3     27 28 (I2C)      ttyAMAn
+# uart3  4   5   6   7     7  29            ttyAMAn
+# uart4  8   9   10  11    24 21 (SPI0)     ttyAMAn
+# uart5  12  13  14  15    32 33 (gpio-fan) ttyAMAn
+#==============================================================================
+# Switch the onboard Bluetooth function on Pi 3B, 3B+, 3A+, 4B and Zero W
+# to use the mini-UART (ttyS0) and restore UART0/ttyAMA0 over GPIOs 14 & 15.
+#dtoverlay=miniuart_bt
+
+# Disable onboard Bluetooth on Pi 3B, 3B+, 3A+, 4B and Zero W, 
+# restoring UART0/ttyAMA0 over GPIOs 14 & 15.
+dtoverlay=disable_bt
+
+# Enable this for board rev1 with the rs485 ic attached
+# Disable this for board rev2 with the rs485 ic removed
+# use id_sd(TXD, GPIO0, pin27), id_sc(RXD, GPIO1, pin28)
+dtoverlay=uart2
+
+# Disable this for board rev1 with the rs485 ic attached
+# Enable this for board rev2 with the rs485 ic removed
+# use uart0 via GPIO14, 15
+#dtoverlay=uart0
+
+#==============================================================================
+# I2C for RTC
+#==============================================================================
+#dtparam=i2c_arm=on # i2c 1 for LCD on CM4IO
+dtparam=i2c_vc=on   # i2c 0 for LCD & RTC on Pump
+dtoverlay=i2c-rtc,pcf85063a,i2c_csi_dsi
+#dtoverlay=i2c-rtc,pcf85063a,i2c_csi_dsi,addr=0x51
+
+#==============================================================================
+# SPI for T-R-Click boards
+#==============================================================================
+#dtoverlay=spi0-cs,cs0_pin=5,cs1_pin=6 # software cs, spidev not loaded
+#
+#dtoverlay=spi0-1cs,cs0_pin=16
+#
+#Success!! Software CS, Use GPIO16 & GPIO20 as CS
+#dtoverlay=spi0-cs 
+#
+#Success!! Software CS
+#  Free CE0(8), CE1(7), and then control them as GPIO-7 & GPIO-8
+#  GPIO 24 & 25 are held by SPI driver. So they cannot be used for other purposes. 
+dtoverlay=spi0-2cs,cs0_pin=24,cs1_pin=25 
+
+

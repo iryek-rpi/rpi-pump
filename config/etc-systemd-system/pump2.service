@@ -1,0 +1,17 @@
+[Unit]
+Description=Pump Control Service
+
+[Service]
+Type=simple
+ExecStart=/home/hwan/pump/pump.sh
+#User=hwan
+
+Restart=always 
+#Restart=on-success
+RestartSec=5
+TimeoutStartSec=5
+TimeoutStopSec=5
+
+
+[Install]
+WantedBy=multi-user.target
