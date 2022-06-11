@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 from datetime import timedelta
 from multiprocessing.connection import Listener
+import multiprocessing as mp
 
 import lgpio
 import signal
@@ -26,6 +27,8 @@ from pump_state_set_level import SetLevelStateMachine
 from pump_state_set_time import SetTimeStateMachine
 from pump_monitor import init_spi_rw, tank_monitor
 from pump_thread import CommThread, RepeatThread
+
+import modbus_server_serial
 
 #==============================================================================
 # 디버그용 로그 설정
@@ -122,6 +125,9 @@ def main():
                     kwargs={'pv':pv()})
     saver.start()
 
+    comm_proc = mp.Process(name="Modbus Server", target=modbus_server_serial.rtu_server_proc, args={})
+    comm_proc.start()
+
     while not is_shutdown:
       pass
 
@@ -129,6 +135,8 @@ def main():
     saver.stop()
     save_data(pv=pv())
     lcd().clear()
+
+    comm_proc.join()
   except KeyboardInterrupt:
     pass
   #finally:
