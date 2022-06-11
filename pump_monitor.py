@@ -62,12 +62,12 @@ def water_level_rate(pv, wl=None):
     wl = pv.water_level
 
   rate = 0.0
-  if pv.water_level >= pv.setting_20ma_ref:
+  if wl >= pv.setting_20ma_ref:
     rate = 100.0
-  elif pv.water_level < pv.setting_4ma_ref:
+  elif wl < pv.setting_4ma_ref:
     rate = 0.0
   else:
-    rate = ((pv.water_level-pv.setting_4ma_ref) / (pv.setting_20ma_ref-pv.setting_4ma_ref))*100.0
+    rate = ((wl-pv.setting_4ma_ref) / (pv.setting_20ma_ref-pv.setting_4ma_ref))*100.0
 
   return rate
 
