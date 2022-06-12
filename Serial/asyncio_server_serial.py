@@ -109,6 +109,7 @@ async def run_server():
     # ----------------------------------------------------------------------- #
     identity = ModbusDeviceIdentification(
         info_name={
+        #info={
             "VendorName": "SMTech",
             "ProductCode": "PU",
             "VendorUrl": "http://forsmt.co.kr",
