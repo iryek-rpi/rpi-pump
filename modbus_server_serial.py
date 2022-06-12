@@ -31,10 +31,46 @@ log.setLevel(logging.DEBUG)
 
 PORT = "/dev/serial1"
 
-def rtu_server_proc():
-    asyncio.run(run_server())
+class PumpDataBlock(ModbusSequentialDataBlock):
+    """A datablock that stores the new value in memory,
 
-async def run_server():
+    and performs a custom action after it has been stored.
+    """
+
+    def setValues(self, address, value):  # pylint: disable=arguments-differ
+        """Set the requested values of the datastore
+
+        :param address: The starting address
+        :param values: The new values to be set
+        """
+        super().setValues(address, value)
+
+        # whatever you want to do with the written value is done here,
+        # however make sure not to do too much work here or it will
+        # block the server, espectially if the server is being written
+        # to very quickly
+        logging.info("wrote {value} to {address}")
+        print(f"wrote {value} to {address}")
+
+    def getValues(self, address, count):  # pylint: disable=arguments-differ
+        """Get the requested values of the datastore
+
+        :param address: The starting address
+        """
+        values = super().getValues(address, count)
+
+        # whatever you want to do with the written value is done here,
+        # however make sure not to do too much work here or it will
+        # block the server, espectially if the server is being written
+        # to very quickly
+        logging.info("read {value} from {address}")
+        print(f"read {values} from {address}")
+        return values
+
+def rtu_server_proc(pipe_req):
+    asyncio.run(run_server(pipe_req))
+
+async def run_server(pipe_req):
     """Run server."""
     # ----------------------------------------------------------------------- #
     # initialize your data store
@@ -45,7 +81,7 @@ async def run_server():
     # because many devices exhibit this kind of behavior (but not all)::
     #
     #     block = ModbusSequentialDataBlock(0x00, [0]*0xff)
-    #block = ModbusSequentialDataBlock(0x00, [0]*0xff)
+    #     block = ModbusSequentialDataBlock(0x00, [0]*0xff)
     #
     # Continuing, you can choose to use a sequential or a sparse DataBlock in
     # your data context.  The difference is that the sequential has no gaps in
@@ -93,12 +129,28 @@ async def run_server():
     #
     #     store = ModbusSlaveContext(..., zero_mode=True)
     # ----------------------------------------------------------------------- #
-    store = ModbusSlaveContext(
-        di=ModbusSequentialDataBlock(0, [17] * 100),
-        co=ModbusSequentialDataBlock(0, [17] * 100),
-        hr=ModbusSequentialDataBlock(0, [17] * 100),
-        ir=ModbusSequentialDataBlock(0, [17] * 100),
-    )
+    # 번지	  Description	         R/W	    기타
+    # 40001	  현재 수위	            읽기	%단위(0~100)
+    # 40002	  예측 수위	            읽기	%단위(0~100)
+    # 40003 	수위 모드	            읽기	0:현재 수위로 운전
+    #                                  1:예측 수위로 운전"
+    # 40004 	펌프1 상태	          읽기	0:펌프1 정지 1:펌프1 가동
+    # 40005 	펌프2 상태	          읽기	0:펌프2 정지 1:펌프2 가동
+    # 40006 	펌프3 상태	          읽기	0:펌프3 정지 1:펌프3 가동
+    # 40007 	spare	              읽기	
+    # 40008 	spare	              읽기	
+    # 40009 	spare	              읽기	
+    # 40010 	spare	              읽기	
+    # 40011 	수위H값(정지수위)       쓰기   %단위(0~100)
+    # 40012 	수위L값(가동수위)       쓰기	 %단위(0~100)
+    # 40013 	펌프운전모드	          쓰기	 0: 수동운전(펌프 제어값에 의한 운전)
+    #                                    1: 자동운전(수위 설정값에 의한 운전)
+    # 40014 	펌프1제어	            쓰기	  0:정지, 1:가동
+    # 40015 	펌프2제어	            쓰기	  0:정지, 1:가동
+    # 40016 	펌프3제어	            쓰기	  0:정지, 1:가동
+    # 40017 	펌프가동댓수(자동운전시)  쓰기	 1:1대, 2:2대, 3:3대
+    holding_reg = PumpDataBlock(0, [0]*17)
+    store = ModbusSlaveContext( hr=holding_reg )
 
     context = ModbusServerContext(slaves=store, single=True)
 

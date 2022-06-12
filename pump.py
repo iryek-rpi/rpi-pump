@@ -5,12 +5,9 @@
 # https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load?answertab=votes#tab-top
 # https://github.com/adafruit/Adafruit_Python_SSD1306
 
-import sys
-import os
 import logging
 from pathlib import Path
 from datetime import timedelta
-from multiprocessing.connection import Listener
 import multiprocessing as mp
 
 import lgpio
@@ -26,9 +23,10 @@ from pump_state import LCDStateMachine
 from pump_state_set_level import SetLevelStateMachine
 from pump_state_set_time import SetTimeStateMachine
 from pump_monitor import init_spi_rw, tank_monitor
-from pump_thread import CommThread, RepeatThread
+import pump_thread
 
 import modbus_server_serial
+import modbus_respond
 
 #==============================================================================
 # 디버그용 로그 설정
@@ -114,29 +112,43 @@ def main():
     buttons(PumpButtons(sm_list))
 
     # 수위 모니터링을 위한 스레드
-    monitor = RepeatThread(interval=pv().setting_interval_monitor, execute=tank_monitor, 
+    monitor = pump_thread.RepeatThread(interval=pv().setting_interval_monitor, execute=tank_monitor, 
                     kwargs={'chip':chip, 'spi':spi, 'sm':sm_lcd, 'pv':pv()})
     monitor.start()
 
-    # set up water level  
+    # Modbus 시리얼 통신을 위한 프로세스
+    comm_proc = mp.Process(name="Modbus Server", target=serial_proc.rtu_server_proc, args={p_req})
+    comm_proc.start()
+
+    # Modbus 요청 처리를 위한 스레드
+    p_respond, p_req = mp.Pipe()
+    responder = pump_thread.RespondThread(execute=modbus_respond.respond, 
+                    kwargs={'pipe':p_respond, 'pv':pv()})
+    responder.start()
+
+    # 수위 저장을 위한 스레드
     logging.info("datapath: {}".format(pv().data_path))
     Path(pv().data_path).mkdir(parents=True, exist_ok=True)
-    saver = RepeatThread(interval=pv().setting_interval_save, execute=save_data, 
-                    kwargs={'pv':pv()})
+    saver = pump_thread.RepeatThread(interval=pv().setting_interval_save, 
+              execute=save_data, kwargs={'pv':pv()})
     saver.start()
 
-    comm_proc = mp.Process(name="Modbus Server", target=modbus_server_serial.rtu_server_proc, args={})
+    pipe_modbus, pipe_main = mp.Pipe()
+    comm_proc = mp.Process(name="Modbus Server", target=modbus_server_serial.rtu_server_proc, args={pipe_modbus})
     comm_proc.start()
 
     while not is_shutdown:
       pass
 
+    # 스레드와 프로세스 정리
     monitor.stop()
+    responder.stop()
     saver.stop()
+    comm_proc.join()
+
     save_data(pv=pv())
     lcd().clear()
 
-    comm_proc.join()
   except KeyboardInterrupt:
     pass
   #finally:
