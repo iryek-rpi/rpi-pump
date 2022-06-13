@@ -16,6 +16,9 @@ from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 from pymodbus.datastore import ModbusSequentialDataBlock
 from pymodbus.framer.rtu_framer import ModbusRtuFramer
 
+import pymodbus.datastore as ds
+import modbus_address as ma
+
 # from pymodbus.datastore import ModbusSparseDataBlock
 
 # --------------------------------------------------------------------------- #
@@ -31,7 +34,52 @@ log.setLevel(logging.DEBUG)
 
 PORT = "/dev/serial1"
 
-class PumpDataBlock(ModbusSequentialDataBlock):
+class PumpDataBlock(ds.BaseModbusDataBlock):
+    """Creates a sequential modbus datastore."""
+
+    def __init__(self, address_list, pipe_req):
+        """Initialize the datastore.
+        """
+        self.address = address_list.copy()
+        self.values = {}
+        self.default_value = 0
+        self.pipe_req = pipe_req
+
+    def validate(self, address, count=1):
+        """Check to see if the request is in range.
+
+        :param address: The starting address
+        :param count: The number of values to test for
+        :returns: True if the request in within range, False otherwise
+        """
+        return address in self.address
+
+    def getValues(self, address, count=1):
+        """Return the requested values of the datastore.
+
+        :param address: The starting address
+        :param count: The number of values to retrieve
+        :returns: The requested values from a:a+c
+        """
+        self.pipe_req.send(address)
+        response=self.pipe_req.recv()
+        return response
+
+    def setValues(self, address, values):
+        """Set the requested values of the datastore.
+
+        :param address: The starting address
+        :param values: The new values to be set
+        """
+        self.pipe_req.send(address)
+        response=self.pipe_req.recv()
+        return response
+        if not isinstance(values, list):
+            values = [values]
+        start = address - self.address
+        self.values[start : start + len(values)] = values
+
+class PumpSequentialDataBlock(ds.BaseModbusDataBlock):
     """A datablock that stores the new value in memory,
 
     and performs a custom action after it has been stored.
@@ -68,6 +116,8 @@ class PumpDataBlock(ModbusSequentialDataBlock):
         return values
 
 def rtu_server_proc(pipe_req):
+    """Modbus 서버 프로세스
+    """
     asyncio.run(run_server(pipe_req))
 
 async def run_server(pipe_req):
@@ -149,7 +199,7 @@ async def run_server(pipe_req):
     # 40015 	펌프2제어	            쓰기	  0:정지, 1:가동
     # 40016 	펌프3제어	            쓰기	  0:정지, 1:가동
     # 40017 	펌프가동댓수(자동운전시)  쓰기	 1:1대, 2:2대, 3:3대
-    holding_reg = PumpDataBlock(0, [0]*17)
+    holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req)
     store = ModbusSlaveContext( hr=holding_reg )
 
     context = ModbusServerContext(slaves=store, single=True)
