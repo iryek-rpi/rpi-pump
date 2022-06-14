@@ -116,16 +116,6 @@ def main():
                     kwargs={'chip':chip, 'spi':spi, 'sm':sm_lcd, 'pv':pv()})
     monitor.start()
 
-    # Modbus 시리얼 통신을 위한 프로세스
-    comm_proc = mp.Process(name="Modbus Server", target=serial_proc.rtu_server_proc, args={p_req})
-    comm_proc.start()
-
-    # Modbus 요청 처리를 위한 스레드
-    p_respond, p_req = mp.Pipe()
-    responder = pump_thread.RespondThread(execute=modbus_respond.respond, 
-                    kwargs={'pipe':p_respond, 'pv':pv()})
-    responder.start()
-
     # 수위 저장을 위한 스레드
     logging.info("datapath: {}".format(pv().data_path))
     Path(pv().data_path).mkdir(parents=True, exist_ok=True)
@@ -133,8 +123,13 @@ def main():
               execute=save_data, kwargs={'pv':pv()})
     saver.start()
 
-    pipe_modbus, pipe_main = mp.Pipe()
-    comm_proc = mp.Process(name="Modbus Server", target=modbus_server_serial.rtu_server_proc, args={pipe_modbus})
+    # Modbus 요청 처리를 위한 스레드
+    p_respond, p_req = mp.Pipe()
+    responder = pump_thread.RespondThread(execute=modbus_respond.respond, 
+                    kwargs={'pipe':p_respond, 'pv':pv()})
+    responder.start()
+
+    comm_proc = mp.Process(name="Modbus Server", target=modbus_server_serial.rtu_server_proc, args={p_req})
     comm_proc.start()
 
     while not is_shutdown:

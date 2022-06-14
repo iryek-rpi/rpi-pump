@@ -34,7 +34,7 @@ log.setLevel(logging.DEBUG)
 
 PORT = "/dev/serial1"
 
-class PumpDataBlock(ds.BaseModbusDataBlock):
+class PumpDataBlock(ds.ModbusSparseDataBlock):
     """Creates a sequential modbus datastore."""
 
     def __init__(self, address_list, pipe_req):
@@ -52,6 +52,8 @@ class PumpDataBlock(ds.BaseModbusDataBlock):
         :param count: The number of values to test for
         :returns: True if the request in within range, False otherwise
         """
+        address += 40000
+        logging.info(f"validate: address({address}) in {self.address}")
         return address in self.address
 
     def getValues(self, address, count=1):
@@ -61,8 +63,10 @@ class PumpDataBlock(ds.BaseModbusDataBlock):
         :param count: The number of values to retrieve
         :returns: The requested values from a:a+c
         """
+        logging.info(f"MODBUS SERVER: sending request to getValues(address:{address})")
         self.pipe_req.send(address)
         response=self.pipe_req.recv()
+        logging.info(f"MODBUS SERVER: received response:{response} for getValues(address:{address})")
         return response
 
     def setValues(self, address, values):
@@ -71,53 +75,20 @@ class PumpDataBlock(ds.BaseModbusDataBlock):
         :param address: The starting address
         :param values: The new values to be set
         """
+        logging.info(f"MODBUS SERVER: sending request to setValues(address:{address}, values:{values})")
         self.pipe_req.send(address)
         response=self.pipe_req.recv()
-        return response
-        if not isinstance(values, list):
-            values = [values]
-        start = address - self.address
-        self.values[start : start + len(values)] = values
+        logging.info(f"MODBUS SERVER: received response:{response} for setValues(address:{address}, values:{values})")
 
-class PumpSequentialDataBlock(ds.BaseModbusDataBlock):
-    """A datablock that stores the new value in memory,
-
-    and performs a custom action after it has been stored.
-    """
-
-    def setValues(self, address, value):  # pylint: disable=arguments-differ
-        """Set the requested values of the datastore
-
-        :param address: The starting address
-        :param values: The new values to be set
-        """
-        super().setValues(address, value)
-
-        # whatever you want to do with the written value is done here,
-        # however make sure not to do too much work here or it will
-        # block the server, espectially if the server is being written
-        # to very quickly
-        logging.info("wrote {value} to {address}")
-        print(f"wrote {value} to {address}")
-
-    def getValues(self, address, count):  # pylint: disable=arguments-differ
-        """Get the requested values of the datastore
-
-        :param address: The starting address
-        """
-        values = super().getValues(address, count)
-
-        # whatever you want to do with the written value is done here,
-        # however make sure not to do too much work here or it will
-        # block the server, espectially if the server is being written
-        # to very quickly
-        logging.info("read {value} from {address}")
-        print(f"read {values} from {address}")
-        return values
+        #if not isinstance(values, list):
+        #    values = [values]
+        #start = address - self.address
+        #self.values[start : start + len(values)] = values
 
 def rtu_server_proc(pipe_req):
     """Modbus 서버 프로세스
     """
+    logging.info("Starting rtu_server_proc()")
     asyncio.run(run_server(pipe_req))
 
 async def run_server(pipe_req):
