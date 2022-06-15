@@ -63,11 +63,12 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :param count: The number of values to retrieve
         :returns: The requested values from a:a+c
         """
-        logging.info(f"MODBUS SERVER: sending request to getValues(address:{address})")
-        self.pipe_req.send(address)
+        msg = (address, [])
+        logging.info(f"MODBUS SERVER: sending request to getValues(address:{msg})")
+        self.pipe_req.send(msg)
         response=self.pipe_req.recv()
         logging.info(f"MODBUS SERVER: received response:{response} for getValues(address:{address})")
-        return response
+        return response[1]
 
     def setValues(self, address, values):
         """Set the requested values of the datastore.
@@ -75,8 +76,9 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :param address: The starting address
         :param values: The new values to be set
         """
-        logging.info(f"MODBUS SERVER: sending request to setValues(address:{address}, values:{values})")
-        self.pipe_req.send(address)
+        msg = (address, values)
+        logging.info(f"MODBUS SERVER: sending {msg} to setValues(address:{address}, values:{values})")
+        self.pipe_req.send(msg)
         response=self.pipe_req.recv()
         logging.info(f"MODBUS SERVER: received response:{response} for setValues(address:{address}, values:{values})")
 
@@ -172,7 +174,6 @@ async def run_server(pipe_req):
     # 40017 	펌프가동댓수(자동운전시)  쓰기	 1:1대, 2:2대, 3:3대
     holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req)
     store = ModbusSlaveContext( hr=holding_reg )
-
     context = ModbusServerContext(slaves=store, single=True)
 
     # ----------------------------------------------------------------------- #
