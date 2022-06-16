@@ -1,5 +1,5 @@
-from threading import Lock
-from queue import Queue
+import threading 
+import queue
 import datetime
 import os
 import pandas as pd
@@ -47,7 +47,7 @@ class PV():
     self.time_no_input = None # 입력이 없는 시간 
     self.last_valid_level = 0
     self.data = []
-    self.lock = Lock()
+    self.lock = threading.Lock()
 
 
     self.setting_tank_full = 2000 # 수조 최고 수위
@@ -72,7 +72,7 @@ class PV():
     if self.adc_avg_count < 1:
       self.adc_avg_count = 1
 
-    self.q_level = Queue(self.adc_avg_count)
+    self.q_level = queue.Queue(self.adc_avg_count)
     for _ in range(self.adc_avg_count):
       self.q_level.put(self.setting_20ma_ref, block=False)
 
