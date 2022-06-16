@@ -16,21 +16,6 @@ import threading
 import time
 import datetime
 
-# Based on tornado.ioloop.IOLoop.instance() approach.
-# See https://github.com/facebook/tornado
-# Whole idea for this metaclass is taken from: https://stackoverflow.com/a/6798042/2402281
-class ThreadSafeSingleton(type):
-  _instances = {}
-  _singleton_lock = threading.Lock()
-
-  def __call__(cls, *args, **kwargs):
-    # double-checked locking pattern (https://en.wikipedia.org/wiki/Double-checked_locking)
-    if cls not in cls._instances:
-      with cls._singleton_lock:
-        if cls not in cls._instances:
-          cls._instances[cls] = super(ThreadSafeSingleton, cls).__call__(*args, **kwargs)
-    return cls._instances[cls]
-
 def change_list_digit(lst, idx, amount=1):
   lst[idx] = change_digit(lst[idx], idx, amount)
 
@@ -105,3 +90,18 @@ def get_dallas():
   temp=ttext.split("\n")[1].split(" ")[9]
   temperature=float(temp[2:])/1000
   return temperature
+
+# Based on tornado.ioloop.IOLoop.instance() approach.
+# See https://github.com/facebook/tornado
+# Whole idea for this metaclass is taken from: https://stackoverflow.com/a/6798042/2402281
+#class ThreadSafeSingleton(type):
+#  _instances = {}
+#  _singleton_lock = threading.Lock()
+#
+#  def __call__(cls, *args, **kwargs):
+#    # double-checked locking pattern (https://en.wikipedia.org/wiki/Double-checked_locking)
+#    if cls not in cls._instances:
+#      with cls._singleton_lock:
+#        if cls not in cls._instances:
+#          cls._instances[cls] = super(ThreadSafeSingleton, cls).__call__(*args, **kwargs)
+#    return cls._instances[cls]

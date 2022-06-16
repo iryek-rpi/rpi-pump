@@ -9,7 +9,7 @@ import pexpect
 
 from pump_screen import *
 from pump_variables import PV
-from pump_util import ThreadSafeSingleton
+#from pump_util import ThreadSafeSingleton
 from pump_btn import PumpButtons, buttons
 
 #class SetTimeStateMachine(metaclass=ThreadSafeSingleton):
