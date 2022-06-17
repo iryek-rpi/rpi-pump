@@ -7,8 +7,13 @@ import csv
 
 import logging
 
-MODE_PLC = 0
-MODE_AI = 1
+# 수위계 입력에 의한 수위값인지, 예측에 의한 수위값인지
+SOURCE_SENSOR = 0
+SOURCE_AI = 1
+
+# 펌프 가동을 자동으로 할 지 여부
+OP_MANUAL = 0
+OP_AUTO = 1
 
 
 def pv(inst=None):
@@ -44,11 +49,13 @@ no_input_tol = {
 class PV():
 
   def __init__(self):
-    self.mode = MODE_PLC  # 운전모드
+    self.source = SOURCE_SENSOR  # PLC/AI 운전모드
+    self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
     self.water_level = 0.0  # 현재 수위
     self.motor1 = 0  # 펌프1
     self.motor2 = 0  # 펌프2
     self.motor3 = 0  # 펌프3
+    self.motor_count = 1
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
     self.last_valid_level = 0
     self.data = []
@@ -56,7 +63,7 @@ class PV():
 
     self.setting_tank_full = 2000  # 수조 최고 수위
     self.setting_4ma_ref = 700  # 4mA ADC 출력
-    self.setting_20ma_ref = 2000  # 4000  # 20mA ADC 출력
+    self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
     self.setting_4ma = 0.0  # 4mA 수위(수위계 캘리브레이션)
     self.setting_20ma = 100.0  # 20mA 수위(수위계 캘리브레이션)
     self.setting_low = 20  # 저수위(%)
@@ -93,7 +100,7 @@ class PV():
                                   'data')
 
   def update(self):
-    self.mode = MODE_PLC  # 운전모드
+    self.source = SOURCE_SENSOR  # 수위값 출처
     self.water_level = 0  # 현재 수위
     self.motor1 = 0  # 펌프1
     self.motor2 = 0  # 펌프2
@@ -144,15 +151,6 @@ class PV():
     self.data = []
     self.lock.release()
     return new_list
-
-  @property
-  def mode(self):
-    # update mode
-    return self._mode
-
-  @mode.setter
-  def mode(self, mode):
-    self._mode = mode
 
 
 def save_data(**kwargs):
