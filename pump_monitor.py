@@ -16,8 +16,8 @@ import csv
 
 from pump_util import *
 from pump_variables import PV
-from pump_variables import MODE_AI
-from pump_variables import MODE_PLC
+from pump_variables import SOURCE_AI
+from pump_variables import SOURCE_SENSOR
 
 #==============================================================================
 # Device Properties
@@ -154,8 +154,8 @@ def tank_monitor(**kwargs):
 
     td = time_now - pv.no_input_starttime
     if td.seconds > pv.setting_tolerance_to_ai:  # 일정 시간 입력이 없으면
-      if pv.mode == MODE_PLC:
-        pv.mode = MODE_AI
+      if pv.source == SOURCE_SENSOR:
+        pv.source = SOURCE_AI
         #현재 회로 구성에서는 CFLOW_PASS를 사용 못하므로 항상 CFLOW_CPU 로 설정되어 있음
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
@@ -164,8 +164,8 @@ def tank_monitor(**kwargs):
     else:
       pv.water_level = pv.last_valid_level  # 일시적인 현상으로 간주하고 마지막 유효 입력 사용
   else:
-    if pv.mode == MODE_AI:
-      pv.mode = MODE_PLC
+    if pv.source == SOURCE_AI:
+      pv.source = SOURCE_SENSOR
       #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
       #set_current_flow(chip=chip, cflow=CFLOW_PASS)
 
@@ -177,7 +177,7 @@ def tank_monitor(**kwargs):
       time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
       motor_state(chip, 0),
       motor_state(chip, 1),
-      motor_state(chip, 2), pv.mode
+      motor_state(chip, 2), pv.source
   ])
 
   logging.debug("writeDAC(level:%d, filtered:%d)", level, pv.water_level)
@@ -211,7 +211,7 @@ def main():
 
     chip = lgpio.gpiochip_open(0)
     set_current_flow(chip=chip, cflow=CFLOW_CPU)
-    pv().mode = MODE_PLC
+    pv().source = SOURCE_SENSOR
 
     lgpio.gpio_claim_output(chip, CE_T, 1)
     lgpio.gpio_claim_output(chip, CE_R, 1)
