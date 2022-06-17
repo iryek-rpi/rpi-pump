@@ -15,17 +15,18 @@ import spidev
 import csv
 
 from pump_util import *
-from pump_variables import MODE_AI, MODE_PLC
-from pump_thread import CommThread
+from pump_variables import PV
+from pump_variables import MODE_AI
+from pump_variables import MODE_PLC
 
 #==============================================================================
 # Device Properties
 #==============================================================================
 
 # /boot/firmware/config.txt
-# Free CE0(8), CE1(7), and then control them as GPIO-7 & GPIO-8 
-# GPIO 24 & 25 are held by SPI driver. So they cannot be used for other purposes.  
-#   dtoverlay=spi0-2cs,cs0_pin=24,cs1_pin=25   
+# Free CE0(8), CE1(7), and then control them as GPIO-7 & GPIO-8
+# GPIO 24 & 25 are held by SPI driver. So they cannot be used for other purposes.
+#   dtoverlay=spi0-2cs,cs0_pin=24,cs1_pin=25
 CE_R = 7  # CE1
 CE_T = 8  # CE0
 
@@ -39,26 +40,29 @@ CSW2 = 13
 
 RUN_MODE = 17
 
+
 def motor_state(chip, m):
-  if m==0:
+  if m == 0:
     return lgpio.gpio_read(chip, M0)
-  elif m==1:
+  elif m == 1:
     return lgpio.gpio_read(chip, M1)
   else:
     return lgpio.gpio_read(chip, M2)
+
 
 def writeDAC(chip, v, spi):
   msb = (v >> 8) & 0x0F
   msb = msb | 0x30
   lsb = v & 0xFF
-  
+
   lgpio.gpio_write(chip, CE_T, 0)
   spi.xfer2([msb, lsb])
   lgpio.gpio_write(chip, CE_T, 1)
   logging.debug("set_DAC({})".format(v))
 
+
 def water_level_rate(pv, wl=None):
-  if wl==None:
+  if wl == None:
     wl = pv.water_level
 
   rate = 0.0
@@ -67,14 +71,17 @@ def water_level_rate(pv, wl=None):
   elif wl < pv.setting_4ma_ref:
     rate = 0.0
   else:
-    rate = ((wl-pv.setting_4ma_ref) / (pv.setting_20ma_ref-pv.setting_4ma_ref))*100.0
+    rate = ((wl - pv.setting_4ma_ref) /
+            (pv.setting_20ma_ref - pv.setting_4ma_ref)) * 100.0
 
   return rate
+
 
 def check_water_level(chip, spi):
   return readADC_MSB(chip, spi)
 
-def readADC_MSB(chip,spi):
+
+def readADC_MSB(chip, spi):
   """
   Reads 2 bytes (byte_0 and 1) and converts the output code from the MSB-mode:
   byte_0 holds two ?? bits, the null bit, and the 5 MSB bits (B11-B07),
@@ -92,25 +99,31 @@ def readADC_MSB(chip,spi):
   #logging.debug(f"MSB_1:0b{MSB_1:0b}")
   MSB_1 = MSB_1 >> 1  # shift right 1 bit to remove B01 from the LSB mode
   #logging.debug(f"MSB_1:0b{MSB_1:0b}")
-  MSB_0 = bytes_received[0] & 0b00011111  # mask the 2 unknown bits and the null bit
+  MSB_0 = bytes_received[
+      0] & 0b00011111  # mask the 2 unknown bits and the null bit
   #logging.debug(f"MSB_0:0b{bytes_received[0]:0b}")
   #logging.debug(f"MSB_0:0b{MSB_0:0b}")
   MSB_0 = MSB_0 << 7  # shift left 7 bits (i.e. the first MSB 5 bits of 12 bits)
   #logging.debug(f"MSB_0<<7:0b{MSB_0:0b}")
-  logging.debug(f"MSB_0+MSB_1:0b{MSB_0+MSB_1:0b} 0x{MSB_0+MSB_1:2X} {MSB_0+MSB_1}")
+  logging.debug(
+      f"MSB_0+MSB_1:0b{MSB_0+MSB_1:0b} 0x{MSB_0+MSB_1:2X} {MSB_0+MSB_1}")
   return MSB_0 + MSB_1
+
 
 def convert_to_voltage(adc_output, VREF=3.3):
   """
   Calculates analogue voltage from the digital output code (ranging from 0-4095)
   VREF could be adjusted here (standard uses the 3V3 rail from the Rpi)
   """
-  return adc_output * (VREF / (2 ** 12 - 1))
+  return adc_output * (VREF / (2**12 - 1))
+
 
 CFLOW_PASS = 0
 CFLOW_CPU = 1
-def set_current_flow(chip, cflow=CFLOW_PASS):
-  if cflow==CFLOW_PASS:
+
+
+def set_current_flow(chip, cflow):
+  if cflow == CFLOW_PASS:
     lgpio.gpio_write(chip, CSW0, 0)
     lgpio.gpio_write(chip, CSW1, 0)
     lgpio.gpio_write(chip, CSW2, 0)
@@ -119,62 +132,67 @@ def set_current_flow(chip, cflow=CFLOW_PASS):
     lgpio.gpio_write(chip, CSW1, 1)
     lgpio.gpio_write(chip, CSW2, 1)
 
+
 def tank_monitor(**kwargs):
-  n0 = datetime.datetime.now()
-  chip=kwargs['chip']
-  spi=kwargs['spi']
-  sm=kwargs['sm']
-  pv=kwargs['pv']
+  """수위 모니터링 스레드
+  RepeatThread에서 주기적으로 호출되어 수위 입력을 처리함
+  """
+
+  chip = kwargs['chip']
+  spi = kwargs['spi']
+  sm = kwargs['sm']
+  pv: PV = kwargs['pv']
 
   level = check_water_level(chip, spi)
   time_now = datetime.datetime.now()
   logging.debug("monitor at {}".format(time_now.ctime()))
 
-  if level<100:
-    if pv.time_no_input==None:
-      pv.time_no_input = time_now
+  # 수위 입력이 없음
+  if level < 100:
+    if pv.no_input_starttime is None:
+      pv.no_input_starttime = time_now
 
-    td = time_now - pv.time_no_input
-    if td.seconds > pv.setting_tolerance_to_ai:
-      if pv.mode==MODE_PLC:
+    td = time_now - pv.no_input_starttime
+    if td.seconds > pv.setting_tolerance_to_ai:  # 일정 시간 입력이 없으면
+      if pv.mode == MODE_PLC:
         pv.mode = MODE_AI
-        set_current_flow(chip=chip, cflow=CFLOW_CPU)
+        #현재 회로 구성에서는 CFLOW_PASS를 사용 못하므로 항상 CFLOW_CPU 로 설정되어 있음
+        #set_current_flow(chip=chip, cflow=CFLOW_CPU)
+
       # get prediction from ML model
       pv.water_level = pv.last_valid_level  # 임시
     else:
-      pv.water_level = pv.last_valid_level  # 마지막 유효 입력
-# ADC_TEST
+      pv.water_level = pv.last_valid_level  # 일시적인 현상으로 간주하고 마지막 유효 입력 사용
   else:
-#    if pv.mode==MODE_AI:
-#      pv.mode = MODE_PLC
-#      set_current_flow(chip=chip, cflow=CFLOW_PASS)
+    if pv.mode == MODE_AI:
+      pv.mode = MODE_PLC
+      #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
+      #set_current_flow(chip=chip, cflow=CFLOW_PASS)
 
-    pv.time_no_input = None
+    pv.no_input_starttime = None
     pv.water_level = pv.filter_data(level)
     pv.last_valid_level = pv.water_level
 
-  logging.debug("level:{} filtered:{}".format(level, pv.water_level))
   pv.append_data([
-      time_now.strftime("%Y-%m-%d %H:%M:%S"), 
-      pv.water_level, 
+      time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
       motor_state(chip, 0),
       motor_state(chip, 1),
-      motor_state(chip, 2),
-      pv.mode])
+      motor_state(chip, 2), pv.mode
+  ])
 
-# ADC_TEST
-  logging.debug("writeDAC(level:{}, filtered:{})".format(level, pv.water_level))
-  writeDAC(chip, level, spi)
+  logging.debug("writeDAC(level:%d, filtered:%d)", level, pv.water_level)
+  #writeDAC(chip, level, spi)
   writeDAC(chip, pv.water_level, spi)
   sm.update_idle()
 
+
 def init_spi_rw(chip, pv, speed=4800):
-# ADC_TEST
+  #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
   #set_current_flow(chip=chip, cflow=CFLOW_PASS)
   set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
-  lgpio.gpio_claim_output(chip,CE_T,1)
-  lgpio.gpio_claim_output(chip,CE_R,1)
+  lgpio.gpio_claim_output(chip, CE_T, 1)
+  lgpio.gpio_claim_output(chip, CE_R, 1)
   time.sleep(0.1)
 
   spi = spidev.SpiDev()
@@ -185,17 +203,18 @@ def init_spi_rw(chip, pv, speed=4800):
 
   return spi
 
+
 def main():
   from pump_variables import PV, pv
   try:
     pv.instance = PV()  # pump variables
 
     chip = lgpio.gpiochip_open(0)
-    set_current_flow(chip=chip, cflow=CFLOW_PASS)
+    set_current_flow(chip=chip, cflow=CFLOW_CPU)
     pv().mode = MODE_PLC
 
-    lgpio.gpio_claim_output(chip,CE_T,1)
-    lgpio.gpio_claim_output(chip,CE_R,1)
+    lgpio.gpio_claim_output(chip, CE_T, 1)
+    lgpio.gpio_claim_output(chip, CE_R, 1)
     time.sleep(0.1)
 
     spi = spidev.SpiDev()
@@ -208,14 +227,15 @@ def main():
 
     while not is_shutdown:
       ADC_output_code = readADC_MSB(chip, spi)
-      logging.debug("MCP3201 output code (MSB-mode): {}".foramt(ADC_output_code))
+      logging.debug(
+          "MCP3201 output code (MSB-mode): {}".foramt(ADC_output_code))
       ADC_voltage = convert_to_voltage(ADC_output_code)
       logging.debug("MCP3201 voltage: {%0.2f}V".format(ADC_voltage))
       conn.send(ADC_voltage)
-      
+
       sleep(0.1)  # wait minimum of 100 ms between ADC measurements
-  
-      #writeDAC(chip=chip, v=ADC_voltage*100, spi=spi) 
+
+      #writeDAC(chip=chip, v=ADC_voltage*100, spi=spi)
       #writeDAC(4020) # 4020 -> 1111 1011 0100
       sleep(2)
   except KeyboardInterrupt:
@@ -224,12 +244,13 @@ def main():
     lgpio.gpiochip_close(chip)
     conn.close()
 
+
 if __name__ == '__main__':
   is_shutdown = False
 
-#==============================================================================
-# systemd 
-#==============================================================================
+  #==============================================================================
+  # systemd
+  #==============================================================================
   def stop(sig, frame):
     logging.info(f"SIGTERM at {datetime.datetime.now()}")
     global is_shutdown
@@ -246,8 +267,6 @@ if __name__ == '__main__':
   logging.info(f"=================================================")
 
   main()
-
-
 '''
 4mA -> 726 -> 0.59v
        741 -> 0.6v

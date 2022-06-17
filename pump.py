@@ -32,10 +32,9 @@ import modbus_respond
 #==============================================================================
 # 디버그용 로그 설정
 #==============================================================================
-logging.basicConfig(format='%(asctime)s %(levelname)s:%(filename)s:%(message)s'
-  , level=logging.DEBUG
-  , datefmt='%Y-%m-%d %H:%M:%S'
-  )
+logging.basicConfig(format='%(asctime)s %(levelname)s:%(filename)s:%(message)s',
+                    level=logging.DEBUG,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 #==============================================================================
 # 디바이스 구성 요소 초기화
@@ -53,22 +52,25 @@ FAN = 12
 RUN_MODE = 17
 
 # I2C 주소
-I2C_BUS = 10      # PCB 보드의 I2C (라즈베리파이 IO 보드는 1)
-I2C_RTC  = 0x51   # Real Time Clock 디바이스 I2C 주소
-I2C_LCD  = 0x27   # 1602 LCD 디바이스 I2C 주소
+I2C_BUS = 10  # PCB 보드의 I2C (라즈베리파이 IO 보드는 1)
+I2C_RTC = 0x51  # Real Time Clock 디바이스 I2C 주소
+I2C_LCD = 0x27  # 1602 LCD 디바이스 I2C 주소
 
 #==============================================================================
-# systemd 
+# systemd
 #==============================================================================
 is_shutdown = False
+
 
 def stop(sig, frame):
   logging.info(f"SIGTERM at {datetime.datetime.now()}")
   global is_shutdown
   is_shutdown = True
 
+
 def ignore(sig, frame):
   logging.info(f"SIGHUP at {datetime.datetime.now()}")
+
 
 signal.signal(signal.SIGTERM, stop)
 #signal.signal(signal.SIGHUP, stop)
@@ -79,11 +81,11 @@ logging.info(f"=================================================")
 
 
 #==============================================================================
-# main 
+# main
 #==============================================================================
 def main():
   try:
-    i2c_bus = 1   # 라즈베리파이 개발용 IO 보드에서는 1
+    i2c_bus = 1  # 라즈베리파이 개발용 IO 보드에서는 1
     lcd_instance = Lcd(addr=0x27, bus=i2c_bus)
     time.sleep(0.1)
   except:
@@ -98,10 +100,11 @@ def main():
   try:
     lcd.instance = lcd_instance
 
-    pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다. 
+    pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
 
-    chip = lgpio.gpiochip_open(0)              # get GPIO chip handle
-    spi = pump_monitor.init_spi_rw(chip, pv(), speed=9600)  # get SPI device handle
+    chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
+    spi = pump_monitor.init_spi_rw(chip, pv(),
+                                   speed=9600)  # get SPI device handle
 
     # state machine 초기화
     sm_lcd = LCDStateMachine(name='LCDStateMachine', pv=pv())
@@ -113,48 +116,57 @@ def main():
     # state machine 객체를 지정하여 버튼 객체 초기화
     buttons(PumpButtons(sm_list))
 
-#==============================================================================
-# Thread & Process
-#==============================================================================
-# pump_monotor.tank_monitor
-#   * 수위 모니터링 스레드
-#   * kwargs={'chip':chip, 'spi':spi, 'sm':sm_lcd, 'pv':pv()})
-#
-# pump_variables.save_data
-#   * 수위 저장 스레드
-#   * kwargs={'pv':pv()}
-#
-# modbus_respond.respond
-#   * Modbus 요청 응답 대기 스레드
-#   * kwargs={'pipe':p_respond, 'pv':pv()}
-#
-# modbus_server_serial.rtu_server_proc
-#   * Modbus 서버 프로세스
-#   * args={p_req}
+    #==============================================================================
+    # Thread & Process
+    #==============================================================================
+    # pump_monotor.tank_monitor
+    #   * 수위 모니터링 스레드
+    #   * kwargs={'chip':chip, 'spi':spi, 'sm':sm_lcd, 'pv':pv()})
+    #
+    # pump_variables.save_data
+    #   * 수위 저장 스레드
+    #   * kwargs={'pv':pv()}
+    #
+    # modbus_respond.respond
+    #   * Modbus 요청 응답 대기 스레드
+    #   * kwargs={'pipe':p_respond, 'pv':pv()}
+    #
+    # modbus_server_serial.rtu_server_proc
+    #   * Modbus 서버 프로세스
+    #   * args={p_req}
 
     # 수위 모니터링을 위한 스레드
-    monitor = pump_thread.RepeatThread(interval=pv().setting_interval_monitor, 
-                execute=pump_monitor.tank_monitor, 
-                kwargs={'chip':chip, 'spi':spi, 'sm':sm_lcd, 'pv':pv()})
+    monitor = pump_thread.RepeatThread(interval=pv().setting_monitor_interval,
+                                       execute=pump_monitor.tank_monitor,
+                                       kwargs={
+                                           'chip': chip,
+                                           'spi': spi,
+                                           'sm': sm_lcd,
+                                           'pv': pv()
+                                       })
     monitor.start()
 
     # 수위 저장을 위한 스레드
     logging.info(f"datapath: {pv().data_path}")
     Path(pv().data_path).mkdir(parents=True, exist_ok=True)
-    saver = pump_thread.RepeatThread(interval=pv().setting_interval_save,
-              execute=pump_variables.save_data, 
-              kwargs={'pv':pv()})
+    saver = pump_thread.RepeatThread(interval=pv().setting_save_interval,
+                                     execute=pump_variables.save_data,
+                                     kwargs={'pv': pv()})
     saver.start()
 
     # Modbus 요청 처리를 위한 스레드
     p_respond, p_req = mp.Pipe()
     responder = pump_thread.RespondThread(execute=modbus_respond.respond,
-                    kwargs={'pipe':p_respond, 'pv':pv()})
+                                          kwargs={
+                                              'pipe': p_respond,
+                                              'pv': pv()
+                                          })
     responder.start()
 
     # Modbus 통신을 위한 프로세스
-    comm_proc = mp.Process(name="Modbus Server", target=modbus_server_serial.rtu_server_proc,
-                  args={p_req})
+    comm_proc = mp.Process(name="Modbus Server",
+                           target=modbus_server_serial.rtu_server_proc,
+                           args={p_req})
     comm_proc.start()
 
     while not is_shutdown:
@@ -173,10 +185,9 @@ def main():
     pass
   #finally:
 
+
 if __name__ == '__main__':
-    main()
-
-
+  main()
 '''
 #==============================================================================
 # Communication
