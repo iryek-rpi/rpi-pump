@@ -56,8 +56,8 @@ class PV():
     self.motor2 = 0  # 펌프2
     self.motor3 = 0  # 펌프3
     self.motor_count = 1
+    self.motor_valid = [1]  # 사용할 수 있는 모터 번호 리스트(1~3)
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
-    self.last_valid_level = 0
     self.data = []
     self.lock = threading.Lock()
 

@@ -6,6 +6,7 @@ import time
 from time import sleep
 import datetime
 import signal
+import random
 
 import logging
 
@@ -15,9 +16,8 @@ import spidev
 import csv
 
 from pump_util import *
+import pump_variables
 from pump_variables import PV
-from pump_variables import SOURCE_AI
-from pump_variables import SOURCE_SENSOR
 
 #==============================================================================
 # Device Properties
@@ -41,13 +41,56 @@ CSW2 = 13
 RUN_MODE = 17
 
 
-def motor_state(chip, m):
+def get_motor_state(chip, m):
   if m == 0:
     return lgpio.gpio_read(chip, M0)
   elif m == 1:
     return lgpio.gpio_read(chip, M1)
   else:
     return lgpio.gpio_read(chip, M2)
+
+
+def is_motor_running(chip):
+  return get_motor_state(chip, M0) or get_motor_state(
+      chip, M1) or get_motor_state(chip, M2)
+
+
+def get_all_motors(chip):
+  """3대의 모터 상태를 (x,x,x)로 리턴
+  """
+  ms = (0, 0, 0)
+  if lgpio.gpio_read(chip, M0):
+    ms[0] = True
+  if lgpio.gpio_read(chip, M1):
+    ms[1] = True
+  if lgpio.gpio_read(chip, M2):
+    ms[2] = True
+  return ms
+
+
+def set_motor_state(chip, m, on_off, pv: PV):
+  msg = 'SUCCESS'
+
+  if m == 0:
+    lgpio.gpio_write(chip, M0, on_off)
+    if lgpio.gpio_read(chip, M0) == on_off:
+      pv.motor1 = on_off
+    else:
+      msg = 'FAIL'
+  elif m == 1:
+    lgpio.gpio_write(chip, M1, on_off)
+    if lgpio.gpio_read(chip, M1) == on_off:
+      pv.motor2 = on_off
+    else:
+      msg = 'FAIL'
+  elif m == 2:
+    lgpio.gpio_write(chip, M2, on_off)
+    if lgpio.gpio_read(chip, M2) == on_off:
+      pv.motor3 = on_off
+    else:
+      msg = 'FAIL'
+
+  logging.info("SET MOTOR{%d} = {%d} {%s}", m + 1, on_off, msg)
 
 
 def writeDAC(chip, v, spi):
@@ -147,6 +190,8 @@ def tank_monitor(**kwargs):
   time_now = datetime.datetime.now()
   logging.debug("monitor at {}".format(time_now.ctime()))
 
+  last_level = pv.water_level
+
   # 수위 입력이 없음
   if level < 100:
     if pv.no_input_starttime is None:
@@ -154,30 +199,45 @@ def tank_monitor(**kwargs):
 
     td = time_now - pv.no_input_starttime
     if td.seconds > pv.setting_tolerance_to_ai:  # 일정 시간 입력이 없으면
-      if pv.source == SOURCE_SENSOR:
-        pv.source = SOURCE_AI
+      if pv.source == pump_variables.SOURCE_SENSOR:
+        pv.source = pump_variables.SOURCE_AI
         #현재 회로 구성에서는 CFLOW_PASS를 사용 못하므로 항상 CFLOW_CPU 로 설정되어 있음
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
       # get prediction from ML model
-      pv.water_level = pv.last_valid_level  # 임시
+      #pv.water_level = pv.last_valid_level  # 임시
     else:
-      pv.water_level = pv.last_valid_level  # 일시적인 현상으로 간주하고 마지막 유효 입력 사용
+      pv.water_level = last_level  # 일시적인 현상으로 간주하고 level 값 버림
   else:
-    if pv.source == SOURCE_AI:
-      pv.source = SOURCE_SENSOR
+    #수위 입력이 있으면 예측모드에서 수위계모드로 변경
+    if pv.source == pump_variables.SOURCE_AI:
+      pv.source = pump_variables.SOURCE_SENSOR
       #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
       #set_current_flow(chip=chip, cflow=CFLOW_PASS)
 
     pv.no_input_starttime = None
     pv.water_level = pv.filter_data(level)
-    pv.last_valid_level = pv.water_level
+
+  if pv.op_mode == pump_variables.OP_AUTO:
+    if pv.water_level > pv.setting_high:
+      set_motor_state(chip, 0, False, pv)
+      set_motor_state(chip, 1, False, pv)
+      set_motor_state(chip, 2, False, pv)
+    elif pv.water_level < pv.setting_low:
+      if not is_motor_running(chip):
+        if pv.motor_count == 1:
+          motor_num = random.choice(pv.motor_valid)
+          set_motor_state(chip, motor_num - 1, True, pv)
+        else:
+          motor_numbers = random.sample(pv.motor_valid, pv.motor_count)
+          for n in motor_numbers:
+            set_motor_state(chip, n - 1, True, pv)
 
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
-      motor_state(chip, 0),
-      motor_state(chip, 1),
-      motor_state(chip, 2), pv.source
+      get_motor_state(chip, 0),
+      get_motor_state(chip, 1),
+      get_motor_state(chip, 2), pv.source
   ])
 
   logging.debug("writeDAC(level:%d, filtered:%d)", level, pv.water_level)

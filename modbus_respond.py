@@ -2,6 +2,7 @@ import logging
 
 import modbus_address as ma
 import pump_variables
+import pump_monitor
 
 # 번지	  Description	         R/W	    기타
 # 40001	  현재 수위	            읽기	%단위(0~100)
@@ -30,6 +31,7 @@ def respond(**kwargs):
     """
   p_respond = kwargs['pipe']
   pv: pump_variables.PV = kwargs['pv']
+  chip = kwargs['chip']
 
   logging.info(f"Starting respond thread({kwargs})")
   while 1:
@@ -57,13 +59,25 @@ def respond(**kwargs):
     elif address == ma.MBW_PUMP_OP_MODE:  #40013 펌프 운전 모드(0:수동운전, 1:자동운전)
       pv.op_mode = values[0]
     elif address == ma.MBW_PUMP1_ON:  #40014 펌프1 ON=1, OFF=0
-      pv.motor1 = values[0]
+      pump_monitor.set_motor_state(chip, 0, values[0], pv)
     elif address == ma.MBW_PUMP2_ON:  #40015 펌프2 ON=1, OFF=0
-      pv.motor2 = values[0]
+      pump_monitor.set_motor_state(chip, 1, values[0], pv)
     elif address == ma.MBW_PUMP3_ON:  #40016 펌프3 ON=1, OFF=0
-      pv.motor3 = values[0]
+      pump_monitor.set_motor_state(chip, 2, values[0], pv)
     elif address == ma.MBW_PUMP_COUNT:  #40017 펌트가동대수(자동운전시)
       pv.motor_count = values[0]
+    elif address == ma.MBW_PUMP_VALID:  #40018 유효한 모터(101 => motor#1 & motor#3)
+      v = values[0]
+      pv.motor_valid = []
+      if v // 100:
+        pv.motor_valid.append(1)
+      if (v // 10) % 10:
+        pv.motor_valid.append(2)
+      if v % 10:
+        pv.motor_valid.append(3)
+
+      if not len(pv.motor_valid):
+        pv.motor_valid = [1]
     else:
       values = []
 
