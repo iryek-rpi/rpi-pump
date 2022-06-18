@@ -50,9 +50,9 @@ def respond(**kwargs):
       values = [pv.motor2]
     elif address == ma.MBR_PUMP3_STATE:  #40006 펌프3 상태
       values = [pv.motor3]
-    elif address == ma.MBW_RULE_UPPER:  #40011 수위 H값%(정지수위)
+    elif address == ma.MBW_AUTO_UPPER:  #40011 수위 H값%(정지수위)
       pv.setting_high = values[0]
-    elif address == ma.MBW_RULE_LOWER:  #40012 수위 L값%(가동수위)
+    elif address == ma.MBW_AUTO_LOWER:  #40012 수위 L값%(가동수위)
       pv.setting_low = values[0]
     elif address == ma.MBW_PUMP_OP_MODE:  #40013 펌프 운전 모드(0:수동운전, 1:자동운전)
       pv.op_mode = values[0]
