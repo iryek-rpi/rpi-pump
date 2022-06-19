@@ -14,6 +14,7 @@ def init_setting(pv: PV):
   if not pathlib.Path(SETTING_NAME).is_file():
     pathlib.Path(SETTING_DIR).mkdir(parents=True, exist_ok=True)
     co['CONTROLLER'] = {
+        'MODBUS_ID': '1',
         'SOLO_MODE': 'MODE_PLC',
         'OP_MODE': 'OP_AUTO',
         'MOTOR_COUNT': '2',
@@ -21,7 +22,7 @@ def init_setting(pv: PV):
         'AUTO_HH': '900',
         'AUTO_L': '200',
         'AUTO_LL': '100',
-        'MODBUS_ID': '1'
+        'LAST_PUMP': '0'
     }
     co['SENSOR'] = {
         '4MA_REF': '700',
@@ -38,11 +39,12 @@ def init_setting(pv: PV):
     co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd'}
 
     with open(SETTING_NAME, 'w') as f:
-      co.wrtie(f)
+      co.write(f)
       config_to_pv(co, pv)
   else:
     co.read(SETTING_NAME)
     config_to_pv(co, pv)
+
 
 def update_config(section, key, value, config_name=SETTING_NAME):
   co = configparser.ConfigParser()
@@ -50,9 +52,15 @@ def update_config(section, key, value, config_name=SETTING_NAME):
   co[section][key] = str(value)
 
   with open(SETTING_NAME, 'w') as f:
-    co.wrtie(f)
+    co.write(f)
+
 
 def config_to_pv(co: configparser.ConfigParser, pv: PV):
+  if co['CONTROLLER']['MODBUS_ID'].isdigit():
+    pv.modbus_id = int(co['CONTROLLER']['MODBUS_ID'])
+  else:
+    pv.modbus_id = 1
+
   if co['CONTROLLER']['SOLO_MODE'] == 'MODE_SOLO':
     pv.solo_mode = pump_variables.MODE_SOLO
   else:
@@ -88,10 +96,8 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
   else:
     pv.setting_ll = 100
 
-  if co['CONTROLLER']['MODBUS_ID'].isdigit():
-    pv.modbus_id = int(co['CONTROLLER']['MODBUS_ID'])
-  else:
-    pv.modbus_id = 1
+  if co['CONTROLLER']['LAST_PUMP'].isdigit():
+    pv.last_pump = int(co['CONTROLLER']['LAST_PUMP'])
 
   if co['SENSOR']['4MA_REF'].isdigit():
     pv.setting_4ma_ref = int(co['SENSOR']['4MA_REF'])
@@ -119,24 +125,19 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
     pv.setting_save_interval = 3600
 
   if co['MONITOR']['TOLERANCE_TO_AI'].isdigit():
-    pv.setting_tolerance_to_ai= int(co['MONITOR']['TOLERANCE_TO_AI'])
+    pv.setting_tolerance_to_ai = int(co['MONITOR']['TOLERANCE_TO_AI'])
   else:
-    pv.setting_tolerance_to_ai= 60
+    pv.setting_tolerance_to_ai = 60
 
   if co['MONITOR']['TOLERANCE_TO_SENSOR'].isdigit():
-    pv.setting_tolerance_to_sensor= int(co['MONITOR']['TOLERANCE_TO_SENSOR'])
+    pv.setting_tolerance_to_sensor = int(co['MONITOR']['TOLERANCE_TO_SENSOR'])
   else:
-    pv.setting_tolerance_to_sensor=60 
+    pv.setting_tolerance_to_sensor = 60
 
   if co['MONITOR']['ADC_IGNORE_SPIKE'].isdigit():
-    pv.setting_adc_ignore_spike= int(co['MONITOR']['ADC_IGNORE_SPIKE'])
+    pv.setting_adc_ignore_spike = int(co['MONITOR']['ADC_IGNORE_SPIKE'])
   else:
-    pv.setting_adc_ignore_spike= 100 
-
-  if co['MANAGE']['ID'].isdigit():
-    pv.= int(co['MONITOR']['ADC_IGNORE_SPIKE'])
-  else:
-    pv.setting_adc_ignore_spike= 100 
+    pv.setting_adc_ignore_spike = 100
 
   pv.user_id = co['MANAGE']['USER_ID']
   pv.password = co['MANAGE']['PASSWORD']
