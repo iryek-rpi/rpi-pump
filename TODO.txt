@@ -1,1 +1,9 @@
-1. multiprocessing에서 safe logging
+[To Do]
+- 1. multiprocessing에서 safe logging
+2. thread safe (pv 사용, lcd 사용)
+3. 
+
+
+[Questions]
+1. 수위>H -> 동작?
+   수위>HH -> 동작?
