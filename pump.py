@@ -5,6 +5,7 @@
 # https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load?answertab=votes#tab-top
 # https://github.com/adafruit/Adafruit_Python_SSD1306
 
+import pathlib
 import logging
 from pathlib import Path
 from datetime import timedelta
@@ -32,9 +33,20 @@ import modbus_respond
 #==============================================================================
 # 디버그용 로그 설정
 #==============================================================================
-logging.basicConfig(format='%(asctime)s %(levelname)s:%(filename)s:%(message)s',
-                    level=logging.DEBUG,
-                    datefmt='%Y-%m-%d %H:%M:%S')
+MAIN_LOGFILE_NAME = "./logs/main.log"
+pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
+logfile = pathlib.Path(MAIN_LOGFILE_NAME)
+logfile.touch(exist_ok=True)
+
+FORMAT = ("%(asctime)-15s %(threadName)-15s"
+          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
+logging.basicConfig(
+    filename=MAIN_LOGFILE_NAME,
+    filemode="a",
+    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
+    format=FORMAT,
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 #==============================================================================
 # 디바이스 구성 요소 초기화

@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
-"""Pymodbus Asyncio Server - asyncio_server_serial.py
+"""Modbus server process
+main thread에서 생성하는 subprocess
+Pymodbus Asyncio Server - asyncio_server_serial.py
 
 Pymodbus Asyncio Server example 코드를 기반으로 작성
 """
@@ -7,6 +8,7 @@ Pymodbus Asyncio Server example 코드를 기반으로 작성
 # import the various server implementations
 # --------------------------------------------------------------------------- #
 import logging
+import pathlib
 import asyncio
 
 from pymodbus.version import version
@@ -24,11 +26,20 @@ import modbus_address as ma
 # --------------------------------------------------------------------------- #
 # configure the service logging
 # --------------------------------------------------------------------------- #
-FORMAT = ("%(asctime)-15s %(threadName)-15s"
-          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
-logging.basicConfig(format=FORMAT)
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
+MODBUS_LOGFILE_NAME = "./logs/modbus_comm.log"
+pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
+modbus_logfile = pathlib.Path(MODBUS_LOGFILE_NAME)
+modbus_logfile.touch(exist_ok=True)
+
+MODBUS_LOG_FORMAT = ("%(asctime)-15s %(threadName)-15s"
+                     " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
+logging.basicConfig(filename=MODBUS_LOGFILE_NAME,
+                    filemode="a",
+                    format=MODBUS_LOG_FORMAT,
+                    level=logging.DEBUG,
+                    datefmt='%Y-%m-%d %H:%M:%S')
+
+modbus_logger = logging.getLogger('modbus_logger')
 
 PORT = "/dev/serial1"
 
@@ -52,7 +63,7 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :returns: True if the request in within range, False otherwise
         """
     address += 40000
-    logging.info(f"validate: address({address}) in {self.address}")
+    modbus_logger.info(f"validate: address({address}) in {self.address}")
     return address in self.address
 
   def getValues(self, address, count=1):
@@ -63,10 +74,11 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :returns: The requested values from a:a+c
         """
     msg = (False, address, [])
-    logging.info(f"MODBUS SERVER: sending request to getValues(address:{msg})")
+    modbus_logger.info(
+        f"MODBUS SERVER: sending request to getValues(address:{msg})")
     self.pipe_req.send(msg)
     response = self.pipe_req.recv()
-    logging.info(
+    modbus_logger.info(
         f"MODBUS SERVER: received response:{response} for getValues(address:{address})"
     )
     return response[1]
@@ -78,12 +90,12 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :param values: The new values to be set
         """
     msg = (True, address, values)
-    logging.info(
+    modbus_logger.info(
         f"MODBUS SERVER: sending {msg} to setValues(address:{address}, values:{values})"
     )
     self.pipe_req.send(msg)
     response = self.pipe_req.recv()
-    logging.info(
+    modbus_logger.info(
         f"MODBUS SERVER: received response:{response} for setValues(address:{address}, values:{values})"
     )
 
@@ -96,7 +108,7 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
 def rtu_server_proc(pipe_req):
   """Modbus 서버 프로세스
     """
-  logging.info("Starting rtu_server_proc()")
+  modbus_logger.info("Starting rtu_server_proc()")
   asyncio.run(run_server(pipe_req))
 
 
