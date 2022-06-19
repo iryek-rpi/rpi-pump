@@ -6,7 +6,7 @@ import logging
 
 from pump_screen import *
 from pump_variables import PV
-from pump_util import ThreadSafeSingleton
+#from pump_util import ThreadSafeSingleton
 from pump_state_set_time import SetTimeStateMachine
 from pump_state_set_level import SetLevelStateMachine
 from pump_btn import buttons

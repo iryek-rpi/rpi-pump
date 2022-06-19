@@ -9,7 +9,6 @@ import signal
 import random
 
 import logging
-from tkinter import W
 
 import lgpio
 import spidev
