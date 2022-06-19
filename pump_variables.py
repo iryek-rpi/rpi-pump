@@ -102,7 +102,7 @@ class PV():
     self.lock.release()
 
     self.password = "rudakwkd"
-    self.id = "hwan"
+    self.user_id = "hwan"
     self.data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                                   'data')
 
