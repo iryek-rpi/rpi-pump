@@ -30,6 +30,8 @@ import pump_thread
 import modbus_server_serial
 import modbus_respond
 
+import config
+
 #==============================================================================
 # 디버그용 로그 설정
 #==============================================================================
@@ -102,6 +104,7 @@ def main():
     lcd.instance = lcd_instance
 
     pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
+    config.init_setting(pv())
 
     chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
     spi = pump_monitor.init_spi_rw(chip, pv(),
