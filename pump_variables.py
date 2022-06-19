@@ -67,7 +67,7 @@ class PV():
     self.data = []
     self.lock = threading.Lock()
 
-    self.setting_tank_full = 2000  # 수조 최고 수위
+    self.setting_tank_full = 4000  # 수조 최고 수위
     self.setting_4ma_ref = 700  # 4mA ADC 출력
     self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
     self.setting_4ma = 0.0  # 4mA 수위(수위계 캘리브레이션)
