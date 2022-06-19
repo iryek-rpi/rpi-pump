@@ -15,6 +15,10 @@ SOURCE_AI = 1
 OP_MANUAL = 0
 OP_AUTO = 1
 
+# PLC와 연동해서 동작할 지, 단독으로 동작할 지
+MODE_PLC = 0  # PLC에서 pump control
+MODE_SOLO = 1  # 수위조절기에서 pump control
+
 
 def pv(inst=None):
   if inst != None:
@@ -49,7 +53,9 @@ no_input_tol = {
 class PV():
 
   def __init__(self):
+    self.modbus_id = 1
     self.source = SOURCE_SENSOR  # PLC/AI 운전모드
+    self.solo_mode = MODE_PLC
     self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
     self.water_level = 0.0  # 현재 수위
     self.motor1 = 0  # 펌프1
@@ -66,8 +72,10 @@ class PV():
     self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
     self.setting_4ma = 0.0  # 4mA 수위(수위계 캘리브레이션)
     self.setting_20ma = 100.0  # 20mA 수위(수위계 캘리브레이션)
-    self.setting_low = 20  # 저수위(%)
     self.setting_high = 80  # 고수위(%)
+    self.setting_hh = 80  # 고수위(%)
+    self.setting_low = 20  # 저수위(%)
+    self.setting_ll = 20  # 저수위(%)
     self.setting_adc_empty = 100  # ADC 값이 이 값 이하이면 입력이 없는 것으로 간주함
 
     # 수위 기록 인터벌 1, 10, 30, 60(1min), 180(3min), 300(5min), 600(10min), 3600(1hr)
