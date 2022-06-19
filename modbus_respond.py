@@ -3,6 +3,7 @@ import logging
 import modbus_address as ma
 import pump_variables
 import pump_monitor
+import config
 
 # 번지	  Description	         R/W	    기타
 # 40001	  현재 수위	            읽기	(0~1000)
@@ -78,36 +79,43 @@ def respond(**kwargs):
         values = [pv.modbus_id]
       else:
         pv.modbus_id = values[0]
+        config.update_config('CONTROLLER', 'MODBUS_ID', pv.modbus_id)
     elif address == ma.MBW_AUTO_H:  # 수위 H값%(정지수위)
       if not wr:
         values = [pv.setting_high]
       else:
         pv.setting_high = values[0]
+        config.update_config('CONTROLLER', 'AUTO_H', pv.setting_high)
     elif address == ma.MBW_AUTO_HH:  # 수위 H값%(정지수위)
       if not wr:
         values = [pv.setting_hh]
       else:
         pv.setting_hh = values[0]
+        config.update_config('CONTROLLER', 'AUTO_HH', pv.setting_hh)
     elif address == ma.MBW_AUTO_L:  # 수위 L값%(가동수위)
       if not wr:
         values = [pv.setting_low]
       else:
         pv.setting_low = values[0]
+        config.update_config('CONTROLLER', 'AUTO_L', pv.setting_low)
     elif address == ma.MBW_AUTO_LL:  # 수위 L값%(가동수위)
       if not wr:
         values = [pv.setting_ll]
       else:
         pv.setting_ll = values[0]
+        config.update_config('CONTROLLER', 'AUTO_LL', pv.setting_ll)
     elif address == ma.MBW_SOLO_MODE:  # 작동 모드 (0:PLC운전 1:단독운전)
       if not wr:
         values = [pv.solo_mode]
       else:
         pv.solo_mode = values[0]
+        config.update_config('CONTROLLER', 'SOLO_MODE', pv.solo_mode)
     elif address == ma.MBW_PUMP_OP_MODE:  # 펌프 운전 모드(0:수동운전, 1:자동운전)
       if not wr:
         values = [pv.op_mode]
       else:
         pv.op_mode = values[0]
+        config.update_config('CONTROLLER', 'OP_MODE', pv.op_mode)
     elif address == ma.MBW_PUMP1_ON:  # 펌프1 ON=1, OFF=0
       if not wr:
         values = [pv.motor1]
@@ -128,6 +136,7 @@ def respond(**kwargs):
         values = [pv.motor_count]
       else:
         pv.motor_count = values[0]
+        config.update_config('CONTROLLER', 'MOTOR_COUNT', pv.motor_count)
     #elif address == ma.MBW_PUMP_VALID:  # 유효한 모터(101 => motor#1 & motor#3)
     #  v = values[0]
     #  pv.motor_valid = []
