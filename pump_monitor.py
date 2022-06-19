@@ -9,6 +9,7 @@ import signal
 import random
 
 import logging
+from tkinter import W
 
 import lgpio
 import spidev
@@ -30,67 +31,57 @@ from pump_variables import PV
 CE_R = 7  # CE1
 CE_T = 8  # CE0
 
-M0 = 2
-M1 = 3
-M2 = 4
+#M0 = 2
+#M1 = 3
+#M2 = 4
+#RUN_MODE = 17
+
+M0_OUT = 2  #24v
+M1_OUT = 3  #24v
+M0_IN = 4  #24v
+M1_IN = 17  #5v
 
 CSW0 = 26
 CSW1 = 19
 CSW2 = 13
 
-RUN_MODE = 17
-
 
 def get_motor_state(chip, m):
   if m == 0:
-    return lgpio.gpio_read(chip, M0)
+    return lgpio.gpio_read(chip, M0_IN)
   elif m == 1:
-    return lgpio.gpio_read(chip, M1)
+    return lgpio.gpio_read(chip, M1_IN)
   else:
-    return lgpio.gpio_read(chip, M2)
+    return -1
 
 
 def is_motor_running(chip):
-  return get_motor_state(chip, M0) or get_motor_state(
-      chip, M1) or get_motor_state(chip, M2)
+  return get_motor_state(chip, M0_IN) or get_motor_state(chip, M1_IN)
 
 
 def get_all_motors(chip):
-  """3대의 모터 상태를 (x,x,x)로 리턴
+  """2대의 모터 상태를 [x,x]로 리턴
   """
-  ms = (0, 0, 0)
-  if lgpio.gpio_read(chip, M0):
+  #ms = [0, 0, 0]
+  ms = [0, 0]
+  if lgpio.gpio_read(chip, M0_IN):
     ms[0] = True
-  if lgpio.gpio_read(chip, M1):
+  if lgpio.gpio_read(chip, M1_IN):
     ms[1] = True
-  if lgpio.gpio_read(chip, M2):
-    ms[2] = True
+  #if lgpio.gpio_read(chip, M2):
+  #  ms[2] = True
   return ms
 
 
 def set_motor_state(chip, m, on_off, pv: PV):
-  msg = 'SUCCESS'
-
   if m == 0:
-    lgpio.gpio_write(chip, M0, on_off)
-    if lgpio.gpio_read(chip, M0) == on_off:
-      pv.motor1 = on_off
-    else:
-      msg = 'FAIL'
+    lgpio.gpio_write(chip, M0_OUT, on_off)
+    pv.motor1 = on_off
   elif m == 1:
-    lgpio.gpio_write(chip, M1, on_off)
-    if lgpio.gpio_read(chip, M1) == on_off:
-      pv.motor2 = on_off
-    else:
-      msg = 'FAIL'
-  elif m == 2:
-    lgpio.gpio_write(chip, M2, on_off)
-    if lgpio.gpio_read(chip, M2) == on_off:
-      pv.motor3 = on_off
-    else:
-      msg = 'FAIL'
+    lgpio.gpio_write(chip, M1_OUT, on_off)
+    pv.motor2 = on_off
 
-  logging.info("SET MOTOR{%d} = {%d} {%s}", m + 1, on_off, msg)
+  logging.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
 
 
 def writeDAC(chip, v, spi):
@@ -193,7 +184,7 @@ def tank_monitor(**kwargs):
   last_level = pv.water_level
 
   # 수위 입력이 없음
-  if level < 100:
+  if level < pv.setting_adc_invalid:  #100
     if pv.no_input_starttime is None:
       pv.no_input_starttime = time_now
 
@@ -205,7 +196,11 @@ def tank_monitor(**kwargs):
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
       # get prediction from ML model
-      #pv.water_level = pv.last_valid_level  # 임시
+      # 예측 모델 적용할 때까지 임시
+      if is_motor_running(chip):
+        pv.water_level += 1
+      else:
+        pv.water_level -= 1
     else:
       pv.water_level = last_level  # 일시적인 현상으로 간주하고 level 값 버림
   else:
@@ -222,22 +217,30 @@ def tank_monitor(**kwargs):
     if pv.water_level >= pv.setting_high:
       set_motor_state(chip, 0, False, pv)
       set_motor_state(chip, 1, False, pv)
-      set_motor_state(chip, 2, False, pv)
+      #set_motor_state(chip, 2, False, pv)
+    elif pv.water_level <= pv.setting_ll:
+      if (not get_motor_state(chip, 0)):
+        set_motor_state(chip, 0, True, pv)
+      if pv.motor_count == 2 and (not get_motor_state(chip, 1)):
+        set_motor_state(chip, 1, True, pv)
     elif pv.water_level <= pv.setting_low:
       if not is_motor_running(chip):
         if pv.motor_count == 1:
-          motor_num = random.choice(pv.motor_valid)
-          set_motor_state(chip, motor_num - 1, True, pv)
+          #motor_num = random.choice(pv.motor_valid)
+          #set_motor_state(chip, motor_num - 1, True, pv)
+          set_motor_state(chip, 0, True, pv)
         else:
-          motor_numbers = random.sample(pv.motor_valid, pv.motor_count)
-          for n in motor_numbers:
-            set_motor_state(chip, n - 1, True, pv)
+          #motor_numbers = random.sample(pv.motor_valid, pv.motor_count)
+          #for n in motor_numbers:
+          #  set_motor_state(chip, n - 1, True, pv)
+          m = (pv.last_pump + 1) % pv.motor_count
+          set_motor_state(chip, m, True, pv)
+          pv.last_pump = m
 
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
       get_motor_state(chip, 0),
-      get_motor_state(chip, 1),
-      get_motor_state(chip, 2), pv.source
+      get_motor_state(chip, 1), 0, pv.source
   ])
 
   logging.debug("writeDAC(level:%d, filtered:%d)", level, pv.water_level)
