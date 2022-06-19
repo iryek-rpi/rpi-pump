@@ -75,7 +75,7 @@ class PV():
     self.setting_hh = 80  # 고수위(%)
     self.setting_low = 20  # 저수위(%)
     self.setting_ll = 20  # 저수위(%)
-    self.setting_adc_empty = 100  # ADC 값이 이 값 이하이면 입력이 없는 것으로 간주함
+    self.setting_adc_invalid = 100  # ADC 값이 이 값 이하이면 입력이 없는 것으로 간주함
 
     # 수위 기록 인터벌 1, 10, 30, 60(1min), 180(3min), 300(5min), 600(10min), 3600(1hr)
     self.setting_monitor_interval = 5  # 수위 모니터링 주기(초)
