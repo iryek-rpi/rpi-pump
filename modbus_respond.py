@@ -61,6 +61,7 @@ def respond(**kwargs):
     msg = p_respond.recv()
     logging.info(f"Received from Pipe:{msg}")
     wr, address, values = msg
+    address += 40000
 
     if address == ma.MBR_LEVEL_SENSOR:  # 현재 수위
       values = [pv.water_level]
