@@ -242,7 +242,7 @@ def tank_monitor(**kwargs):
       get_motor_state(chip, 1), 0, pv.source
   ])
 
-  logging.debug("writeDAC(level:%d, filtered:%d)", level, pv.water_level)
+  logging.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
   #writeDAC(chip, level, spi)
   writeDAC(chip, pv.water_level, spi)
   sm.update_idle()
