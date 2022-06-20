@@ -171,7 +171,10 @@ def main():
     # Modbus 통신을 위한 프로세스
     comm_proc = mp.Process(name="Modbus Server",
                            target=modbus_server_serial.rtu_server_proc,
-                           args={p_req})
+                           kwargs={
+                             'pipe_request':p_req,
+                             'modbus_id':pv().modbus_id
+                           })
     comm_proc.start()
 
     while not is_shutdown:

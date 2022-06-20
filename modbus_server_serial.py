@@ -105,14 +105,17 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
     #self.values[start : start + len(values)] = values
 
 
-def rtu_server_proc(pipe_req):
+def rtu_server_proc(**kwargs): #pipe_req, modbus_id):
   """Modbus 서버 프로세스
     """
-  logging.info("Starting rtu_server_proc()")
-  asyncio.run(run_server(pipe_req))
+  pipe_req = kwargs['pipe_request']
+  modbus_id = kwargs['modbus_id']
+
+  logging.info(f"Starting rtu_server_proc(pipe_req:{pipe_req}, modbus_id:{modbus_id})")
+  asyncio.run(run_server(pipe_req, modbus_id))
 
 
-async def run_server(pipe_req):
+async def run_server(pipe_req, modbus_id):
   """Run server."""
   # ----------------------------------------------------------------------- #
   # initialize your data store
@@ -193,7 +196,7 @@ async def run_server(pipe_req):
   # 40017 	펌프가동댓수(자동운전시)  쓰기	 1:1대, 2:2대, 3:3대
   holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req)
   store = ModbusSlaveContext(hr=holding_reg)
-  context = ModbusServerContext(slaves=store, single=True)
+  context = ModbusServerContext(slaves={modbus_id: store}, single=False)
 
   # ----------------------------------------------------------------------- #
   # initialize the server information
