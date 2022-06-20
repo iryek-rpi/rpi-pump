@@ -57,7 +57,7 @@ class PV():
     self.source = SOURCE_SENSOR  # PLC/AI 운전모드
     self.solo_mode = MODE_PLC
     self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
-    self.water_level = 0.0  # 현재 수위
+    self.water_level = 0  # 현재 수위
     self.motor1 = 0  # 펌프1
     self.motor2 = 0  # 펌프2
     self.motor3 = 0  # 펌프3
