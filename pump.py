@@ -172,8 +172,8 @@ def main():
     comm_proc = mp.Process(name="Modbus Server",
                            target=modbus_server_serial.rtu_server_proc,
                            kwargs={
-                             'pipe_request':p_req,
-                             'modbus_id':pv().modbus_id
+                               'pipe_request': p_req,
+                               'modbus_id': pv().modbus_id
                            })
     comm_proc.start()
 
@@ -186,7 +186,7 @@ def main():
     saver.stop()
     comm_proc.join()
 
-    save_data(pv=pv())
+    pump_variables.save_data(pv=pv())
     lcd().clear()
 
   except KeyboardInterrupt:
