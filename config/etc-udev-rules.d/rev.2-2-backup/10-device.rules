@@ -1,0 +1,4 @@
+KERNEL=="spidev0.[0-1]*", GROUP="spi" MODE="0660"
+KERNEL=="i2c-[0-9]*", GROUP="i2c" MODE="0660"
+KERNEL=="gpiochip[0-9]*", GROUP="gpio" MODE="0660"
+KERNEL=="ttyAMA0", SYMLINK+="serial0" GROUP="dialout" MODE="0660"
