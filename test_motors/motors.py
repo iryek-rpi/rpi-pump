@@ -33,12 +33,12 @@ def is_motor_running(chip):
 
 
 def get_all_motors(chip):
-  """2대의 모터 상태를 [x,x]로 리턴
+  """3대의 모터 상태를 (x,x,x)로 리턴
   """
   #ms = [0, 0, 0]
   ms0 = lgpio.gpio_read(chip, M0_IN)
   ms1 = lgpio.gpio_read(chip, M1_IN)
-  ms2 = lgpio.gpio_read(chip, M2_IN):
+  ms2 = lgpio.gpio_read(chip, M2_IN)
 
   return (ms2, ms1, ms0)
 

@@ -5,6 +5,7 @@ import logging
 
 import lgpio
 from pump_lcd import lcd
+import pump_variables
 from pump_variables import PV
 from pump_variables import SOURCE_SENSOR
 from pump_variables import SOURCE_AI
@@ -56,26 +57,46 @@ CURSOR_LL10 = 0xC0 + 13
 CURSOR_LL01 = 0xC0 + 14
 
 
-def scr_idle_1(pv):
+def scr_idle_1(pv: pump_variables.PV):
   logging.debug("scr_idle_1:level:{}".format(pv.water_level))
   if pv.source == SOURCE_AI:
-    s1 = f"AI PWL:{int(pv.water_level)} "
+    s1 = f"PWL:{int(pv.water_level)} "
   else:
-    s1 = f"PLC WL:{int(pv.water_level)} "
+    s1 = f"WL:{int(pv.water_level)} "
 
-  if pv.motor1 == 0:
+  if not pv.run_mode_out:
+    s1 += " X "
+  else:
+    s1 += " O "
+
+  if not pv.motor2_in:
     s1 += "X"
-  elif pv.motor1 > 0:
+  else:
     s1 += "O"
 
-  if pv.motor2 == 0:
+  if not pv.motor1_in:
     s1 += "X"
-  elif pv.motor2 > 0:
+  else:
     s1 += "O"
 
-  if pv.motor3 == 0:
+  if not pv.motor0_in:
+    s1 += "X "
+  else:
+    s1 += "O "
+
+  if not pv.motor2_out:
     s1 += "X"
-  elif pv.motor3 > 0:
+  else:
+    s1 += "O"
+
+  if not pv.motor1_out:
+    s1 += "X"
+  else:
+    s1 += "O"
+
+  if not pv.motor0_out:
+    s1 += "X"
+  else:
     s1 += "O"
 
   rate = water_level_rate(pv)

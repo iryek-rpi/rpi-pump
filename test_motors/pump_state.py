@@ -5,11 +5,13 @@ from transitions.extensions import MachineFactory
 import logging
 
 from pump_screen import *
+import pump_variables
 from pump_variables import PV
 #from pump_util import ThreadSafeSingleton
 from pump_state_set_time import SetTimeStateMachine
 from pump_state_set_level import SetLevelStateMachine
 from pump_btn import buttons
+import motors
 
 logging.getLogger('transitions').setLevel(logging.WARNING)
 
@@ -22,6 +24,9 @@ class LCDStateMachine():
   }, {
       'name': 'IDLE-1',
       'on_enter': ['idle_1']
+  }, {
+      'name': 'IDLE-1-MOTOR',
+      'on_enter': ['idle_1_motor']
   }, {
       'name': 'IDLE-2',
       'on_enter': ['idle_2']
@@ -56,6 +61,14 @@ class LCDStateMachine():
           'trigger': 'update_idle',
           'dest': 'IDLE-1'
       }, {
+          'source': 'IDLE-1',
+          'trigger': 'btn3_s',
+          'dest': 'IDLE-1-MOTOR'
+      }, {
+          'source': 'IDLE-1-MOTOR',
+          'trigger': 'exit_motor',
+          'dest': 'IDLE-1'
+      }, {
           'source': 'IDLE-2',
           'trigger': 'update_idle',
           'dest': 'IDLE-2'
@@ -69,12 +82,8 @@ class LCDStateMachine():
           'dest': 'IDLE-4'
       }, {
           'source': 'IDLE-1',
-          'trigger': 'btn1_s',
-          'dest': 'IDLE-2'
-      }, {
-          'source': 'IDLE-1',
           'trigger': 'btn3_s',
-          'dest': 'IDLE-1'
+          'dest': 'IDLE-1-MOTOR'
       }, {
           'source': 'IDLE-2',
           'trigger': 'btn1_s',
@@ -100,7 +109,7 @@ class LCDStateMachine():
 
   def __init__(self, *args, **kwargs):
     self.name = kwargs.get('name')
-    self.pv = kwargs.get('pv')
+    self.pv: pump_variables.PV = kwargs.get('pv')
     self.sm_locked_cls = MachineFactory.get_predefined(locked=True)
     self.machine = self.sm_locked_cls(model=self,
                                       states=LCDStateMachine.states,
@@ -117,21 +126,41 @@ class LCDStateMachine():
     self.init()
 
   def idle_1(self):
-    self.pv.motor1 = 1
-    self.pv.motor2 = 0
-    self.pv.motor3 = 1
     scr_idle_1(self.pv)
 
+  def idle_1_motor(self):
+    m3, m2, m1 = motors.get_all_motors(self.pv.chip)
+    self.pv.motor2_in = m3
+    self.pv.motor1_in = m2
+    self.pv.motor0_in = m1
+    logging.info(f"{(m3,m2,m1)} = get_all_motors()")
+
+    self.pv.motor_out_count = self.pv.motor_out_count + 1
+    self.pv.motor_out_count = self.pv.motor_out_count % 8
+
+    n1 = self.pv.motor_out_count % 2
+    n2 = (self.pv.motor_out_count // 2) % 2
+    n3 = ((self.pv.motor_out_count // 2) // 2) % 2
+    motors.set_all_motors(self.pv.chip, (n3, n2, n1))
+    self.pv.motor2_out = n3
+    self.pv.motor1_out = n2
+    self.pv.motor0_out = n1
+
+    logging.info(f"set_all_motors({self.pv.motor_out_count} )")
+    logging.info(f"set_all_motors({(n3,n2,n1)} )")
+
+    if not self.pv.run_mode_out:
+      self.pv.run_mode_out = 1
+    else:
+      self.pv.run_mode_out = 0
+
+    motors.set_run_mode(self.pv.chip, self.pv.run_mode_out)
+    self.exit_motor()
+
   def idle_2(self):
-    self.pv.motor1 = 0
-    self.pv.motor2 = 1
-    self.pv.motor3 = 1
     scr_idle_2(self.pv)
 
   def idle_3(self):
-    self.pv.motor1 = 1
-    self.pv.motor2 = 1
-    self.pv.motor3 = 0
     scr_idle_3(self.pv)
 
   def idle_4(self):

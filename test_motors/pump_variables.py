@@ -60,9 +60,18 @@ class PV():
     self.solo_mode = MODE_PLC
     self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
     self.water_level = 0  # 현재 수위
-    self.motor1 = 0  # 펌프1
-    self.motor2 = 0  # 펌프2
-    self.motor3 = 0  # 펌프3
+
+    self.run_mode_out = 0
+
+    self.motor_out_count = 0
+    self.motor0_out = 0  # 펌프1
+    self.motor1_out = 0  # 펌프2
+    self.motor2_out = 0  # 펌프3
+
+    self.motor0_in = 0  # 펌프1
+    self.motor1_in = 0  # 펌프2
+    self.motor2_in = 0  # 펌프3
+
     self.motor_count = 1
     self.motor_valid = [1]  # 사용할 수 있는 모터 번호 리스트(1~3)
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
