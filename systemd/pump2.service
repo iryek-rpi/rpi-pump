@@ -5,6 +5,7 @@ Description=Pump Control Service
 Type=simple
 ExecStart=/home/hwan/pump/pump.sh
 #User=hwan
+WorkingDirectory=/home/hwan/pump
 
 Restart=always 
 #Restart=on-success
