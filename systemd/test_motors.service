@@ -1,0 +1,18 @@
+[Unit]
+Description=Motor Input/Output Test Service
+
+[Service]
+Type=simple
+ExecStart=/home/hwan/pump/test_motors/test_motors.sh
+#User=hwan
+WorkingDirectory=/home/hwan/pump/test_motors
+
+Restart=always 
+#Restart=on-success
+RestartSec=5
+TimeoutStartSec=5
+TimeoutStopSec=5
+
+
+[Install]
+WantedBy=multi-user.target
