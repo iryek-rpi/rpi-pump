@@ -60,9 +60,9 @@ CURSOR_LL01 = 0xC0 + 14
 def scr_idle_1(pv: pump_variables.PV):
   logging.debug("scr_idle_1:level:{}".format(pv.water_level))
   if pv.source == SOURCE_AI:
-    s1 = f"PWL:{int(pv.water_level)} "
+    s1 = f"PWL: "
   else:
-    s1 = f"WL:{int(pv.water_level)} "
+    s1 = f"WL:  "
 
   if not pv.run_mode_out:
     s1 += " X "
