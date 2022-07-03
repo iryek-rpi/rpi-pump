@@ -21,7 +21,11 @@ M0_OUT = 2  #24v
 M1_OUT = 3  #24v
 M2_OUT = 4  #24v
 
-M1_IN = 17  #5v
+RUN_MODE_OUT = 17  #
+
+M0_IN = 26  #cur_sw0
+M1_IN = 19  #cur_sw1
+M2_IN = 13  #cur_sw2
 
 
 def get_motor_state(chip, m):
