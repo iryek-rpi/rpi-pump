@@ -214,26 +214,30 @@ def tank_monitor(**kwargs):
 
   if pv.op_mode == pump_variables.OP_AUTO:
     if pv.water_level >= pv.setting_high:
-      set_motor_state(chip, 0, False, pv)
-      set_motor_state(chip, 1, False, pv)
+      #set_motor_state(chip, 0, False, pv)
+      #set_motor_state(chip, 1, False, pv)
       #set_motor_state(chip, 2, False, pv)
+      pass
     elif pv.water_level <= pv.setting_ll:
       if (not get_motor_state(chip, 0)):
-        set_motor_state(chip, 0, True, pv)
+        #set_motor_state(chip, 0, True, pv)
+        pass
       if pv.motor_count == 2 and (not get_motor_state(chip, 1)):
-        set_motor_state(chip, 1, True, pv)
+        #set_motor_state(chip, 1, True, pv)
+        pass
     elif pv.water_level <= pv.setting_low:
       if not is_motor_running(chip):
         if pv.motor_count == 1:
           #motor_num = random.choice(pv.motor_valid)
           #set_motor_state(chip, motor_num - 1, True, pv)
-          set_motor_state(chip, 0, True, pv)
+          #set_motor_state(chip, 0, True, pv)
+          pass
         else:
           #motor_numbers = random.sample(pv.motor_valid, pv.motor_count)
           #for n in motor_numbers:
           #  set_motor_state(chip, n - 1, True, pv)
           m = (pv.last_pump + 1) % pv.motor_count
-          set_motor_state(chip, m, True, pv)
+          #set_motor_state(chip, m, True, pv)
           pv.last_pump = m
 
   pv.append_data([
