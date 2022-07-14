@@ -168,6 +168,7 @@ def main():
                                           })
     responder.start()
 
+    logging.info("modbus_id:%d", pv().modbus_id)
     # Modbus 통신을 위한 프로세스
     comm_proc = mp.Process(name="Modbus Server",
                            target=modbus_server_serial.rtu_server_proc,

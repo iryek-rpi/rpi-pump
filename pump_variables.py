@@ -53,7 +53,7 @@ no_input_tol = {
 class PV():
 
   def __init__(self):
-    self.modbus_id = 1
+    self.modbus_id = 0
     self.source = SOURCE_SENSOR  # PLC/AI 운전모드
     self.solo_mode = MODE_PLC
     self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
