@@ -74,8 +74,7 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :returns: The requested values from a:a+c
         """
     msg = (False, address, [])
-    logging.info(
-        f"MODBUS SERVER: sending request to getValues(address:{msg})")
+    logging.info(f"MODBUS SERVER: sending request to getValues(address:{msg})")
     self.pipe_req.send(msg)
     response = self.pipe_req.recv()
     logging.info(
@@ -105,18 +104,64 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
     #self.values[start : start + len(values)] = values
 
 
-def rtu_server_proc(**kwargs): #pipe_req, modbus_id):
+def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
   """Modbus 서버 프로세스
     """
   pipe_req = kwargs['pipe_request']
   modbus_id = kwargs['modbus_id']
 
-  logging.info(f"Starting rtu_server_proc(pipe_req:{pipe_req}, modbus_id:{modbus_id})")
+  logging.info(
+      f"Starting rtu_server_proc(pipe_req:{pipe_req}, modbus_id:{modbus_id})")
   asyncio.run(run_server(pipe_req, modbus_id))
 
 
 async def run_server(pipe_req, modbus_id):
   """Run server."""
+  holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req)
+  store = ModbusSlaveContext(hr=holding_reg)
+  context = ModbusServerContext(slaves={modbus_id: store}, single=False)
+
+  # ----------------------------------------------------------------------- #
+  # initialize the server information
+  # If you don"t set this or any fields, they are defaulted to empty strings.
+  # ----------------------------------------------------------------------- #
+  identity = ModbusDeviceIdentification(
+      info_name={
+          "VendorName": "SMTech",
+          "ProductCode": "PU",
+          "VendorUrl": "http://forsmt.co.kr",
+          "ProductName": "AI Water Level Controller",
+          "ModelName": "SM-001",
+          "MajorMinorRevision": version.short(),
+      })
+
+  # ----------------------------------------------------------------------- #
+  # run the server you want
+  # ----------------------------------------------------------------------- #
+  # 	deferred start:
+  #server = await StartTcpServer(
+  #    context,
+  #    identity=identity,
+  #    address=("0.0.0.0", 5020),  # nosec
+  #    allow_reuse_address=True,
+  #    defer_start=True,
+  #)
+  #asyncio.get_event_loop().call_later(20, lambda: server.serve_forever)
+  #await server.serve_forever()
+
+  # RTU:
+  await StartSerialServer(context,
+                          framer=ModbusRtuFramer,
+                          identity=identity,
+                          port=PORT,
+                          timeout=.005,
+                          baudrate=9600,
+                          autoreconnect=True)
+
+
+if __name__ == "__main__":
+  asyncio.run(run_server())
+
   # ----------------------------------------------------------------------- #
   # initialize your data store
   # ----------------------------------------------------------------------- #
@@ -194,49 +239,3 @@ async def run_server(pipe_req, modbus_id):
   # 40015 	펌프2제어	            쓰기	  0:정지, 1:가동
   # 40016 	펌프3제어	            쓰기	  0:정지, 1:가동
   # 40017 	펌프가동댓수(자동운전시)  쓰기	 1:1대, 2:2대, 3:3대
-  holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req)
-  store = ModbusSlaveContext(hr=holding_reg)
-  context = ModbusServerContext(slaves={modbus_id: store}, single=False)
-
-  # ----------------------------------------------------------------------- #
-  # initialize the server information
-  # ----------------------------------------------------------------------- #
-  # If you don"t set this or any fields, they are defaulted to empty strings.
-  # ----------------------------------------------------------------------- #
-  identity = ModbusDeviceIdentification(
-      info_name={
-          "VendorName": "SMTech",
-          "ProductCode": "PU",
-          "VendorUrl": "http://forsmt.co.kr",
-          "ProductName": "AI Water Level Controller",
-          "ModelName": "SM-001",
-          "MajorMinorRevision": version.short(),
-      })
-
-  # ----------------------------------------------------------------------- #
-  # run the server you want
-  # ----------------------------------------------------------------------- #
-  # 	deferred start:
-  #server = await StartTcpServer(
-  #    context,
-  #    identity=identity,
-  #    address=("0.0.0.0", 5020),  # nosec
-  #    allow_reuse_address=True,
-  #    defer_start=True,
-  #)
-
-  #asyncio.get_event_loop().call_later(20, lambda: server.serve_forever)
-  #await server.serve_forever()
-
-  # RTU:
-  await StartSerialServer(context,
-                          framer=ModbusRtuFramer,
-                          identity=identity,
-                          port=PORT,
-                          timeout=.005,
-                          baudrate=9600,
-                          autoreconnect=True)
-
-
-if __name__ == "__main__":
-  asyncio.run(run_server())
