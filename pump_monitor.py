@@ -58,14 +58,13 @@ def get_motor_state(chip, m):
     return lgpio.gpio_read(chip, M1_IN)
   elif m == 2:
     return lgpio.gpio_read(chip, M2_IN)
-  else:
     return -1
 
 
 def is_motor_running(chip):
   '''안쓰는 모터는 접점을 열어둬서 모터가 구동 안되는 것으로 인식하도록 해야 함'''
-  return get_motor_state(chip, M0_IN) or get_motor_state(
-      chip, M1_IN) or get_motor_state(chip, M2_IN)
+  return get_motor_state(chip, 0) or get_motor_state(
+      chip, 1) or get_motor_state(chip, 2)
 
 
 def get_all_motors(chip):
@@ -224,6 +223,7 @@ def tank_monitor(**kwargs):
       # get prediction from ML model
       # 예측 모델 적용할 때까지 임시
       if is_motor_running(chip):
+        logging.debug("is_motor_running() true")
         pv.water_level += 1
       else:
         pv.water_level -= 1
