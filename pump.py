@@ -107,6 +107,7 @@ def main():
     config.init_setting(pv())
 
     chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
+    pv().chip = chip
     spi = pump_monitor.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
 
