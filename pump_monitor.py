@@ -58,7 +58,8 @@ def get_motor_state(chip, m):
     return lgpio.gpio_read(chip, M1_IN)
   elif m == 2:
     return lgpio.gpio_read(chip, M2_IN)
-    return -1
+  #else:       
+  #  return -1
 
 
 def is_motor_running(chip):
