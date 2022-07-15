@@ -227,7 +227,8 @@ def tank_monitor(**kwargs):
         logging.debug("is_motor_running() true")
         pv.water_level += 1
       else:
-        pv.water_level -= 1
+        if pv.water_level > 0:
+          pv.water_level -= 1
     else:
       pv.water_level = last_level  # 일시적인 현상으로 간주하고 level 값 버림
   else:
