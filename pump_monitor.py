@@ -167,8 +167,8 @@ def convert_to_voltage(adc_output, VREF=3.3):
   return adc_output * (VREF / (2**12 - 1))
 
 
-CFLOW_PASS = 0
-CFLOW_CPU = 1
+#CFLOW_PASS = 0
+#CFLOW_CPU = 1
 
 
 #def set_current_flow(chip, cflow):
