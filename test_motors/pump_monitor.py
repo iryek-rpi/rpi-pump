@@ -151,19 +151,18 @@ def convert_to_voltage(adc_output, VREF=3.3):
   return adc_output * (VREF / (2**12 - 1))
 
 
-CFLOW_PASS = 0
-CFLOW_CPU = 1
+#CFLOW_PASS = 0
+#CFLOW_CPU = 1
 
-
-def set_current_flow(chip, cflow):
-  if cflow == CFLOW_PASS:
-    lgpio.gpio_write(chip, CSW0, 0)
-    lgpio.gpio_write(chip, CSW1, 0)
-    lgpio.gpio_write(chip, CSW2, 0)
-  else:
-    lgpio.gpio_write(chip, CSW0, 1)
-    lgpio.gpio_write(chip, CSW1, 1)
-    lgpio.gpio_write(chip, CSW2, 1)
+#def set_current_flow(chip, cflow):
+#  if cflow == CFLOW_PASS:
+#    lgpio.gpio_write(chip, CSW0, 0)
+#    lgpio.gpio_write(chip, CSW1, 0)
+#    lgpio.gpio_write(chip, CSW2, 0)
+#  else:
+#    lgpio.gpio_write(chip, CSW0, 1)
+#    lgpio.gpio_write(chip, CSW1, 1)
+#    lgpio.gpio_write(chip, CSW2, 1)
 
 
 def tank_monitor(**kwargs):
@@ -255,7 +254,7 @@ def tank_monitor(**kwargs):
 def init_spi_rw(chip, pv, speed=4800):
   #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
   #set_current_flow(chip=chip, cflow=CFLOW_PASS)
-  set_current_flow(chip=chip, cflow=CFLOW_CPU)
+  #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
   lgpio.gpio_claim_output(chip, CE_T, 1)
   lgpio.gpio_claim_output(chip, CE_R, 1)
@@ -276,7 +275,7 @@ def main():
     pv.instance = PV()  # pump variables
 
     chip = lgpio.gpiochip_open(0)
-    set_current_flow(chip=chip, cflow=CFLOW_CPU)
+    #    set_current_flow(chip=chip, cflow=CFLOW_CPU)
     pv().source = SOURCE_SENSOR
 
     lgpio.gpio_claim_output(chip, CE_T, 1)

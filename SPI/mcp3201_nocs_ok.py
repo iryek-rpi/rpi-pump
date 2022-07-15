@@ -29,19 +29,17 @@ spi.no_cs = True
 CFLOW_PASS = 0
 CFLOW_CPU = 1
 
+#def set_current_flow(chip, cflow):
+#  if cflow == CFLOW_PASS:
+#    lgpio.gpio_write(chip, CSW0, 0)
+#    lgpio.gpio_write(chip, CSW1, 0)
+#    lgpio.gpio_write(chip, CSW2, 0)
+#  else:
+#    lgpio.gpio_write(chip, CSW0, 1)
+#    lgpio.gpio_write(chip, CSW1, 1)
+#    lgpio.gpio_write(chip, CSW2, 1)
 
-def set_current_flow(chip, cflow):
-  if cflow == CFLOW_PASS:
-    lgpio.gpio_write(chip, CSW0, 0)
-    lgpio.gpio_write(chip, CSW1, 0)
-    lgpio.gpio_write(chip, CSW2, 0)
-  else:
-    lgpio.gpio_write(chip, CSW0, 1)
-    lgpio.gpio_write(chip, CSW1, 1)
-    lgpio.gpio_write(chip, CSW2, 1)
-
-
-set_current_flow(chip, cflow=CFLOW_CPU)
+#set_current_flow(chip, cflow=CFLOW_CPU)
 
 
 def writeDAC(v):
