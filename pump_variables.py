@@ -106,12 +106,12 @@ class PV():
     self.data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                                   'data')
 
-  def update(self):
-    self.source = SOURCE_SENSOR  # 수위값 출처
-    self.water_level = 0  # 현재 수위
-    self.motor1 = 0  # 펌프1
-    self.motor2 = 0  # 펌프2
-    self.motor3 = 0  # 펌프3
+#  def update(self):
+#    self.source = SOURCE_SENSOR  # 수위값 출처
+#    self.water_level = 0  # 현재 수위
+#    self.motor1 = 0  # 펌프1
+#    self.motor2 = 0  # 펌프2
+#    self.motor3 = 0  # 펌프3
 
   def put_water_level(self, level):
     """수위 값을 q_level에 넣는다.
