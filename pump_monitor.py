@@ -30,57 +30,76 @@ from pump_variables import PV
 CE_R = 7  # CE1
 CE_T = 8  # CE0
 
-#M0 = 2
-#M1 = 3
-#M2 = 4
-#RUN_MODE = 17
-
 M0_OUT = 2  #24v
 M1_OUT = 3  #24v
-M0_IN = 4  #24v
-M1_IN = 17  #5v
+M2_OUT = 4  #24v
 
-CSW0 = 26
-CSW1 = 19
-CSW2 = 13
+RUN_MODE_OUT = 17  #24v
+
+M0_IN = 26  #cur_sw0
+M1_IN = 19  #cur_sw1
+M2_IN = 13  #cur_sw2
+
+
+def set_run_mode(chip, v):
+  '''
+  아래 2개 중 어떤 모드를 출력해야 하나?
+  (1) 수동/자동 모드
+  (2) 수위계/AI
+  '''
+  lgpio.gpio_write(chip, RUN_MODE_OUT, v)
 
 
 def get_motor_state(chip, m):
+  '''m=0,1,2'''
   if m == 0:
-    return lgpio.gpio_read(chip, M0_IN)
+    return lgpio.gpio_read(chip, M0_OUT)
   elif m == 1:
-    return lgpio.gpio_read(chip, M1_IN)
+    return lgpio.gpio_read(chip, M1_OUT)
+  elif m == 2:
+    return lgpio.gpio_read(chip, M2_OUT)
   else:
     return -1
 
 
 def is_motor_running(chip):
-  return get_motor_state(chip, M0_IN) or get_motor_state(chip, M1_IN)
+  '''안쓰는 모터는 접점을 열어둬서 모터가 구동 안되는 것으로 인식하도록 해야 함'''
+  return get_motor_state(chip, M0_OUT) or get_motor_state(
+      chip, M1_OUT) or get_motor_state(chip, M2_OUT)
 
 
 def get_all_motors(chip):
-  """2대의 모터 상태를 [x,x]로 리턴
+  """3대의 모터 상태를 (M2,M1,M0)로 리턴
   """
   #ms = [0, 0, 0]
-  ms = [0, 0]
-  if lgpio.gpio_read(chip, M0_IN):
-    ms[0] = True
-  if lgpio.gpio_read(chip, M1_IN):
-    ms[1] = True
-  #if lgpio.gpio_read(chip, M2):
-  #  ms[2] = True
-  return ms
+  ms0 = lgpio.gpio_read(chip, M0_IN)
+  ms1 = lgpio.gpio_read(chip, M1_IN)
+  ms2 = lgpio.gpio_read(chip, M2_IN)
+
+  return (ms2, ms1, ms0)
 
 
-def set_motor_state(chip, m, on_off, pv: PV):
+def set_motor_state(chip, m, on_off):
   if m == 0:
     lgpio.gpio_write(chip, M0_OUT, on_off)
-    pv.motor1 = on_off
   elif m == 1:
     lgpio.gpio_write(chip, M1_OUT, on_off)
-    pv.motor2 = on_off
+  elif m == 2:
+    lgpio.gpio_write(chip, M2_OUT, on_off)
 
-  logging.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
+  logging.info("SET MOTOR#{%d}/(1,2,3) = {%d}", m + 1, on_off)
+
+
+def set_all_motors(chip, m):
+  '''(M2, M1, M0)'''
+  a, b, c = m
+  lgpio.gpio_write(chip, M0_OUT, c)
+  lgpio.gpio_write(chip, M1_OUT, b)
+  lgpio.gpio_write(chip, M2_OUT, a)
+
+
+
+#=============================================================
 
 
 def writeDAC(chip, v, spi):
@@ -155,15 +174,15 @@ CFLOW_PASS = 0
 CFLOW_CPU = 1
 
 
-def set_current_flow(chip, cflow):
-  if cflow == CFLOW_PASS:
-    lgpio.gpio_write(chip, CSW0, 0)
-    lgpio.gpio_write(chip, CSW1, 0)
-    lgpio.gpio_write(chip, CSW2, 0)
-  else:
-    lgpio.gpio_write(chip, CSW0, 1)
-    lgpio.gpio_write(chip, CSW1, 1)
-    lgpio.gpio_write(chip, CSW2, 1)
+#def set_current_flow(chip, cflow):
+#  if cflow == CFLOW_PASS:
+#    lgpio.gpio_write(chip, CSW0, 0)
+#    lgpio.gpio_write(chip, CSW1, 0)
+#    lgpio.gpio_write(chip, CSW2, 0)
+#  else:
+#    lgpio.gpio_write(chip, CSW0, 1)
+#    lgpio.gpio_write(chip, CSW1, 1)
+#    lgpio.gpio_write(chip, CSW2, 1)
 
 
 def tank_monitor(**kwargs):
@@ -251,7 +270,7 @@ def tank_monitor(**kwargs):
 def init_spi_rw(chip, pv, speed=4800):
   #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
   #set_current_flow(chip=chip, cflow=CFLOW_PASS)
-  set_current_flow(chip=chip, cflow=CFLOW_CPU)
+  #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
   lgpio.gpio_claim_output(chip, CE_T, 1)
   lgpio.gpio_claim_output(chip, CE_R, 1)
@@ -272,7 +291,7 @@ def main():
     pv.instance = PV()  # pump variables
 
     chip = lgpio.gpiochip_open(0)
-    set_current_flow(chip=chip, cflow=CFLOW_CPU)
+    #set_current_flow(chip=chip, cflow=CFLOW_CPU)
     pv().source = SOURCE_SENSOR
 
     lgpio.gpio_claim_output(chip, CE_T, 1)
