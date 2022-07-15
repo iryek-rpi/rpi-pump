@@ -53,19 +53,19 @@ def set_run_mode(chip, v):
 def get_motor_state(chip, m):
   '''m=0,1,2'''
   if m == 0:
-    return lgpio.gpio_read(chip, M0_OUT)
+    return lgpio.gpio_read(chip, M0_IN)
   elif m == 1:
-    return lgpio.gpio_read(chip, M1_OUT)
+    return lgpio.gpio_read(chip, M1_IN)
   elif m == 2:
-    return lgpio.gpio_read(chip, M2_OUT)
+    return lgpio.gpio_read(chip, M2_IN)
   else:
     return -1
 
 
 def is_motor_running(chip):
   '''안쓰는 모터는 접점을 열어둬서 모터가 구동 안되는 것으로 인식하도록 해야 함'''
-  return get_motor_state(chip, M0_OUT) or get_motor_state(
-      chip, M1_OUT) or get_motor_state(chip, M2_OUT)
+  return get_motor_state(chip, M0_IN) or get_motor_state(
+      chip, M1_IN) or get_motor_state(chip, M2_IN)
 
 
 def get_all_motors(chip):
@@ -97,9 +97,6 @@ def set_all_motors(chip, m):
   lgpio.gpio_write(chip, M1_OUT, b)
   lgpio.gpio_write(chip, M2_OUT, a)
 
-
-
-#=============================================================
 
 
 def writeDAC(chip, v, spi):
