@@ -63,15 +63,15 @@ class LCDStateMachine():
     self.init()
 
   def idle_1(self):
-    self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
+    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_1(self.pv)
 
   def idle_2(self):
-    self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
+    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_2(self.pv)
 
   def idle_3(self):
-    self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
+    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_3(self.pv)
 
   def idle_4(self):

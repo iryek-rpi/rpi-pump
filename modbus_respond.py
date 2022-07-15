@@ -70,11 +70,14 @@ def respond(**kwargs):
     elif address == ma.MBR_SOURCE:  # 수위 모드(0:수위계:w, 1:예측수위)
       values = [pv.source]
     elif address == ma.MBR_PUMP1_STATE:  # 펌프1 상태
-      values = [pv.motor1]
+      #values = [pv.motor1]
+      values = [pump_monitor.get_motor_state(pv.chip, 0)]
     elif address == ma.MBR_PUMP2_STATE:  # 펌프2 상태
-      values = [pv.motor2]
+      #values = [pv.motor2]
+      values = [pump_monitor.get_motor_state(pv.chip, 1)]
     elif address == ma.MBR_PUMP3_STATE:  # 펌프3 상태
-      values = [pv.motor3]
+      #values = [pv.motor3]
+      values = [pump_monitor.get_motor_state(pv.chip, 2)]
     elif address == ma.MBW_MODBUS_ID:  # MODBUS ID
       if not wr:
         values = [pv.modbus_id]

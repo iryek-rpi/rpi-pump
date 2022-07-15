@@ -79,23 +79,29 @@ def get_all_motors(chip):
   return (ms2, ms1, ms0)
 
 
-def set_motor_state(chip, m, on_off):
+def set_motor_state(chip, m, on_off, pv):
   if m == 0:
     lgpio.gpio_write(chip, M0_OUT, on_off)
+    #pv.motor1 = on_off
   elif m == 1:
     lgpio.gpio_write(chip, M1_OUT, on_off)
+    #pv.motor2 = on_off
   elif m == 2:
     lgpio.gpio_write(chip, M2_OUT, on_off)
+    #pv.motor3 = on_off
 
   logging.info("SET MOTOR#{%d}/(1,2,3) = {%d}", m + 1, on_off)
 
 
-def set_all_motors(chip, m):
+def set_all_motors(chip, m, pv):
   '''(M2, M1, M0)'''
   a, b, c = m
   lgpio.gpio_write(chip, M0_OUT, c)
   lgpio.gpio_write(chip, M1_OUT, b)
   lgpio.gpio_write(chip, M2_OUT, a)
+  #pv.motor1 = c
+  #pv.motor2 = b
+  #pv.motor3 = a
 
 
 
@@ -194,9 +200,14 @@ def tank_monitor(**kwargs):
 
   level = check_water_level(chip, spi)
   time_now = datetime.datetime.now()
-  logging.debug("monitor at {}".format(time_now.ctime()))
+  logging.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), level))
 
   last_level = pv.water_level
+
+  logging.debug("level:%d", level)
+  logging.debug("pv.setting_adc_invalid:%d", pv.setting_adc_invalid)
+  (c,b,a) = get_all_motors(chip)
+  logging.debug("get_all_motors:(%d, %d, %d)", c,b,a)
 
   # 수위 입력이 없음
   if level < pv.setting_adc_invalid:  #100

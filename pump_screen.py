@@ -10,6 +10,7 @@ from pump_variables import SOURCE_SENSOR
 from pump_variables import SOURCE_AI
 from pump_util import get_time, get_my_ipwlan, list_to_number
 from pump_btn import buttons
+import pump_monitor
 from pump_monitor import water_level_rate
 
 #LCD_WIDTH = 20    # Maximum characters per line
@@ -63,20 +64,31 @@ def scr_idle_1(pv):
   else:
     s1 = f"PLC WL:{int(pv.water_level)} "
 
-  if pv.motor1 == 0:
-    s1 += "X"
-  elif pv.motor1 > 0:
-    s1 += "O"
+  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
 
-  if pv.motor2 == 0:
-    s1 += "X"
-  elif pv.motor2 > 0:
+  # O : 펌프 가동 중
+  # - : 펌프 중지 중
+  # X : 펌프 없음
+  if not m1:
+    s1 += "-"
+  elif m1>0:
     s1 += "O"
+  else:
+    s1 = 'X'
 
-  if pv.motor3 == 0:
-    s1 += "X"
-  elif pv.motor3 > 0:
+  if not m2:
+    s1 += "-"
+  elif m1>0:
     s1 += "O"
+  else:
+    s1 = 'X'
+
+  if not m3:
+    s1 += "-"
+  elif m1>0:
+    s1 += "O"
+  else:
+    s1 = 'X'
 
   rate = water_level_rate(pv)
 
@@ -90,23 +102,30 @@ def scr_idle_2(pv):
   else:
     s1 = f"PLC WL:{pv.water_level:.1f}"
 
+  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
   mt1 = ""
   mt2 = ""
   mt3 = ""
-  if pv.motor1 == 0:
+  if not m1:
     mt1 = "M1:-  "
-  elif pv.motor1 > 0:
+  elif m1 > 0:
     mt1 = "M1:O  "
+  else:
+    mt1 = "M1:X  "
 
-  if pv.motor2 == 0:
+  if not m2:
     mt2 = "M2:-  "
-  elif pv.motor2 > 0:
+  elif m2 > 0:
     mt2 = "M2:O  "
+  else:
+    mt2 = "M2:X  "
 
-  if pv.motor3 == 0:
-    mt3 = "M3:-"
-  elif pv.motor3 > 0:
-    mt3 = "M3:O"
+  if not m3:
+    mt3 = "M3:-  "
+  elif m3 > 0:
+    mt3 = "M3:O  "
+  else:
+    mt3 = "M3:X  "
 
   s2 = f"{mt1}{mt2}{mt3}"
   #s2 = "2022/12/31 12:55"
@@ -121,20 +140,31 @@ def scr_idle_3(pv):
   else:
     s1 = f"PLC WL:{pv.water_level:.1f} "
 
-  if pv.motor1 == 0:
-    s1 += "X"
-  elif pv.motor1 > 0:
-    s1 += "O"
+  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
 
-  if pv.motor2 == 0:
-    s1 += "X"
-  elif pv.motor2 > 0:
+  # O : 펌프 가동 중
+  # - : 펌프 중지 중
+  # X : 펌프 없음
+  if not m1:
+    s1 += "-"
+  elif m1>0:
     s1 += "O"
+  else:
+    s1 = 'X'
 
-  if pv.motor3 == 0:
-    s1 += "X"
-  elif pv.motor3 > 0:
+  if not m2:
+    s1 += "-"
+  elif m1>0:
     s1 += "O"
+  else:
+    s1 = 'X'
+
+  if not m3:
+    s1 += "-"
+  elif m1>0:
+    s1 += "O"
+  else:
+    s1 = 'X'
 
   s2 = get_time()
 
