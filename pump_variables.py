@@ -60,10 +60,11 @@ class PV():
     self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
     self.water_level = 0  # 현재 수위
     # 현재 모터 상태는 항상 MOTOR_INPUT 단자에서 읽어옴
-    #self.motor1 = 0  # 펌프1
-    #self.motor2 = 0  # 펌프2
-    #self.motor3 = 0  # 펌프3
-    self.motor_count = 1
+    #self.motor_count = 1
+    self.motors = [0,0,0] # 연결된 모터는 1, 연결 안된 모터는 0 
+    self.motor1 = 0  # motor 1,2,3의 마지막 구동 상태
+    self.motor2 = 0
+    self.motor3 = 0
     self.motor_valid = [1]  # 사용할 수 있는 모터 번호 리스트(1~3)
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
     self.data = []
