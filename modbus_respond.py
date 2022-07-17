@@ -135,12 +135,12 @@ def respond(**kwargs):
         values = [pv.motor3]
       else:
         pump_monitor.set_motor_state(chip, 2, values[0], pv)
-    elif address == ma.MBW_PUMP_COUNT:  # 펌트 가용 대수(자동운전시)
-      if not wr:
-        values = [pv.motor_count]
-      else:
-        pv.motor_count = values[0]
-        config.update_config('CONTROLLER', 'MOTOR_COUNT', pv.motor_count)
+#    elif address == ma.MBW_PUMP_COUNT:  # 펌트 가용 대수(자동운전시)
+#      if not wr:
+#        values = [pv.motor_count]
+#      else:
+#        pv.motor_count = values[0]
+#        config.update_config('CONTROLLER', 'MOTOR_COUNT', pv.motor_count)
     #elif address == ma.MBW_PUMP_VALID:  # 유효한 모터(101 => motor#1 & motor#3)
     #  v = values[0]
     #  pv.motor_valid = []
