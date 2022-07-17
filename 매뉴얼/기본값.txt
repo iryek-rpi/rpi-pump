@@ -1,0 +1,7 @@
+* 모든 설정값은 아래 파일에 저장되어 있음
+  * ./setting/setting.ini
+
+* 프로그램 시작 시 setting.ini를 읽어서 pump_variables.PV에 저장함
+
+* setting.ini가 없을 경우, 
+  * config.init_setting()에서 ./setting/setting.ini 파일을 생성하며 기본값을 저장함
