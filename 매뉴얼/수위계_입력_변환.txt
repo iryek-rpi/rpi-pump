@@ -1,0 +1,10 @@
+* 수위계 값 범위
+  * 4mA ~ 20mA
+
+* 수위계 범위에 따른 ADC 값에 따라 장치마다 캘리브레이션이 필요하지만, 우선 setting.ini에서 값을 지정하여 캘리브레이션하도록 함
+  * 4ma_ref = 수위계 값이 4mA일 때 ADC의 값 => 0.0%
+  * 20ma_ref = 수위계 값이 20mA일 때 ADC의 값 => 100.0%
+
+* 수위 % 계산식
+  * pump_monitor.py
+      def water_level_rate(pv, wl=None):
