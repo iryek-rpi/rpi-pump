@@ -3,6 +3,7 @@ from pump_variables import PV
 
 import configparser
 import pathlib
+import logging
 
 SETTING_DIR = "./setting/"
 SETTING_NAME = SETTING_DIR + "setting.ini"
@@ -12,6 +13,7 @@ def init_setting(pv: PV):
   co = configparser.ConfigParser()
 
   if not pathlib.Path(SETTING_NAME).is_file():
+    logging.info("No setting file exists. Create one with defaults")
     pathlib.Path(SETTING_DIR).mkdir(parents=True, exist_ok=True)
     co['CONTROLLER'] = {
         'MODBUS_ID': '1',
@@ -42,6 +44,7 @@ def init_setting(pv: PV):
       co.write(f)
       config_to_pv(co, pv)
   else:
+    logging.info("Reading setting from setting.ini")
     co.read(SETTING_NAME)
     config_to_pv(co, pv)
 
@@ -57,8 +60,10 @@ def update_config(section, key, value, config_name=SETTING_NAME):
 
 def config_to_pv(co: configparser.ConfigParser, pv: PV):
   if co['CONTROLLER']['MODBUS_ID'].isdigit():
+    logging.info("modbus id from setting:%s", co['CONTROLLER']['MODBUS_ID'])
     pv.modbus_id = int(co['CONTROLLER']['MODBUS_ID'])
   else:
+    logging.info("invalid modbus id from setting. default id=1")
     pv.modbus_id = 1
 
   if co['CONTROLLER']['SOLO_MODE'] == 'MODE_SOLO':
