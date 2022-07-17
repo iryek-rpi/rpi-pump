@@ -18,6 +18,7 @@ import csv
 from pump_util import *
 import pump_variables
 from pump_variables import PV
+import config
 
 #==============================================================================
 # Device Properties
@@ -76,7 +77,8 @@ def get_all_motors(chip):
   ms1 = lgpio.gpio_read(chip, M1_IN)
   ms2 = lgpio.gpio_read(chip, M2_IN)
 
-  return (ms2, ms1, ms0)
+  logging.info("(MS0, MS1, MS2): (%d, %d, %d)", ms0, ms1, ms2)
+  return (ms0, ms1, ms2)
 
 
 def set_motor_state(chip, m, on_off, pv):
@@ -94,11 +96,11 @@ def set_motor_state(chip, m, on_off, pv):
 
 
 def set_all_motors(chip, m, pv):
-  '''(M2, M1, M0)'''
+  '''(M0, M1, M2)'''
   a, b, c = m
-  lgpio.gpio_write(chip, M0_OUT, c)
+  lgpio.gpio_write(chip, M0_OUT, a)
   lgpio.gpio_write(chip, M1_OUT, b)
-  lgpio.gpio_write(chip, M2_OUT, a)
+  lgpio.gpio_write(chip, M2_OUT, c)
   #pv.motor1 = c
   #pv.motor2 = b
   #pv.motor3 = a
@@ -241,29 +243,40 @@ def tank_monitor(**kwargs):
     pv.no_input_starttime = None
     pv.water_level = pv.filter_data(level)
 
-  if pv.op_mode == pump_variables.OP_AUTO:
+  if pv.op_mode == pump_variables.OP_AUTO:  # 설정값(LL,L,H,HH)에 따라 룰 기반으로 자동 운전
     if pv.water_level >= pv.setting_high:
-      set_motor_state(chip, 0, False, pv)
-      set_motor_state(chip, 1, False, pv)
-      #set_motor_state(chip, 2, False, pv)
-    elif pv.water_level <= pv.setting_ll:
-      if (not get_motor_state(chip, 0)):
-        set_motor_state(chip, 0, True, pv)
-      if pv.motor_count == 2 and (not get_motor_state(chip, 1)):
-        set_motor_state(chip, 1, True, pv)
+      if is_motor_running(chip):
+        (m0, m1, m2) = get_all_motors(chip)
+        config.save_motors((m0,m1,m2))
+        set_all_motors(chip, (False, False, False), pv)
     elif pv.water_level <= pv.setting_low:
       if not is_motor_running(chip):
-        if pv.motor_count == 1:
+        m0 = config.read_config('MOTOR', 'MOTOR1')
+        m1 = config.read_config('MOTOR', 'MOTOR2')
+        m2 = config.read_config('MOTOR', 'MOTOR3')
+        ms = {0:m0, 1:m1, 2:m2}
+
+        k=0
+        for i, n in enumerate(pv.motors):
+          if ms[n]: # 이 전에 가동했으면
+            k = i+1  # 다음 모터를 가동 대상으로
+
+        k = k%len(pv.motors) 
+
+        set_motor_state(chip, pv.motors[k], pv)
+
+#        if pv.motor_count == 1:
           #motor_num = random.choice(pv.motor_valid)
           #set_motor_state(chip, motor_num - 1, True, pv)
-          set_motor_state(chip, 0, True, pv)
-        else:
+#          set_motor_state(chip, 0, True, pv)
+#        else:
           #motor_numbers = random.sample(pv.motor_valid, pv.motor_count)
           #for n in motor_numbers:
           #  set_motor_state(chip, n - 1, True, pv)
-          m = (pv.last_pump + 1) % pv.motor_count
-          set_motor_state(chip, m, True, pv)
-          pv.last_pump = m
+#          m = (pv.last_pump + 1) % pv.motor_count
+#          set_motor_state(chip, m, True, pv)
+#          pv.last_pump = m
+
 
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
