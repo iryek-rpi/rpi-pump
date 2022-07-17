@@ -6,7 +6,7 @@ import time
 from time import sleep
 import datetime
 import signal
-import random
+import threading
 
 import logging
 
@@ -189,6 +189,9 @@ def convert_to_voltage(adc_output, VREF=3.3):
 #    lgpio.gpio_write(chip, CSW1, 1)
 #    lgpio.gpio_write(chip, CSW2, 1)
 
+def save_motor_state(chip):
+  (m0,m1,m2) = get_all_motors(chip)
+  config.save_motors((m0,m1,m2))
 
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
@@ -257,13 +260,14 @@ def tank_monitor(**kwargs):
         ms = {0:m0, 1:m1, 2:m2}
 
         k=0
-        for i, n in enumerate(pv.motors):
+        for i, n in enumerate(pv.motor_valid):
           if ms[n]: # 이 전에 가동했으면
             k = i+1  # 다음 모터를 가동 대상으로
 
-        k = k%len(pv.motors) 
+        k = k%len(pv.motor_valid) 
 
-        set_motor_state(chip, pv.motors[k], pv)
+        set_motor_state(chip, pv.motor_valid[k], True, pv)
+        threading.Timer(pv.motor_lead_time, save_motor_state, [chip])  # 일정 시간 후에 모터 상태를 읽어서 저장
 
 #        if pv.motor_count == 1:
           #motor_num = random.choice(pv.motor_valid)

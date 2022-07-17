@@ -65,7 +65,9 @@ class PV():
     self.motor1 = 0  # motor 1,2,3의 마지막 구동 상태
     self.motor2 = 0
     self.motor3 = 0
-    self.motor_valid = [1]  # 사용할 수 있는 모터 번호 리스트(1~3)
+    self.motor_valid = [0]  # 사용할 수 있는 모터 번호 리스트(0~2)
+    self.motor_lead_time = 10
+
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
     self.data = []
     self.lock = threading.Lock()
