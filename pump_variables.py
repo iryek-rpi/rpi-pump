@@ -71,8 +71,11 @@ class PV():
 
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
     self.data = []
+    self.train = []
+    self.forcast = None
     self.lock = threading.Lock()
 
+    self.setting_max_train = 518400 # 3600*24*30 (30일)
     self.setting_4ma_ref = 700  # 4mA ADC 출력
     self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
     self.setting_4ma = 0.0  # 4mA 수위(수위계 캘리브레이션)
@@ -156,6 +159,10 @@ class PV():
   def append_data(self, ld):
     self.lock.acquire()
     self.data.append(ld)
+    if len(self.train)>=self.setting_max_train:
+      n = self.setting_max_train//3
+      self.train = self.train[n:]   # 오래된 순으로 1/3 버림
+    self.train.append(ld)
     self.lock.release()
 
   def dump_data(self):

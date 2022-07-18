@@ -226,14 +226,23 @@ def tank_monitor(**kwargs):
         #현재 회로 구성에서는 CFLOW_PASS를 사용 못하므로 항상 CFLOW_CPU 로 설정되어 있음
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
+      pv.water_level = ml.get_future_level(time_now)
+      if (not pv.water_level) and ml.train():
+        pv.water_level = ml.get_future_level(time_now)
+      else:
+        logging.info("Training failed.")
+        pv.water_level = last_level
+
       # get prediction from ML model
       # 예측 모델 적용할 때까지 임시
       if is_motor_running(chip):
         logging.debug("is_motor_running() true")
-        pv.water_level += 1
+        pv.water_level += 2
       else:
         if pv.water_level > 0:
-          pv.water_level -= 1
+          pv.water_level -=2 
+      
+
     else:
       pv.water_level = last_level  # 일시적인 현상으로 간주하고 level 값 버림
   else:
@@ -285,7 +294,7 @@ def tank_monitor(**kwargs):
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),
       get_motor_state(chip, 0),
-      get_motor_state(chip, 1), 0, pv.source
+      get_motor_state(chip, 1), get_motor_state(chip, 2), pv.source
   ])
 
   logging.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
