@@ -38,8 +38,8 @@ def init_setting(pv: PV):
         'ADC_INVALID': 100,
     }
     co['MONITOR'] = {
-        'MONITOR_INTERVAL': 5,
-        'SAVE_INTERVAL': 3600,
+        'MONITOR_INTERVAL': 5, #sec
+        'SAVE_INTERVAL': 24,   #hour
         'TOLERANCE_TO_AI': 60,
         'TOLERANCE_TO_SENSOR': 60,
         'ADC_IGNORE_SPIKE': 100
@@ -179,9 +179,9 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
     pv.setting_monitor_interval = 5
 
   if ('MONITOR' in co) and ('SAVE_INTERVAL' in co['MONITOR']) and co['MONITOR']['SAVE_INTERVAL'].isdigit():
-    pv.setting_save_interval = int(co['MONITOR']['SAVE_INTERVAL'])
+    pv.setting_save_interval = int(co['MONITOR']['SAVE_INTERVAL'])*3600
   else:
-    pv.setting_save_interval = 3600
+    pv.setting_save_interval = 24*3600
 
   if ('MONITOR' in co) and ('TOLERANCE_TO_AI' in co['MONITOR']) and co['MONITOR']['TOLERANCE_TO_AI'].isdigit():
     pv.setting_tolerance_to_ai = int(co['MONITOR']['TOLERANCE_TO_AI'])
