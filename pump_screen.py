@@ -56,6 +56,9 @@ CURSOR_LH01 = 0xC0 + 6
 CURSOR_LL10 = 0xC0 + 13
 CURSOR_LL01 = 0xC0 + 14
 
+def scr_init_msg(pv):
+  s1 = "Initializing..."
+  lcd().string(s1, L1)
 
 def scr_idle_1(pv):
   logging.debug("scr_idle_1:level:{}".format(pv.water_level))
