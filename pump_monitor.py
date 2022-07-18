@@ -283,7 +283,7 @@ def tank_monitor(**kwargs):
 
 
   pv.append_data([
-      time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
+      time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),
       get_motor_state(chip, 0),
       get_motor_state(chip, 1), 0, pv.source
   ])
