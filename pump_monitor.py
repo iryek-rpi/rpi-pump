@@ -117,6 +117,15 @@ def writeDAC(chip, v, spi):
   lgpio.gpio_write(chip, CE_T, 1)
   logging.debug("set_DAC({})".format(v))
 
+def water_level_ADC(pv, rate):
+  if rate<=0:
+    v = pv.setting_4ma_ref
+  elif rate>=100:
+    v = pv.setting_20ma_ref
+  else:
+    v = pv.setting_4ma_ref + (rate/100) * (pv.setting_20ma_ref-pv.setting_4ma_ref)
+  
+  return v
 
 def water_level_rate(pv, wl=None):
   if wl == None:
@@ -203,9 +212,10 @@ def tank_monitor(**kwargs):
   sm = kwargs['sm']
   pv: PV = kwargs['pv']
 
-  level = check_water_level(chip, spi)
+  adc_level = check_water_level(chip, spi)
   time_now = datetime.datetime.now()
-  logging.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), level))
+  logging.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
+  level = water_level_rate(pv, adc_level)
 
   last_level = pv.water_level
 
@@ -299,7 +309,8 @@ def tank_monitor(**kwargs):
 
   logging.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
   #writeDAC(chip, level, spi)
-  writeDAC(chip, pv.water_level, spi)
+
+  writeDAC(chip, water_level_ADC(pv, pv.water_level), spi)
   sm.update_idle()
 
 
