@@ -21,7 +21,7 @@ B2 = 20
 B3 = 21
 
 BOUNCE_TIME = 0.05  #50ms
-HOLD_TIME = 0.5  # 500ms
+HOLD_TIME = 1.5  # 500ms  # long press 시간
 
 
 def buttons(inst=None):
