@@ -20,6 +20,7 @@ from pump_variables import PV, pv
 import pump_variables
 from pump_util import *
 from pump_lcd import Lcd, lcd
+import pump_screen
 from pump_btn import PumpButtons, buttons
 from pump_state import LCDStateMachine
 from pump_state_set_level import SetLevelStateMachine
@@ -110,6 +111,11 @@ def main():
     pv().chip = chip
     spi = pump_monitor.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
+
+    pump_screen.scr_init_msg(pv())
+    import ml
+    if Path("./model/pump_model.json").exists():
+      pv().model = ml.read_model("pump_model.json")
 
     # state machine 초기화
     sm_lcd = LCDStateMachine(name='LCDStateMachine', pv=pv())
