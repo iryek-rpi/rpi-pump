@@ -213,6 +213,7 @@ def tank_monitor(**kwargs):
   pv: PV = kwargs['pv']
 
   adc_level = check_water_level(chip, spi)
+  #adc_level = 1500
   time_now = datetime.datetime.now()
   logging.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
   level = water_level_rate(pv, adc_level)
@@ -225,7 +226,7 @@ def tank_monitor(**kwargs):
   logging.debug("get_all_motors:(%d, %d, %d)", c,b,a)
 
   # 수위 입력이 없음
-  if level < pv.setting_adc_invalid:  #100
+  if level < water_level_rate(pv, pv.setting_adc_invalid):  #100
     if pv.no_input_starttime is None:
       pv.no_input_starttime = time_now
 
@@ -310,7 +311,8 @@ def tank_monitor(**kwargs):
   logging.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
   #writeDAC(chip, level, spi)
 
-  writeDAC(chip, water_level_ADC(pv, pv.water_level), spi)
+  #writeDAC(chip, water_level_ADC(pv, pv.water_level), spi)
+  writeDAC(chip, int(water_level_ADC(pv, 80)), spi)
   sm.update_idle()
 
 
