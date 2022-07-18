@@ -114,8 +114,8 @@ def main():
 
     pump_screen.scr_init_msg(pv())
     import ml
-    if Path("./model/pump_model.json").exists():
-      pv().model = ml.read_model("pump_model.json")
+    #if Path("./model/pump_model.json").exists():
+    #  pv().model = ml.read_model("pump_model.json")
 
     # state machine 초기화
     sm_lcd = LCDStateMachine(name='LCDStateMachine', pv=pv())
