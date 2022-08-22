@@ -60,6 +60,7 @@ class PV():
     self.solo_mode = MODE_PLC
     self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
     self.water_level = 0  # 현재 수위
+    self.temperature = 0
     # 현재 모터 상태는 항상 MOTOR_INPUT 단자에서 읽어옴
     #self.motor_count = 1
     self.motors = [0,0,0] # 연결된 모터는 1, 연결 안된 모터는 0 

@@ -202,6 +202,15 @@ def save_motor_state(chip):
   (m0,m1,m2) = get_all_motors(chip)
   config.save_motors((m0,m1,m2))
 
+def get_temp():
+    with open('/sys/devices/virtual/thermal/thermal_zone0/temp') as f:
+        temp_str = f.read()
+
+    try:
+        return int(temp_str) / 1000
+    except (IndexError, ValueError,) as e:
+        raise RuntimeError('Could not parse temperature output.') from e
+
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
   RepeatThread에서 주기적으로 호출되어 수위 입력을 처리함
@@ -211,6 +220,8 @@ def tank_monitor(**kwargs):
   spi = kwargs['spi']
   sm = kwargs['sm']
   pv: PV = kwargs['pv']
+
+  pv.temperature = get_temp()
 
   adc_level = check_water_level(chip, spi)
   #adc_level = 1500
