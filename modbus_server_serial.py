@@ -14,18 +14,23 @@ import asyncio
 from pymodbus.version import version
 from pymodbus.server.async_io import StartSerialServer
 from pymodbus.device import ModbusDeviceIdentification
-from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
-from pymodbus.datastore import ModbusSequentialDataBlock
-from pymodbus.framer.rtu_framer import ModbusRtuFramer
 
+#from pymodbus.datastore import ModbusSlaveContext
+#from pymodbus.datastore import ModbusServerContext
+#from pymodbus.datastore import ModbusSequentialDataBlock
+#from pymodbus.datastore import ModbusSparseDataBlock
 import pymodbus.datastore as ds
-import modbus_address as ma
 
+#from pymodbus.framer.rtu_framer import ModbusRtuFramer
+from pymodbus.transaction import ModbusRtuFramer
+
+
+
+import modbus_address as ma
 import pump_util as util
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
-# from pymodbus.datastore import ModbusSparseDataBlock
 
 # --------------------------------------------------------------------------- #
 # configure the service logging
@@ -48,10 +53,10 @@ logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 PORT = "/dev/serial1"
 
 
-class PumpDataBlock(ds.ModbusSparseDataBlock):
+class PumpDataBlock(ds.ModbusSequentialDataBlock):
   """Creates a sequential modbus datastore."""
 
-  def __init__(self, address_list, pipe_req):
+  def __init__(self, address, pipe_req):
     """Initialize the datastore.
         """
     self.address = address_list.copy()
@@ -139,21 +144,6 @@ async def run_server(pipe_req, modbus_id):
           "MajorMinorRevision": version.short(),
       })
 
-  # ----------------------------------------------------------------------- #
-  # run the server you want
-  # ----------------------------------------------------------------------- #
-  # 	deferred start:
-  #server = await StartTcpServer(
-  #    context,
-  #    identity=identity,
-  #    address=("0.0.0.0", 5020),  # nosec
-  #    allow_reuse_address=True,
-  #    defer_start=True,
-  #)
-  #asyncio.get_event_loop().call_later(20, lambda: server.serve_forever)
-  #await server.serve_forever()
-
-  # RTU:
   await StartSerialServer(context,
                           framer=ModbusRtuFramer,
                           identity=identity,
