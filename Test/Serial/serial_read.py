@@ -3,8 +3,10 @@
 import time
 import serial
 
-port = '/dev/serial1'
-port='/dev/ttyAMA0'
+#o port = '/dev/serial1'
+port = '/dev/serial2'
+#o port = '/dev/ttyAMA0'
+#x port = '/dev/ttyAMA1'
 ser = serial.Serial(
     port,
     baudrate = 115200,
