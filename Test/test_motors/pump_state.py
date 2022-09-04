@@ -13,7 +13,7 @@ from pump_state_set_level import SetLevelStateMachine
 from pump_btn import buttons
 import motors
 
-logging.getLogger('transitions').setLevel(logging.WARNING)
+logging.getLogger('transitions').setLevel(logging.DEBUG)
 
 
 #class LCDStateMachine(metaclass=ThreadSafeSingleton):
@@ -133,7 +133,7 @@ class LCDStateMachine():
     self.pv.motor2_in = m3
     self.pv.motor1_in = m2
     self.pv.motor0_in = m1
-    logging.info(f"{(m3,m2,m1)} = get_all_motors()")
+    logger.info(f"{(m3,m2,m1)} = get_all_motors()")
 
     self.pv.motor_out_count = self.pv.motor_out_count + 1
     self.pv.motor_out_count = self.pv.motor_out_count % 8
@@ -146,8 +146,8 @@ class LCDStateMachine():
     self.pv.motor1_out = n2
     self.pv.motor0_out = n1
 
-    logging.info(f"set_all_motors({self.pv.motor_out_count} )")
-    logging.info(f"set_all_motors({(n3,n2,n1)} )")
+    logger.info(f"set_all_motors({self.pv.motor_out_count} )")
+    logger.info(f"set_all_motors({(n3,n2,n1)} )")
 
     if not self.pv.run_mode_out:
       self.pv.run_mode_out = 1

@@ -8,7 +8,7 @@ import datetime
 import signal
 import random
 
-import logging
+import picologging as logging
 
 import lgpio
 import spidev
@@ -18,6 +18,16 @@ import csv
 from pump_util import *
 import pump_variables
 from pump_variables import PV
+
+FORMAT = ("%(asctime)-15s %(threadName)-15s"
+          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
+logging.basicConfig(
+    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
+    format=FORMAT,
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+logger = logging.getLogger()
 
 #==============================================================================
 # Device Properties
@@ -39,6 +49,7 @@ RUN_MODE_OUT = 17  #5v
 M0_IN = 26  #cur_sw0
 M1_IN = 19  #cur_sw1
 M2_IN = 13  #cur_sw2
+
 
 def set_run_mode(chip, v):
   lgpio.gpio_write(chip, RUN_MODE_OUT, v)
@@ -79,7 +90,7 @@ def set_motor_state(chip, m, on_off):
   elif m == 2:
     lgpio.gpio_write(chip, M2_OUT, on_off)
 
-  logging.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
+  logger.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
 
 
 def set_all_motors(chip, m):
@@ -88,7 +99,8 @@ def set_all_motors(chip, m):
   lgpio.gpio_write(chip, M1_OUT, b)
   lgpio.gpio_write(chip, M2_OUT, a)
 
-  logging.info(f"SET MOTORS{(M2_OUT, M1_OUT, M0_OUT)} = {(a,b,c)}")
+  logger.info(f"SET MOTORS{(M2_OUT, M1_OUT, M0_OUT)} = {(a,b,c)}")
+
 
 def writeDAC(chip, v, spi):
   msb = (v >> 8) & 0x0F
@@ -98,7 +110,7 @@ def writeDAC(chip, v, spi):
   lgpio.gpio_write(chip, CE_T, 0)
   spi.xfer2([msb, lsb])
   lgpio.gpio_write(chip, CE_T, 1)
-  logging.debug("set_DAC({})".format(v))
+  logger.debug("set_DAC({})".format(v))
 
 
 def water_level_rate(pv, wl=None):
@@ -132,20 +144,20 @@ def readADC_MSB(chip, spi):
   bytes_received = spi.xfer2([0x00, 0x00])
   lgpio.gpio_write(chip, CE_R, 1)
 
-  #logging.debug("Read:0x{0:2X} 0x{1:2X}".format(bytes_received[0], bytes_received[1]) )
-  #logging.debug("Read:0b{0:b} 0b{1:b}".format(bytes_received[0], bytes_received[1]) )
+  #logger.debug("Read:0x{0:2X} 0x{1:2X}".format(bytes_received[0], bytes_received[1]) )
+  #logger.debug("Read:0b{0:b} 0b{1:b}".format(bytes_received[0], bytes_received[1]) )
 
   MSB_1 = bytes_received[1]
-  #logging.debug(f"MSB_1:0b{MSB_1:0b}")
+  #logger.debug(f"MSB_1:0b{MSB_1:0b}")
   MSB_1 = MSB_1 >> 1  # shift right 1 bit to remove B01 from the LSB mode
-  #logging.debug(f"MSB_1:0b{MSB_1:0b}")
+  #logger.debug(f"MSB_1:0b{MSB_1:0b}")
   MSB_0 = bytes_received[
       0] & 0b00011111  # mask the 2 unknown bits and the null bit
-  #logging.debug(f"MSB_0:0b{bytes_received[0]:0b}")
-  #logging.debug(f"MSB_0:0b{MSB_0:0b}")
+  #logger.debug(f"MSB_0:0b{bytes_received[0]:0b}")
+  #logger.debug(f"MSB_0:0b{MSB_0:0b}")
   MSB_0 = MSB_0 << 7  # shift left 7 bits (i.e. the first MSB 5 bits of 12 bits)
-  #logging.debug(f"MSB_0<<7:0b{MSB_0:0b}")
-  logging.debug(
+  #logger.debug(f"MSB_0<<7:0b{MSB_0:0b}")
+  logger.debug(
       f"MSB_0+MSB_1:0b{MSB_0+MSB_1:0b} 0x{MSB_0+MSB_1:2X} {MSB_0+MSB_1}")
   return MSB_0 + MSB_1
 
@@ -184,7 +196,7 @@ def tank_monitor(**kwargs):
 
   level = check_water_level(chip, spi)
   time_now = datetime.datetime.now()
-  logging.debug("monitor at {}".format(time_now.ctime()))
+  logger.debug("monitor at {}".format(time_now.ctime()))
 
   last_level = pv.water_level
 
@@ -252,7 +264,7 @@ def tank_monitor(**kwargs):
       get_motor_state(chip, 1), 0, pv.source
   ])
 
-  logging.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
+  logger.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
   #writeDAC(chip, level, spi)
   writeDAC(chip, pv.water_level, spi)
   sm.update_idle()
@@ -299,10 +311,9 @@ def main():
 
     while not is_shutdown:
       ADC_output_code = readADC_MSB(chip, spi)
-      logging.debug(
-          "MCP3201 output code (MSB-mode): {}".foramt(ADC_output_code))
+      logger.debug("MCP3201 output code (MSB-mode): {}".foramt(ADC_output_code))
       ADC_voltage = convert_to_voltage(ADC_output_code)
-      logging.debug("MCP3201 voltage: {%0.2f}V".format(ADC_voltage))
+      logger.debug("MCP3201 voltage: {%0.2f}V".format(ADC_voltage))
       conn.send(ADC_voltage)
 
       sleep(0.1)  # wait minimum of 100 ms between ADC measurements
@@ -324,19 +335,19 @@ if __name__ == '__main__':
   # systemd
   #==============================================================================
   def stop(sig, frame):
-    logging.info(f"SIGTERM at {datetime.datetime.now()}")
+    logger.info(f"SIGTERM at {datetime.datetime.now()}")
     global is_shutdown
     is_shutdown = True
 
   def ignore(sig, frame):
-    logging.info(f"SIGHUP at {datetime.datetime.now()}")
+    logger.info(f"SIGHUP at {datetime.datetime.now()}")
 
   signal.signal(signal.SIGTERM, stop)
   #signal.signal(signal.SIGHUP, stop)
 
-  logging.info(f"=================================================")
-  logging.info(f"START at {datetime.datetime.now()}")
-  logging.info(f"=================================================")
+  logger.info(f"=================================================")
+  logger.info(f"START at {datetime.datetime.now()}")
+  logger.info(f"=================================================")
 
   main()
 '''

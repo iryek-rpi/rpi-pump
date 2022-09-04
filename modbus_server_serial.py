@@ -7,7 +7,7 @@ Pymodbus Asyncio Server example 코드를 기반으로 작성
 # --------------------------------------------------------------------------- #
 # import the various server implementations
 # --------------------------------------------------------------------------- #
-import logging
+import picologging as logging
 import pathlib
 import asyncio
 
@@ -20,6 +20,10 @@ from pymodbus.framer.rtu_framer import ModbusRtuFramer
 
 import pymodbus.datastore as ds
 import modbus_address as ma
+
+import pump_util as util
+
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 # from pymodbus.datastore import ModbusSparseDataBlock
 
@@ -36,7 +40,7 @@ import modbus_address as ma
 #logging.basicConfig(filename=MODBUS_LOGFILE_NAME,
 #                    filemode="a",
 #                    format=MODBUS_LOG_FORMAT,
-#                    level=logging.DEBUG,
+#                    level=logger.debug,
 #                    datefmt='%Y-%m-%d %H:%M:%S')
 
 #modbus_logger = logging.getLogger('modbus_logger')
@@ -63,7 +67,7 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :returns: True if the request in within range, False otherwise
         """
     address += 40000
-    logging.info(f"validate: address({address}) in {self.address}")
+    logger.info(f"validate: address({address}) in {self.address}")
     return address in self.address
 
   def getValues(self, address, count=1):
@@ -74,10 +78,10 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :returns: The requested values from a:a+c
         """
     msg = (False, address, [])
-    logging.info(f"MODBUS SERVER: sending request to getValues(address:{msg})")
+    logger.info(f"MODBUS SERVER: sending request to getValues(address:{msg})")
     self.pipe_req.send(msg)
     response = self.pipe_req.recv()
-    logging.info(
+    logger.info(
         f"MODBUS SERVER: received response:{response} for getValues(address:{address})"
     )
     return response[1]
@@ -89,12 +93,12 @@ class PumpDataBlock(ds.ModbusSparseDataBlock):
         :param values: The new values to be set
         """
     msg = (True, address, values)
-    logging.info(
+    logger.info(
         f"MODBUS SERVER: sending {msg} to setValues(address:{address}, values:{values})"
     )
     self.pipe_req.send(msg)
     response = self.pipe_req.recv()
-    logging.info(
+    logger.info(
         f"MODBUS SERVER: received response:{response} for setValues(address:{address}, values:{values})"
     )
 
@@ -110,7 +114,7 @@ def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
   pipe_req = kwargs['pipe_request']
   modbus_id = kwargs['modbus_id']
 
-  logging.info(
+  logger.info(
       f"Starting rtu_server_proc(pipe_req:{pipe_req}, modbus_id:{modbus_id})")
   asyncio.run(run_server(pipe_req, modbus_id))
 

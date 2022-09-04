@@ -1,9 +1,13 @@
-import logging
+import picologging as logging
 
 import modbus_address as ma
 import pump_variables
 import pump_monitor
 import config
+
+import pump_util as util
+
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 # 번지	  Description	         R/W	    기타
 # 40001	  현재 수위	            읽기	(0~1000)
@@ -55,11 +59,11 @@ def respond(**kwargs):
   pv: pump_variables.PV = kwargs['pv']
   chip = kwargs['chip']
 
-  logging.info(f"Starting respond thread({kwargs})")
+  logger.info(f"Starting respond thread({kwargs})")
   while 1:
-    logging.info(f"Receiving from Pipe:{p_respond}.......")
+    logger.info(f"Receiving from Pipe:{p_respond}.......")
     msg = p_respond.recv()
-    logging.info(f"Received from Pipe:{msg}")
+    logger.info(f"Received from Pipe:{msg}")
     wr, address, values = msg
     address += 40000
 
@@ -158,4 +162,4 @@ def respond(**kwargs):
 
     msg = (address, values)
     p_respond.send(msg)
-    logging.info(f"sent: {msg}")
+    logger.info(f"sent: {msg}")

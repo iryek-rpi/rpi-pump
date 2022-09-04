@@ -3,18 +3,23 @@ from pump_variables import PV
 
 import configparser
 import pathlib
-import logging
+import picologging as logging
 import ast
+
+import pump_util as util
 
 SETTING_DIR = "./setting/"
 SETTING_NAME = SETTING_DIR + "setting.ini"
 
 
+#import pump_util as util
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
+
 def init_setting(pv: PV):
   co = configparser.ConfigParser()
 
   if not pathlib.Path(SETTING_NAME).is_file():
-    logging.info("No setting file exists. Create one with defaults")
+    logger.info("No setting file exists. Create one with defaults")
     pathlib.Path(SETTING_DIR).mkdir(parents=True, exist_ok=True)
     co['CONTROLLER'] = {
         'MODBUS_ID': 1,
@@ -50,7 +55,7 @@ def init_setting(pv: PV):
       co.write(f)
       config_to_pv(co, pv)
   else:
-    logging.info("Reading setting from setting.ini")
+    logger.info("Reading setting from setting.ini")
     co.read(SETTING_NAME)
     config_to_pv(co, pv)
 
@@ -73,7 +78,7 @@ def read_config(section, key, config_name=SETTING_NAME):
   if (section in co) and (key in co[section]):
     return co[section][key]
   else:
-    logging.info("No setting[%s][%s]", section, key)
+    logger.info("No setting[%s][%s]", section, key)
     return None
 
 def str_to_list(s:str):
@@ -82,10 +87,10 @@ def str_to_list(s:str):
 def config_to_pv(co: configparser.ConfigParser, pv: PV):
   
   if ('CONTROLLER' in co) and ('MODBUS_ID' in co['CONTROLLER']) and co['CONTROLLER']['MODBUS_ID'].isdigit():
-    logging.info("modbus id from setting:%s", co['CONTROLLER']['MODBUS_ID'])
+    logger.info("modbus id from setting:%s", co['CONTROLLER']['MODBUS_ID'])
     pv.modbus_id = int(co['CONTROLLER']['MODBUS_ID'])
   else:
-    logging.info("invalid modbus id from setting. default id=1")
+    logger.info("invalid modbus id from setting. default id=1")
     pv.modbus_id = 1
 
   if ('CONTROLLER' in co) and ('SOLO_MODE' in co['CONTROLLER']) and co['CONTROLLER']['SOLO_MODE'] == 'MODE_SOLO':
@@ -133,8 +138,8 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
       if installed_motors[i]:
         pv.motors[j]=i
       j += 1
-    logging.info("installed motors: %s", str(installed_motors))
-    logging.info("pv.motors: %s", str(pv.motors))
+    logger.info("installed motors: %s", str(installed_motors))
+    logger.info("pv.motors: %s", str(pv.motors))
 
 
   # MOTOR1,2,3 마지막 가동 상태. 교번 운전에 반영
