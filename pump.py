@@ -60,6 +60,8 @@ I2C_BUS = 10  # PCB 보드의 I2C (라즈베리파이 IO 보드는 1)
 I2C_RTC = 0x51  # Real Time Clock 디바이스 I2C 주소
 I2C_LCD = 0x27  # 1602 LCD 디바이스 I2C 주소
 
+FAN = 12
+
 #==============================================================================
 # systemd
 #==============================================================================
@@ -113,6 +115,9 @@ def main():
                                    speed=9600)  # get SPI device handle
 
     pump_screen.scr_init_msg(pv())
+
+    lgpio.gpio_claim_output(chip, FAN, 1)
+
     import ml
     #if Path("./model/pump_model.json").exists():
     #  pv().model = ml.read_model("pump_model.json")

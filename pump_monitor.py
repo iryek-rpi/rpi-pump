@@ -41,6 +41,7 @@ M0_IN = 26  #cur_sw0
 M1_IN = 19  #cur_sw1
 M2_IN = 13  #cur_sw2
 
+#FAN = 12
 
 def set_run_mode(chip, v):
   '''
@@ -211,6 +212,8 @@ def get_temp():
     except (IndexError, ValueError,) as e:
         raise RuntimeError('Could not parse temperature output.') from e
 
+#fan_state=0
+
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
   RepeatThread에서 주기적으로 호출되어 수위 입력을 처리함
@@ -222,6 +225,14 @@ def tank_monitor(**kwargs):
   pv: PV = kwargs['pv']
 
   pv.temperature = get_temp()
+  #if not fan_state:
+  #  lgpio.gpio_write(chip, FAN, 1)
+  #  fan_state=1
+  #  logging.debug("Fan On")
+  #else:
+  #  lgpio.gpio_write(chip, FAN, 0)
+  #  fan_state=0
+  #  logging.debug("Fan Off")
 
   adc_level = check_water_level(chip, spi)
   #adc_level = 1500
