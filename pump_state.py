@@ -3,8 +3,8 @@ from transitions import *
 from transitions.extensions import MachineFactory
 
 # transitions 라이브러리의 log를 출력하기 위해 logging 사용 
-#import picologging as logging
-import logging
+import picologging as logging
+#import logging
 
 import pump_util as util
 
@@ -15,6 +15,10 @@ from pump_variables import PV
 from pump_state_set_time import SetTimeStateMachine
 from pump_state_set_level import SetLevelStateMachine
 from pump_btn import buttons
+
+TRANSITION_LOGFILE_NAME = f"./logs/{util.get_time_str()}_transition.log"
+
+_ = util.make_logger(name='transitions', filename=TRANSITION_LOGFILE_NAME)
 
 #logging.getLogger('transitions').setLevel(logging.WARNING)
 #trasition_logger = logging.getLogger('transitions')
@@ -32,20 +36,19 @@ from pump_btn import buttons
 #file_handler.setFormatter(formatter)
 #transition_logger.addHandler(file_handler)
 
-TRANSITION_LOGFILE_NAME = f"./logs/{util.get_time_str()}_transition.log"
 
-logging.basicConfig(
-    filename=TRANSITION_LOGFILE_NAME,
-    filemode="a",
-    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
-    format=util.LOG_FORMAT,
-    level=logger.debug,
-    datefmt='%Y-%m-%d %H:%M:%S')
+#logging.basicConfig(
+#    filename=TRANSITION_LOGFILE_NAME,
+#    filemode="a",
+#    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
+#    format=util.LOG_FORMAT,
+#    level=logger.debug,
+#    datefmt='%Y-%m-%d %H:%M:%S')
 
 # Set up logging; The basic log level will be DEBUG
-logging.basicConfig(level=logger.debug)
+#logging.basicConfig(level=logger.debug)
 # Set transitions' log level to INFO; DEBUG messages will be omitted
-logging.getLogger('transitions').setLevel(logger.info)
+#logging.getLogger('transitions').setLevel(logger.info)
 
 #class LCDStateMachine(metaclass=ThreadSafeSingleton):
 class LCDStateMachine():

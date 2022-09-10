@@ -36,7 +36,7 @@ MAIN_LOGGER_NAME = "LOGGER_MAIN"
 MODBUS_LOGGER_NAME = "LOGGER_MODBUS"
 TRASITION_LOGGER_NAME = "transitions"
 
-def make_logger(name, filename=None, format=LOG_FORMAT, level=logger.debug):
+def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
   """Make a custom logger"""
   logger = logging.getLogger(name)
   logger.setLevel(level)
