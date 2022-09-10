@@ -1,7 +1,7 @@
 import time
 import datetime
 
-import logging
+import picologging as logging
 
 import lgpio
 from pump_lcd import lcd
@@ -12,6 +12,16 @@ from pump_variables import SOURCE_AI
 from pump_util import get_time, get_my_ipwlan, list_to_number
 from pump_btn import buttons
 from pump_monitor import water_level_rate
+
+FORMAT = ("%(asctime)-15s %(threadName)-15s"
+          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
+logging.basicConfig(
+    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
+    format=FORMAT,
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+logger = logging.getLogger()
 
 #LCD_WIDTH = 20    # Maximum characters per line
 LCD_WIDTH = 16  # Maximum characters per line
@@ -58,7 +68,7 @@ CURSOR_LL01 = 0xC0 + 14
 
 
 def scr_idle_1(pv: pump_variables.PV):
-  logging.debug("scr_idle_1:level:{}".format(pv.water_level))
+  logger.debug("scr_idle_1:level:{}".format(pv.water_level))
   if pv.source == SOURCE_AI:
     s1 = f"PWL: "
   else:
@@ -202,7 +212,7 @@ def scr_enter_set_level(pv):
 def scr_set_level_h10(pv):
   v = buttons().statemachine().high[0]
   p = CURSOR_LH10
-  logging.debug(f"h10:{v}")
+  logger.debug(f"h10:{v}")
   lcd().cursor_pos(2, p)
   lcd().cursor_off()
   lcd().put_str(str(v))
@@ -212,7 +222,7 @@ def scr_set_level_h10(pv):
 def scr_set_level_h01(pv):
   v = buttons().statemachine().high[1]
   p = CURSOR_LH01
-  logging.debug(f"h01:{v}")
+  logger.debug(f"h01:{v}")
   lcd().cursor_pos(2, p)
   lcd().cursor_off()
   lcd().put_str(str(v))
@@ -222,7 +232,7 @@ def scr_set_level_h01(pv):
 def scr_set_level_L10(pv):
   v = buttons().statemachine().low[0]
   p = CURSOR_LL10
-  logging.debug(f"L10:{v}")
+  logger.debug(f"L10:{v}")
   lcd().cursor_pos(2, p)
   lcd().cursor_off()
   lcd().put_str(str(v))
@@ -232,7 +242,7 @@ def scr_set_level_L10(pv):
 def scr_set_level_L01(pv):
   v = buttons().statemachine().low[1]
   p = CURSOR_LL01
-  logging.debug(f"L01:{v}")
+  logger.debug(f"L01:{v}")
   lcd().cursor_pos(2, p)
   lcd().cursor_off()
   lcd().put_str(str(v))
@@ -267,7 +277,7 @@ def scr_settime_save(pv):
 def scr_settime_y10(pv):
   y = buttons().statemachine().y
   y10 = (y // 10) % 100
-  logging.debug(f"y:{y} y10:{y10}")  #" str(y10):",str(y10))
+  logger.debug(f"y:{y} y10:{y10}")  #" str(y10):",str(y10))
   lcd().cursor_pos(2, CURSOR_Y10)
   lcd().cursor_off()
   lcd().put_str(str(y10))

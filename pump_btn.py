@@ -3,10 +3,13 @@ from gpiozero.pins.lgpio import LGPIOFactory
 from gpiozero import Button
 from time import sleep
 
-import logging
+import picologging as logging
 
 #from pump_lcd import lcd_string
 
+import pump_util as util
+
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 class PButton(Button):
 
@@ -34,65 +37,65 @@ buttons.instance = None
 
 
 def held_1(d):
-  logging.debug(f"B1 held:{d}")
+  logger.debug(f"B1 held:{d}")
   d.held = True
   d.sm.btn1_l()
-  logging.debug(f"Button1 Held: state:{d.sm.state}")
+  logger.debug(f"Button1 Held: state:{d.sm.state}")
 
 
 def held_2(d):
-  logging.debug(f"B2 held:{d}")
+  logger.debug(f"B2 held:{d}")
   d.held = True
-  logging.debug(f"state:{d.sm.state}")
+  logger.debug(f"state:{d.sm.state}")
 
 
 def held_3(d):
-  logging.debug(f"B3 held:{d}")
+  logger.debug(f"B3 held:{d}")
   d.held = True
-  logging.debug(f"state:{d.sm.state}")
+  logger.debug(f"state:{d.sm.state}")
 
 
 def pressed_1(d):
-  logging.debug(f"B1 pressed:{d}")
+  logger.debug(f"B1 pressed:{d}")
   d.held = False
   #d.sm.btn1_s()
-  logging.debug(f"state:{d.sm.state}")
+  logger.debug(f"state:{d.sm.state}")
 
 
 def released_1(d):
   if d.held == False:
-    logging.debug(f"B1 released:{d}")
+    logger.debug(f"B1 released:{d}")
     d.sm.btn1_s()
-    logging.debug(f"state:{d.sm.state}")
+    logger.debug(f"state:{d.sm.state}")
   else:
     d.held = False
 
 
 def pressed_2(d):
-  logging.debug(f"B2 pressed:{d}")
+  logger.debug(f"B2 pressed:{d}")
   d.held = False
-  logging.debug(f"state:{d.sm.state}")
+  logger.debug(f"state:{d.sm.state}")
 
 
 def released_2(d):
   if d.held == False:
-    logging.debug(f"B2 released:{d}")
+    logger.debug(f"B2 released:{d}")
     d.sm.btn2_s()
-    logging.debug(f"state:{d.sm.state}")
+    logger.debug(f"state:{d.sm.state}")
   else:
     d.held = False
 
 
 def pressed_3(d):
-  logging.debug(f"B3 pressed:{d}")
+  logger.debug(f"B3 pressed:{d}")
   d.held = False
-  logging.debug(f"state:{d.sm.state}")
+  logger.debug(f"state:{d.sm.state}")
 
 
 def released_3(d):
   if d.held == False:
-    logging.debug(f"B3 released:{d}")
-    logging.debug(f"state:{d.sm.state}")
+    logger.debug(f"B3 released:{d}")
+    logger.debug(f"state:{d.sm.state}")
     d.sm.btn3_s()
   else:
     d.held = False
@@ -135,20 +138,20 @@ class PumpButtons(object):
 
   def set_statemachine(self, new_sm):
     self.previous_sm = self.b1.sm
-    logging.debug(f"new_sm:{new_sm}")
-    logging.debug(f"b1:{self.b1}")
+    logger.debug(f"new_sm:{new_sm}")
+    logger.debug(f"b1:{self.b1}")
     self.b1.sm = new_sm
     self.b2.sm = new_sm
     self.b3.sm = new_sm
 
   def restore_statemachine(self):
-    logging.debug(f"previous_sm:{self.previous_sm}")
-    logging.debug(f"self.b1.sm:{self.b1.sm}")
+    logger.debug(f"previous_sm:{self.previous_sm}")
+    logger.debug(f"self.b1.sm:{self.b1.sm}")
     self.b1.sm = self.previous_sm
     self.previous_sm = self.b2.sm
     self.b2.sm = self.b1.sm
     self.b3.sm = self.b1.sm
-    logging.debug(f"self.b1.sm:{self.b1.sm}")
+    logger.debug(f"self.b1.sm:{self.b1.sm}")
     self.b1.sm.enter()
 
   def statemachine(self):

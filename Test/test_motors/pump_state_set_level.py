@@ -2,7 +2,7 @@ import transitions
 from transitions import *
 from transitions.extensions import MachineFactory
 
-import logging
+import picologging as logging
 
 import calendar
 import pexpect
@@ -12,6 +12,16 @@ from pump_variables import PV
 from pump_util import list_to_number, change_digit
 from pump_btn import PumpButtons, buttons
 import config
+
+FORMAT = ("%(asctime)-15s %(threadName)-15s"
+          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
+logging.basicConfig(
+    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
+    format=FORMAT,
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+logger = logging.getLogger()
 
 
 #class SetTimeStateMachine(metaclass=ThreadSafeSingleton):
@@ -152,7 +162,7 @@ class SetLevelStateMachine():
     self.low = [0, 0]
 
   def enter_set_level(self):
-    logging.debug(f"enter_set_level:{self}")
+    logger.debug(f"enter_set_level:{self}")
     #buttons().set_statemachine(self)
     self.high_old = [(self.pv.setting_high // 10) % 10,
                      self.pv.setting_high % 10]

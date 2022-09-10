@@ -9,12 +9,56 @@ import sys
 from subprocess import check_output     
 from re import findall            
 import os
-import datetime
-from datetime import timedelta
+import pathlib
+import picologging as logging
 import threading
 
-import time
 import datetime
+from datetime import timedelta
+
+def get_time_str():
+  return datetime.datetime.now().strftime("%Y-%2m-%2d_%H-%M-%S")
+
+#LOG_FORMAT = '%(asctime)s [%(filename)s:%(lineno)d] %(message)s'
+#LOG_FORMAT = ("%(asctime)-15s %(threadName)-15s"
+#          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
+
+# picologging의 제약사항으로 thread name 출력이 안됨
+LOG_FORMAT = '%(asctime)s p:%(process)d t:%(thread)d [%(filename)s:%(lineno)d] %(message)s'
+
+MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
+TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
+pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
+#logfile = pathlib.Path(MAIN_LOGFILE_NAME)
+#logfile.touch(exist_ok=True)
+
+MAIN_LOGGER_NAME = "LOGGER_MAIN"
+MODBUS_LOGGER_NAME = "LOGGER_MODBUS"
+TRASITION_LOGGER_NAME = "transitions"
+
+def make_logger(name, filename=None, format=LOG_FORMAT, level=logger.debug):
+  """Make a custom logger"""
+  logger = logging.getLogger(name)
+  logger.setLevel(level)
+
+  formatter = logging.Formatter(format, datefmt="%Y-%m-%d:%H:%M:%S")
+
+  console_handler = logging.StreamHandler()
+  console_handler.setLevel(level)
+  console_handler.setFormatter(formatter)
+
+  logger.addHandler(console_handler)
+
+  if filename:
+    file_handler = logging.FileHandler(filename)
+    file_handler.setLevel(level)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+  return logger
+
+_ = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME)
+
 
 def change_list_digit(lst, idx, amount=1):
   lst[idx] = change_digit(lst[idx], idx, amount)

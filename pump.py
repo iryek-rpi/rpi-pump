@@ -6,7 +6,7 @@
 # https://github.com/adafruit/Adafruit_Python_SSD1306
 
 import pathlib
-import logging
+import picologging as logging
 from pathlib import Path
 from datetime import timedelta
 import multiprocessing as mp
@@ -16,9 +16,14 @@ import signal
 import time
 import datetime
 
+import picologging as logging
+
+# logger 생성하기 위해 가장 먼저 import 해야 함
+import pump_util as util
+from pump_util import *
+
 from pump_variables import PV, pv
 import pump_variables
-from pump_util import *
 from pump_lcd import Lcd, lcd
 import pump_screen
 from pump_btn import PumpButtons, buttons
@@ -36,20 +41,14 @@ import config
 #==============================================================================
 # 디버그용 로그 설정
 #==============================================================================
-MAIN_LOGFILE_NAME = "./logs/main.log"
-pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
-logfile = pathlib.Path(MAIN_LOGFILE_NAME)
-logfile.touch(exist_ok=True)
-
-FORMAT = ("%(asctime)-15s %(threadName)-15s"
-          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
-logging.basicConfig(
-    filename=MAIN_LOGFILE_NAME,
-    filemode="a",
-    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
-    format=FORMAT,
-    level=logging.DEBUG,
-    datefmt='%Y-%m-%d %H:%M:%S')
+#logging.basicConfig(
+#    filename=MAIN_LOGFILE_NAME,
+#    filemode="a",
+#    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
+#    format=FORMAT,
+#    level=logging.debug,
+#    datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 #==============================================================================
 # 디바이스 구성 요소 초기화
@@ -69,21 +68,21 @@ is_shutdown = False
 
 
 def stop(sig, frame):
-  logging.info(f"SIGTERM at {datetime.datetime.now()}")
+  logger.info(f"SIGTERM at {datetime.datetime.now()}")
   global is_shutdown
   is_shutdown = True
 
 
 def ignore(sig, frame):
-  logging.info(f"SIGHUP at {datetime.datetime.now()}")
+  logger.info(f"SIGHUP at {datetime.datetime.now()}")
 
 
 signal.signal(signal.SIGTERM, stop)
 #signal.signal(signal.SIGHUP, stop)
 
-logging.info(f"=================================================")
-logging.info(f"START at {datetime.datetime.now()}")
-logging.info(f"=================================================")
+logger.info(f"=================================================")
+logger.info(f"START at {datetime.datetime.now()}")
+logger.info(f"=================================================")
 
 
 #==============================================================================
@@ -99,7 +98,7 @@ def main():
     lcd_instance = Lcd(addr=0x27, bus=i2c_bus)
     time.sleep(0.1)
   finally:
-    logging.info("BUS:{:02d} LCD ADDR:{:02X}".format(i2c_bus, I2C_LCD))
+    logger.info("BUS:{:02d} LCD ADDR:{:02X}".format(i2c_bus, I2C_LCD))
 
   #i2c_rtc = lgpio.i2c_open(10, I2C_RTC) # 10 for RTC bus both on pump & CM4IO board
 
@@ -163,7 +162,7 @@ def main():
     monitor.start()
 
     # 수위 저장을 위한 스레드
-    logging.info(f"datapath: {pv().data_path}")
+    logger.info(f"datapath: {pv().data_path}")
     Path(pv().data_path).mkdir(parents=True, exist_ok=True)
     saver = pump_thread.RepeatThread(interval=pv().setting_save_interval,
                                      execute=pump_variables.save_data,
@@ -180,7 +179,7 @@ def main():
                                           })
     responder.start()
 
-    logging.info("modbus_id:%d", pv().modbus_id)
+    logger.info("modbus_id:%d", pv().modbus_id)
     # Modbus 통신을 위한 프로세스
     comm_proc = mp.Process(name="Modbus Server",
                            target=modbus_server_serial.rtu_server_proc,

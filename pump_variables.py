@@ -5,7 +5,11 @@ import os
 import pandas as pd
 import csv
 
-import logging
+import picologging as logging
+
+import pump_util as util
+
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 # 수위계 입력에 의한 수위값인지, 예측에 의한 수위값인지
 SOURCE_SENSOR = 0
@@ -133,8 +137,8 @@ class PV():
     self.lock.release()
 
   def filter_data(self, level):
-    logging.debug("level: {}".format(level))
-    logging.debug("q_level: {}".format(self.q_level.queue))
+    logger.debug("level: {}".format(level))
+    logger.debug("q_level: {}".format(self.q_level.queue))
 
     self.lock.acquire()
 
@@ -181,10 +185,10 @@ def save_data(**kwargs):
   data = pv.dump_data()
   if len(data) > 0:
     fname = os.path.join(pv.data_path, n.strftime("%Y-%m-%d-%H-%M-%S.csv"))
-    logging.debug(f"save file name:{fname}")
+    logger.debug(f"save file name:{fname}")
     try:
       with open(fname, 'w') as f:
         w = csv.writer(f)
         w.writerows(data)
     except:
-      logging.debug("Error save data")
+      logger.debug("Error save data")

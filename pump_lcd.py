@@ -6,7 +6,11 @@ from re import findall, match
 from subprocess import check_output
 from os.path import exists
 
-import logging
+import picologging as logging
+
+import pump_util as util
+
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 # old and new versions of the RPi have swapped the two i2c buses
 # they can be identified by RPI_REVISION (or check sysfs)
@@ -163,7 +167,7 @@ class Lcd:
   def string(self, msg, line):
     LCD_WIDTH = 16
     msg = msg.ljust(LCD_WIDTH," ")
-    logging.debug("|{}|".format(msg))
+    logger.debug("|{}|".format(msg))
 
     if line == 1:
       self.write(0x80)
