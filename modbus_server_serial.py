@@ -1,8 +1,6 @@
 """Modbus server process
 main thread에서 생성하는 subprocess
-Pymodbus Asyncio Server - asyncio_server_serial.py
-
-Pymodbus Asyncio Server example 코드를 기반으로 작성
+Pymodbus Asyncio Server - asyncio_server_serial.py을 기반으로 작성
 """
 # --------------------------------------------------------------------------- #
 # import the various server implementations
