@@ -13,9 +13,9 @@ from pymodbus.version import version
 from pymodbus.server.async_io import StartSerialServer
 from pymodbus.device import ModbusDeviceIdentification
 
-#from pymodbus.datastore import ModbusSlaveContext
-#from pymodbus.datastore import ModbusServerContext
-#from pymodbus.datastore import ModbusSequentialDataBlock
+from pymodbus.datastore import ModbusSlaveContext
+from pymodbus.datastore import ModbusServerContext
+from pymodbus.datastore import ModbusSequentialDataBlock
 #from pymodbus.datastore import ModbusSparseDataBlock
 import pymodbus.datastore as ds
 
@@ -68,7 +68,7 @@ class PumpDataBlock(ds.ModbusSequentialDataBlock):
         :param count: The number of values to test for
         :returns: True if the request in within range, False otherwise
         """
-    address += 40000
+    #address += 40000
     logger.info(f"validate: address({address}) in {self.address}")
     return address in self.address
 
