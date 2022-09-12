@@ -7,7 +7,7 @@ import config
 
 import pump_util as util
 
-logger = logging.getLogger(util.MAIN_LOGGER_NAME)
+logger = logging.getLogger(util.MODBUS_LOGGER_NAME)
 
 # 번지	  Description	         R/W	    기타
 # 40001	  현재 수위	            읽기	(0~1000)
@@ -54,6 +54,32 @@ MBW_PUMP_COUNT = 40030
 logger = logging.getLogger(name=util.MODBUS_LOGGER_NAME)
 
 def respond(**kwargs):
+  """Main 프로세스의 RespondThread에서 실행되는 Modbus 요청에 대한 응답 루틴
+    """
+  p_respond = kwargs['pipe']
+  pv: pump_variables.PV = kwargs['pv']
+  chip = kwargs['chip']
+
+  logger.info(f"Starting respond thread({kwargs})")
+  while 1:
+    logger.info(f"Receiving from Pipe:{p_respond}.......")
+    msg = p_respond.recv()
+    logger.info(f"Received from Pipe:{msg}")
+    wr, address, count, values = msg
+
+    if not wr:
+      values = pv.get_modbus_sequence(address=address, count=count)
+      logger.info(f"get modbus block: {values} at: {address}")
+    else:
+      pv.set_modbus_sequence(address=address, values=values)
+      logger.info(f"set modbus block at {address}")
+
+    msg = (address, values)
+    p_respond.send(msg)
+    logger.info(f"sent: {msg}")
+
+
+def respond_old(**kwargs):
   """Main 프로세스의 RespondThread에서 실행되는 Modbus 요청에 대한 응답 루틴
     """
   p_respond = kwargs['pipe']

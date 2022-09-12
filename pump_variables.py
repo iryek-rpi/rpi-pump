@@ -8,6 +8,7 @@ import csv
 import picologging as logging
 
 import pump_util as util
+import modbus_address as ma
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
@@ -59,18 +60,31 @@ class PV():
   def __init__(self):
     self.chip = -1
     self.model = None
+
+    self._mbl = [0 for _ in range(ma.M_END)]
+
+    #self.water_level = 0  # 현재 수위
+    #self.source = SOURCE_SENSOR  # PLC/AI 운전모드
+    
+    #self.motor1 = 0  # motor 1,2,3의 마지막 구동 상태
+    #self.motor2 = 0
+    #self.motor3 = 0
+
     self.modbus_id = 0
-    self.source = SOURCE_SENSOR  # PLC/AI 운전모드
+
+    #self.setting_high = 80  # 고수위(%)
+    #self.setting_hh = 80  # 고수위(%)
+    #self.setting_low = 20  # 저수위(%)
+    #self.setting_ll = 20  # 저수위(%)
+
     self.solo_mode = MODE_PLC
     self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
-    self.water_level = 0  # 현재 수위
+
+
     self.temperature = 0
     # 현재 모터 상태는 항상 MOTOR_INPUT 단자에서 읽어옴
     #self.motor_count = 1
     self.motors = [0,0,0] # 연결된 모터는 1, 연결 안된 모터는 0 
-    self.motor1 = 0  # motor 1,2,3의 마지막 구동 상태
-    self.motor2 = 0
-    self.motor3 = 0
     self.motor_valid = [0]  # 사용할 수 있는 모터 번호 리스트(0~2)
     self.motor_lead_time = 10
 
@@ -85,10 +99,6 @@ class PV():
     self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
     self.setting_4ma = 0.0  # 4mA 수위(수위계 캘리브레이션)
     self.setting_20ma = 100.0  # 20mA 수위(수위계 캘리브레이션)
-    self.setting_high = 80  # 고수위(%)
-    self.setting_hh = 80  # 고수위(%)
-    self.setting_low = 20  # 저수위(%)
-    self.setting_ll = 20  # 저수위(%)
     self.setting_adc_invalid = 100  # ADC 값이 이 값 이하이면 입력이 없는 것으로 간주함
 
     # 수위 기록 인터벌 1, 10, 30, 60(1min), 180(3min), 300(5min), 600(10min), 3600(1hr)
@@ -119,6 +129,162 @@ class PV():
     self.user_id = "hwan"
     self.data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                                   'data')
+
+  @property
+  def water_level(self):
+    return self._mbl[ma.M1_LEVEL_SENSOR]
+
+  @water_level.setter
+  def water_level(self, level):
+    self._mbl[ma.M1_LEVEL_SENSOR] = level 
+
+  @property
+  def water_level_ai(self):
+    return self._mbl[ma.M2_LEVEL_AI]
+
+  @water_level_ai.setter
+  def water_level_ai(self, level):
+    self._mbl[ma.M2_LEVEL_AI] = level 
+
+  @property
+  def source(self):
+    return self._mbl[ma.M3_SOURCE]
+
+  @source.setter
+  def source(self, s):
+    self._mbl[ma.M3_SOURCE] = s 
+
+  @property
+  def motor1(self):
+    return self._mbl[ma.M4_PUMP1_STATE]
+
+  @motor1.setter
+  def motor1(self, s):
+    self._mbl[ma.M4_PUMP1_STATE] = s 
+
+  @property
+  def motor2(self):
+    return self._mbl[ma.M5_PUMP2_STATE]
+
+  @motor2.setter
+  def motor2(self, s):
+    self._mbl[ma.M5_PUMP2_STATE] = s 
+
+  @property
+  def motor3(self):
+    return self._mbl[ma.M6_PUMP3_STATE]
+
+  @motor3.setter
+  def motor3(self, s):
+    self._mbl[ma.M6_PUMP3_STATE] = s 
+
+  @property
+  def setting_high(self):
+    return self._mbl[ma.M8_AUTO_H]
+
+  @setting_high.setter
+  def setting_high(self, level):
+    self._mbl[ma.M8_AUTO_H] = level 
+
+  @property
+  def setting_hh(self):
+    return self._mbl[ma.M9_AUTO_HH]
+
+  @setting_hh.setter
+  def setting_hh(self, level):
+    self._mbl[ma.M9_AUTO_HH] = level 
+
+  @property
+  def setting_low(self):
+    return self._mbl[ma.M10_AUTO_L]
+
+  @setting_low.setter
+  def setting_low(self, level):
+    self._mbl[ma.M10_AUTO_L] = level 
+
+  @property
+  def setting_ll(self):
+    return self._mbl[ma.M11_AUTO_LL]
+
+  @setting_ll.setter
+  def setting_ll(self, level):
+    self._mbl[ma.M11_AUTO_LL] = level 
+
+  @property
+  def solo_mode(self):
+    return self._mbl[ma.M12_SOLO_MODE]
+
+  @solo_mode.setter
+  def solo_mode(self, m):
+    self._mbl[ma.M12_SOLO_MODE] = m 
+
+  @property
+  def op_mode(self):
+    return self._mbl[ma.M13_PUMP_OP_MODE]
+
+  @op_mode.setter
+  def op_mode(self, m):
+    self._mbl[ma.M13_PUMP_OP_MODE] = m 
+
+  @property
+  def pump1_on(self):
+    return self._mbl[ma.M14_PUMP1_ON]
+
+  @pump1_on.setter
+  def pump1_on(self, s):
+    self._mbl[ma.M14_PUMP1_ON] = s 
+
+  @property
+  def pump2_on(self):
+    return self._mbl[ma.M15_PUMP2_ON]
+
+  @pump2_on.setter
+  def pump2_on(self, s):
+    self._mbl[ma.M15_PUMP2_ON] = s 
+
+  @property
+  def pump3_on(self):
+    return self._mbl[ma.M16_PUMP3_ON]
+
+  @pump3_on.setter
+  def pump3_on(self, s):
+    self._mbl[ma.M16_PUMP3_ON] = s 
+
+  @property
+  def pump_count(self):
+    return self._mbl[ma.M17_PUMP_COUNT]
+
+  @pump_count.setter
+  def pump_count(self, n):
+    self._mbl[ma.M17_PUMP_COUNT] = n 
+
+  def get_modbus_sequence(self, address, count):
+    if address < 0:
+      address = 0
+    if address >= ma.M_END:
+      address = ma.M_END -1
+    
+    if (address+count)>ma.M_END:
+      count = 0
+    if (address+count)<=0:
+      count = 0
+
+    return self._mbl[address:address+count].copy()
+
+  def set_modbus_sequence(self, address, values):
+    if address < 0:
+      address = 0
+    if address >= ma.M_END:
+      address = ma.M_END -1
+    
+    count = len(values)
+    if (address+count)>ma.M_END:
+      count = 0
+    if (address+count)<=0:
+      count = 0
+
+    for i in range(count):
+      self._mbl[address+i] = values[i]
 
 #  def update(self):
 #    self.source = SOURCE_SENSOR  # 수위값 출처
