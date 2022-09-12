@@ -59,6 +59,7 @@ def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
   return logger
 
 _ = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME)
+_ = make_logger(name=MODBUS_LOGGER_NAME, filename=MODBUS_LOGFILE_NAME)
 
 
 def change_list_digit(lst, idx, amount=1):
