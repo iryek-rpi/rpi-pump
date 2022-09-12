@@ -51,6 +51,7 @@ MBW_PUMP2_ON = 40028
 MBW_PUMP3_ON = 40029
 MBW_PUMP_COUNT = 40030
 
+logger = logging.getLogger(name=util.MODBUS_LOGGER_NAME)
 
 def respond(**kwargs):
   """Main 프로세스의 RespondThread에서 실행되는 Modbus 요청에 대한 응답 루틴
@@ -64,7 +65,7 @@ def respond(**kwargs):
     logger.info(f"Receiving from Pipe:{p_respond}.......")
     msg = p_respond.recv()
     logger.info(f"Received from Pipe:{msg}")
-    wr, address, values = msg
+    wr, address, count, values = msg
     address += 40000
 
     if address == ma.MBR_LEVEL_SENSOR:  # 현재 수위

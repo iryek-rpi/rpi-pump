@@ -27,8 +27,7 @@ from pymodbus.transaction import ModbusRtuFramer
 import modbus_address as ma
 import pump_util as util
 
-logger = logging.getLogger(util.MAIN_LOGGER_NAME)
-
+logger = logging.getLogger(name=util.MODBUS_LOGGER_NAME)
 
 # --------------------------------------------------------------------------- #
 # configure the service logging
@@ -57,7 +56,7 @@ class PumpDataBlock(ds.ModbusSequentialDataBlock):
   def __init__(self, address, pipe_req):
     """Initialize the datastore.
         """
-    self.address = address_list.copy()
+    self.address = address.copy()
     self.values = {}
     self.default_value = 0
     self.pipe_req = pipe_req
@@ -80,12 +79,12 @@ class PumpDataBlock(ds.ModbusSequentialDataBlock):
         :param count: The number of values to retrieve
         :returns: The requested values from a:a+c
         """
-    msg = (False, address, [])
-    logger.info(f"MODBUS SERVER: sending request to getValues(address:{msg})")
+    msg = (False, address, count, [])
+    logger.info(f"MODBUS SERVER: sending request to getValues(address:{address}, count:{count}, msg:{msg})")
     self.pipe_req.send(msg)
     response = self.pipe_req.recv()
     logger.info(
-        f"MODBUS SERVER: received response:{response} for getValues(address:{address})"
+        f"MODBUS SERVER: received response:{response} for getValues(address:{address} msg:{msg})"
     )
     return response[1]
 
@@ -95,7 +94,7 @@ class PumpDataBlock(ds.ModbusSequentialDataBlock):
         :param address: The starting address
         :param values: The new values to be set
         """
-    msg = (True, address, values)
+    msg = (True, address, 0, values)
     logger.info(
         f"MODBUS SERVER: sending {msg} to setValues(address:{address}, values:{values})"
     )

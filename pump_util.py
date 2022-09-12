@@ -27,6 +27,7 @@ def get_time_str():
 LOG_FORMAT = '%(asctime)s p:%(process)d t:%(thread)d [%(filename)s:%(lineno)d] %(message)s'
 
 MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
+MODBUS_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus.log"
 TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
 pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
 #logfile = pathlib.Path(MAIN_LOGFILE_NAME)
