@@ -141,13 +141,14 @@ async def run_server(pipe_req, modbus_id):
           "MajorMinorRevision": version.short(),
       })
 
-  await StartSerialServer(context,
+  server = await StartSerialServer(context,
                           framer=ModbusRtuFramer,
                           identity=identity,
                           port=PORT,
                           timeout=.005,
                           baudrate=9600,
                           autoreconnect=True)
+  return server
 
 
 if __name__ == "__main__":
