@@ -36,6 +36,8 @@ import pump_thread
 import modbus_server_serial
 import modbus_respond
 
+import fan_control
+
 import config
 
 #==============================================================================
@@ -115,7 +117,7 @@ def main():
 
     pump_screen.scr_init_msg(pv())
 
-    lgpio.gpio_claim_output(chip, FAN, 1)
+    #lgpio.gpio_claim_output(chip, FAN, 1)
 
     import ml
     #if Path("./model/pump_model.json").exists():
@@ -188,6 +190,14 @@ def main():
                                'modbus_id': pv().modbus_id
                            })
     comm_proc.start()
+
+    logger.info("Starting fan control")
+    # fan control process
+    fan_logger = logging.getLogger(name = util.FAN_LOGGER_NAME)
+    fan_proc = mp.Process(name="Fan Control",
+                           target=fan_control.fan_proc,
+                           kwargs = {'logger': fan_logger})
+    fan_proc.start()
 
     while not is_shutdown:
       pass

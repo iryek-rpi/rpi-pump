@@ -28,6 +28,7 @@ LOG_FORMAT = '%(asctime)s p:%(process)d t:%(thread)d [%(filename)s:%(lineno)d] %
 
 MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
 MODBUS_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus.log"
+FAN_LOGFILE_NAME = f"./logs/{get_time_str()}_fan.log"
 TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
 pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
 #logfile = pathlib.Path(MAIN_LOGFILE_NAME)
@@ -36,6 +37,7 @@ pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
 MAIN_LOGGER_NAME = "LOGGER_MAIN"
 MODBUS_LOGGER_NAME = "LOGGER_MODBUS"
 TRASITION_LOGGER_NAME = "transitions"
+FAN_LOGGER_NAME = "LOGGER_FAN"
 
 def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
   """Make a custom logger"""
@@ -58,6 +60,7 @@ def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
 
   return logger
 
+print("make_logger")
 _ = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME)
 _ = make_logger(name=MODBUS_LOGGER_NAME, filename=MODBUS_LOGFILE_NAME)
 
