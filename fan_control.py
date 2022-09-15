@@ -11,7 +11,7 @@ from gpiozero import OutputDevice
 ON_THRESHOLD = 60
 OFF_THRESHOLD = 50 
 
-SLEEP_INTERVAL = 5  # (seconds) How often we check the core temperature.
+SLEEP_INTERVAL = 20  # (seconds) How often we check the core temperature.
 
 GPIO_PIN=12
 
