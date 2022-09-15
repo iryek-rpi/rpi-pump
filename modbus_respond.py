@@ -7,7 +7,8 @@ import config
 
 import pump_util as util
 
-logger = logging.getLogger(util.MODBUS_LOGGER_NAME)
+#logger = logging.getLogger(util.MODBUS_LOGGER_NAME)
+logger = util.make_logger(name=util.MODBUS_CLIENT_LOGGER_NAME, filename=util.MODBUS_CLIENT_LOGFILE_NAME)
 
 # 번지	  Description	         R/W	    기타
 # 40001	  현재 수위	            읽기	(0~1000)
@@ -50,8 +51,6 @@ MBW_PUMP1_ON = 40027
 MBW_PUMP2_ON = 40028
 MBW_PUMP3_ON = 40029
 MBW_PUMP_COUNT = 40030
-
-logger = logging.getLogger(name=util.MODBUS_LOGGER_NAME)
 
 def respond(**kwargs):
   """Main 프로세스의 RespondThread에서 실행되는 Modbus 요청에 대한 응답 루틴

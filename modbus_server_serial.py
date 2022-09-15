@@ -27,7 +27,7 @@ from pymodbus.transaction import ModbusRtuFramer
 import modbus_address as ma
 import pump_util as util
 
-logger = logging.getLogger(name=util.MODBUS_LOGGER_NAME)
+logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME)
 
 # --------------------------------------------------------------------------- #
 # configure the service logging

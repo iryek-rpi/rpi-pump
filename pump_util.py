@@ -27,7 +27,8 @@ def get_time_str():
 LOG_FORMAT = '%(asctime)s p:%(process)d t:%(thread)d [%(filename)s:%(lineno)d] %(message)s'
 
 MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
-MODBUS_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus.log"
+MODBUS_CLIENT_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_client.log"
+MODBUS_SERVER_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_server.log"
 FAN_LOGFILE_NAME = f"./logs/{get_time_str()}_fan.log"
 TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
 pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
@@ -35,7 +36,8 @@ pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
 #logfile.touch(exist_ok=True)
 
 MAIN_LOGGER_NAME = "LOGGER_MAIN"
-MODBUS_LOGGER_NAME = "LOGGER_MODBUS"
+MODBUS_SERVER_LOGGER_NAME = "LOGGER_MODBUS_SERVER"
+MODBUS_CLIENT_LOGGER_NAME = "LOGGER_MODBUS_CLIENT"
 TRASITION_LOGGER_NAME = "transitions"
 FAN_LOGGER_NAME = "LOGGER_FAN"
 
@@ -62,8 +64,6 @@ def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
 
 print("make_logger")
 _ = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME)
-_ = make_logger(name=MODBUS_LOGGER_NAME, filename=MODBUS_LOGFILE_NAME)
-
 
 def change_list_digit(lst, idx, amount=1):
   lst[idx] = change_digit(lst[idx], idx, amount)
