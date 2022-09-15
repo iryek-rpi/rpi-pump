@@ -97,7 +97,8 @@ def scr_idle_1(pv):
   else:
     s1 = 'X'
 
-  rate = water_level_rate(pv)
+  #rate = water_level_rate(pv)
+  rate = pv.water_level
 
   lcd().string(s1, L1)
   lcd().bar(rate, L2)

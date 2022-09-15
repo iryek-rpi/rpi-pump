@@ -337,7 +337,7 @@ def tank_monitor(**kwargs):
   #writeDAC(chip, level, spi)
 
   #writeDAC(chip, water_level_ADC(pv, pv.water_level), spi)
-  writeDAC(chip, int(water_level_ADC(pv, 80)), spi)
+  writeDAC(chip, int(water_level_ADC(pv, level)), spi)
   sm.update_idle()
 
 
