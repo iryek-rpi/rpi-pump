@@ -39,6 +39,7 @@ import modbus_respond
 import fan_control
 
 import config
+import mqtt_pub
 
 #==============================================================================
 # 디버그용 로그 설정
@@ -110,6 +111,13 @@ def main():
     pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
     config.init_setting(pv())
 
+    pv().mqtt_timeout = config.read_config('MQTT', 'TIMEOUT')
+    pv().mqtt_port = config.read_config('MQTT', 'PORT')
+    pv().mqtt_broker = config.read_config('MQTT', 'BROKER')
+
+    client = mqtt_pub.mqtt_init(broker=pv().mqtt_broker, port=pv().mqtt_port)
+    pv().mqtt_client = client
+
     chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
     pv().chip = chip
     spi = pump_monitor.init_spi_rw(chip, pv(),
@@ -119,7 +127,7 @@ def main():
 
     #lgpio.gpio_claim_output(chip, FAN, 1)
 
-    import ml
+    #import ml
     #if Path("./model/pump_model.json").exists():
     #  pv().model = ml.read_model("pump_model.json")
 

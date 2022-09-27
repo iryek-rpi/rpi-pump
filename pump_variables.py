@@ -258,6 +258,30 @@ class PV():
   def pump_count(self, n):
     self._mbl[ma.M17_PUMP_COUNT] = n 
 
+  @property
+  def mqtt_timeout(self):
+    return self._mbl[ma.M18_MQTT_TIMEOUT]
+
+  @mqtt_timeout.setter
+  def mqtt_timeout(self, n):
+    self._mbl[ma.M18_MQTT_TIMEOUT] = n 
+
+  @property
+  def mqtt_port(self):
+    return self._mbl[ma.M19_MQTT_PORT]
+
+  @mqtt_port.setter
+  def mqtt_port(self, n):
+    self._mbl[ma.M19_MQTT_PORT] = n 
+
+  @property
+  def mqtt_broker(self):
+    return self._mqtt_broker
+
+  @mqtt_broker.setter
+  def mqtt_broker(self, broker):
+    self._mqtt_broker = broker 
+
   def get_modbus_sequence(self, address, count):
     if address < 0:
       address = 0

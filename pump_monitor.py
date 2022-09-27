@@ -18,8 +18,9 @@ import csv
 import pump_util as util
 from pump_util import *
 import pump_variables
-from pump_variables import PV
+from pump_variables import PV, pv
 import config
+import mqtt_pub
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
@@ -311,6 +312,7 @@ def tank_monitor(**kwargs):
 #          set_motor_state(chip, m, True, pv)
 #          pv.last_pump = m
 
+  mqtt_pub.mqtt_publish(topic="sensor_level", level=str(pv.water_level), client=pv.mqtt_client)
 
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),

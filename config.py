@@ -50,6 +50,11 @@ def init_setting(pv: PV):
         'ADC_IGNORE_SPIKE': 100
     }
     co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd'}
+    co['MQTT'] = {
+      'BROKER': 'X230T.local',
+      'PORT': 1883,
+      'TIMEOUT': 10
+    }
 
     with open(SETTING_NAME, 'w') as f:
       co.write(f)
