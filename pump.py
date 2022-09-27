@@ -114,8 +114,10 @@ def main():
     pv().mqtt_timeout = config.read_config('MQTT', 'TIMEOUT')
     pv().mqtt_port = config.read_config('MQTT', 'PORT')
     pv().mqtt_broker = config.read_config('MQTT', 'BROKER')
+    pv().mqtt_topic = config.read_config('MQTT', 'TOPIC')
+    pv().mqtt_client_name = config.read_config('MQTT', 'CLIENT_NAME')
 
-    client = mqtt_pub.mqtt_init(broker=pv().mqtt_broker, port=pv().mqtt_port)
+    client = mqtt_pub.mqtt_init(client_name=pv().mqtt_client_name, broker=pv().mqtt_broker, port=pv().mqtt_port)
     pv().mqtt_client = client
 
     chip = lgpio.gpiochip_open(0)  # get GPIO chip handle

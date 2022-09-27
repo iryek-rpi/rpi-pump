@@ -18,8 +18,8 @@ def mqtt_publish(topic, level, client):
   logger.info(f"mqtt topic:{topic} payload:{level}")
   #publish.multiple(msgs, hostname=host)
 
-def mqtt_init(broker, port):
-  client = mqtt.client.Client('pump_monitor')
+def mqtt_init(client_name, broker, port):
+  client = mqtt.client.Client(client_name)
   client.connect(broker, int(port))
   return client
 
