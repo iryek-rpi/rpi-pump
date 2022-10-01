@@ -2,7 +2,7 @@ import transitions
 from transitions import *
 from transitions.extensions import MachineFactory
 
-import logging
+import picologging as logging
 
 import calendar
 import pexpect
@@ -11,6 +11,10 @@ from pump_screen import *
 from pump_variables import PV
 #from pump_util import ThreadSafeSingleton
 from pump_btn import PumpButtons, buttons
+
+import pump_util as util
+
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 #class SetTimeStateMachine(metaclass=ThreadSafeSingleton):
 class SetTimeStateMachine():
@@ -98,7 +102,7 @@ class SetTimeStateMachine():
     self.min = 0
 
   def enter_time_setting(self):
-    logging.debug("enter_time_setting:{}".format(self))
+    logger.debug("enter_time_setting:{}".format(self))
     #buttons().set_statemachine(self)
     now = datetime.datetime.now()
     #ct = f"{now.year}/{now.month}/{now.day} {now.hour}:{now.minute:02d}" 
@@ -124,14 +128,14 @@ class SetTimeStateMachine():
 
   def save_time(self):
     ts = f"{self.m}/{self.d}/{self.y} {self.h}:{self.min}"
-    logging.debug(f"callback: save_time:{ts}, {self}")
+    logger.debug(f"callback: save_time:{ts}, {self}")
     c = pexpect.spawn(f"sudo /usr/bin/date --set='{ts}'")
     try:  # 현재 user id에 따라서 sudo password prompt가 안나올 수도 있음
       c.expect('password')
       c.sendline(self.pv.password)
-      logging.debug(f"save_time: sudo prompt: {c.read()}")
+      logger.debug(f"save_time: sudo prompt: {c.read()}")
     except:
-      logging.debug(f"save_time: No sudo prompt!")
+      logger.debug(f"save_time: No sudo prompt!")
       pass
     self.leave()
 
@@ -188,7 +192,7 @@ class SetTimeStateMachine():
     scr_settime_min01(self.pv)
 
   def y10_inc(self):
-    logging.debug("before inc: year10->year10")
+    logger.debug("before inc: year10->year10")
     temp = (self.y//10)%100
     temp += 1
     if temp==10:
@@ -196,7 +200,7 @@ class SetTimeStateMachine():
     self.y = ((((self.y//100)*10)+temp)*10)+(self.y%10)
 
   def y10_dec(self):
-    logging.debug("before dec: year10->year10")
+    logger.debug("before dec: year10->year10")
     temp = (self.y//10)%100
     temp -= 1
     if temp==1:
@@ -204,7 +208,7 @@ class SetTimeStateMachine():
     self.y = ((((self.y//100)*10)+temp)*10)+(self.y%10)
 
   def y01_inc(self):
-    logging.debug("before inc: year01->year01")
+    logger.debug("before inc: year01->year01")
     temp = self.y%10
     temp += 1
     if self.y<2030:
@@ -217,7 +221,7 @@ class SetTimeStateMachine():
     self.y = ((self.y//10)*10)+temp
 
   def y01_dec(self):
-    logging.debug("before dec: year01->year01")
+    logger.debug("before dec: year01->year01")
     temp = self.y%10
     temp -= 1
     if self.y<2030:
@@ -230,7 +234,7 @@ class SetTimeStateMachine():
     self.y = ((self.y//10)*10)+temp
 
   def m10_inc(self):
-    logging.debug("before inc: month10->month10")
+    logger.debug("before inc: month10->month10")
     temp = self.m//10
     temp += 1
     if temp>1:
@@ -239,7 +243,7 @@ class SetTimeStateMachine():
     self.m = temp*10+self.m%10
 
   def m10_dec(self):
-    logging.debug("before dec: year10->year10")
+    logger.debug("before dec: year10->year10")
     temp = (self.y//10)%100
     temp -= 1
     if temp==1:
@@ -247,21 +251,21 @@ class SetTimeStateMachine():
     self.y = ((((self.y//100)*10)+temp)*10)+(self.y%10)
 
   def m01_inc(self):
-    logging.debug("before inc: month01->month01")
+    logger.debug("before inc: month01->month01")
     if self.m>11:
       self.m = 1
     else:
       self.m += 1
 
   def m01_dec(self):
-    logging.debug("before dec: month01->month01")
+    logger.debug("before dec: month01->month01")
     if self.m<2:
       self.m = 12
     else:
       self.m -= 1
 
   def d10_inc(self):
-    logging.debug("before inc: day10->day10")
+    logger.debug("before inc: day10->day10")
     if self.m==2:
       if self.d==19:
         if calendar.isleap(self.y)==False:
@@ -290,7 +294,7 @@ class SetTimeStateMachine():
         self.d += 10
 
   def d10_dec(self):
-    logging.debug("before dec: day10->day10")
+    logger.debug("before dec: day10->day10")
     if self.m==2:
       if self.d==9:
         if calendar.isleap(self.y)==False:
@@ -321,7 +325,7 @@ class SetTimeStateMachine():
         self.d -= 10  # 25 -> 15
 
   def d01_inc(self):
-    logging.debug("before inc: day01->day01")
+    logger.debug("before inc: day01->day01")
     if self.m==2:
       if self.d==28:
         if calendar.isleap(self.y)==False:
@@ -344,7 +348,7 @@ class SetTimeStateMachine():
         self.d = ((self.d//10)*10)+((self.d%10)+1)%10 
 
   def d01_dec(self):
-    logging.debug("before dec: day01->day01")
+    logger.debug("before dec: day01->day01")
     if self.m==2:
       if self.d==20:
         if calendar.isleap(self.y)==False:
@@ -379,7 +383,7 @@ class SetTimeStateMachine():
         self.d = ((self.d//10)*10)+(self.d%10)-1 
 
   def h10_inc(self):
-    logging.debug("before inc: hour10->hour10")
+    logger.debug("before inc: hour10->hour10")
 
     modulo = 3
 
@@ -389,14 +393,14 @@ class SetTimeStateMachine():
     self.h = temp
 
   def h10_dec(self):
-    logging.debug("before dec: hour10->hour10")
+    logger.debug("before dec: hour10->hour10")
     if self.h//10 == 0:
       self.h += 20    # 1 -> 21
     else:
       self.h = (((self.h//10)-1)%3)*10 + self.h%10
 
   def h01_inc(self):
-    logging.debug("before inc: hour01->hour01")
+    logger.debug("before inc: hour01->hour01")
 
     temp = (self.h//10)*10 + ((self.h%10)+1)%10
     if temp > 23:
@@ -404,7 +408,7 @@ class SetTimeStateMachine():
     self.h = temp
 
   def h01_dec(self):
-    logging.debug("before dec: hour10->hour10")
+    logger.debug("before dec: hour10->hour10")
     if self.h%10 == 0:
       temp = (self.h//10)*10 + 9
       if temp>23:
@@ -414,26 +418,26 @@ class SetTimeStateMachine():
       self.h = (self.h//10)*10 + (self.h%10)-1
 
   def min10_inc(self):
-    logging.debug("before inc: min10->min10")
+    logger.debug("before inc: min10->min10")
 
     modulo = 6 
 
     self.min = (((self.min//10)+1)%modulo)*10 + self.min%10
 
   def min10_dec(self):
-    logging.debug("before dec: min10->min10")
+    logger.debug("before dec: min10->min10")
     if self.min//10 == 0:
       self.min += 50    # 01 -> 51
     else:
       self.min = (((self.min//10)-1)%6)*10 + self.min%10
 
   def min01_inc(self):
-    logging.debug("before inc: min01->min01")
+    logger.debug("before inc: min01->min01")
 
     self.min = ((self.min//10)*10) + ((self.min%10)+1)%10
 
   def min01_dec(self):
-    logging.debug("before dec: min01->min01")
+    logger.debug("before dec: min01->min01")
     if self.min%10 == 0:
       self.min = (self.min//10)*10 + 9
     else:

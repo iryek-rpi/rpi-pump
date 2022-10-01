@@ -1,4 +1,4 @@
-import logging
+import picologging as logging
 import lgpio
 import datetime
 
@@ -13,9 +13,11 @@ logging.basicConfig(
     level=logging.DEBUG,
     datefmt='%Y-%m-%d %H:%M:%S')
 
-logging.info(f"=================================================")
-logging.info(f"START at {datetime.datetime.now()}")
-logging.info(f"=================================================")
+logger = logging.getLogger()
+
+logger.info(f"=================================================")
+logger.info(f"START at {datetime.datetime.now()}")
+logger.info(f"=================================================")
 
 M0_OUT = 2  #24v
 M1_OUT = 3  #24v
@@ -66,7 +68,7 @@ def set_motor_state(chip, m, on_off):
   elif m == 2:
     lgpio.gpio_write(chip, M2_OUT, on_off)
 
-  logging.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
+  logger.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
 
 
 def set_all_motors(chip, m):
@@ -75,7 +77,7 @@ def set_all_motors(chip, m):
   lgpio.gpio_write(chip, M1_OUT, b)
   lgpio.gpio_write(chip, M2_OUT, c)
 
-  logging.info(f"SET MOTORS{(M0_OUT, M1_OUT, M2_OUT)} = {(a,b,c)}")
+  logger.info(f"SET MOTORS{(M0_OUT, M1_OUT, M2_OUT)} = {(a,b,c)}")
 
 
 #==============================================================================

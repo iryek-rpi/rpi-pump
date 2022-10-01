@@ -1,5 +1,15 @@
-import logging
+import picologging as logging
 import lgpio
+
+FORMAT = ("%(asctime)-15s %(threadName)-15s"
+          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
+logging.basicConfig(
+    #format='%(asctime)s %(threadName) %(levelname)s:%(filename)s:%(message)s',
+    format=FORMAT,
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+logger = logging.getLogger()
 
 M0_OUT = 2  #24v
 M1_OUT = 3  #24v
@@ -51,7 +61,7 @@ def set_motor_state(chip, m, on_off):
   elif m == 2:
     lgpio.gpio_write(chip, M2_OUT, on_off)
 
-  logging.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
+  logger.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
 
 
 def set_all_motors(chip, m):
@@ -60,7 +70,7 @@ def set_all_motors(chip, m):
   lgpio.gpio_write(chip, M1_OUT, b)
   lgpio.gpio_write(chip, M2_OUT, a)
 
-  logging.info(f"SET MOTORS{(M2_OUT, M1_OUT, M0_OUT)} = {(a,b,c)}")
+  logger.info(f"SET MOTORS{(M2_OUT, M1_OUT, M0_OUT)} = {(a,b,c)}")
 
 
 #==============================================================================

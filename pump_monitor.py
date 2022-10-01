@@ -8,17 +8,22 @@ import datetime
 import signal
 import threading
 
-import logging
+import picologging as logging
 
 import lgpio
 import spidev
+import mqtt_pub
 
 import csv
 
+import pump_util as util
 from pump_util import *
 import pump_variables
-from pump_variables import PV
+from pump_variables import PV, pv
 import config
+import ml
+
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 #==============================================================================
 # Device Properties
@@ -40,7 +45,6 @@ RUN_MODE_OUT = 17  #24v
 M0_IN = 26  #cur_sw0
 M1_IN = 19  #cur_sw1
 M2_IN = 13  #cur_sw2
-
 
 def set_run_mode(chip, v):
   '''
@@ -77,7 +81,7 @@ def get_all_motors(chip):
   ms1 = lgpio.gpio_read(chip, M1_IN)
   ms2 = lgpio.gpio_read(chip, M2_IN)
 
-  logging.info("(MS0, MS1, MS2): (%d, %d, %d)", ms0, ms1, ms2)
+  logger.info("(MS0, MS1, MS2): (%d, %d, %d)", ms0, ms1, ms2)
   return (ms0, ms1, ms2)
 
 
@@ -92,7 +96,7 @@ def set_motor_state(chip, m, on_off, pv):
     lgpio.gpio_write(chip, M2_OUT, on_off)
     #pv.motor3 = on_off
 
-  logging.info("SET MOTOR#{%d}/(1,2,3) = {%d}", m + 1, on_off)
+  logger.info("SET MOTOR#{%d}/(1,2,3) = {%d}", m + 1, on_off)
 
 
 def set_all_motors(chip, m, pv):
@@ -115,7 +119,7 @@ def writeDAC(chip, v, spi):
   lgpio.gpio_write(chip, CE_T, 0)
   spi.xfer2([msb, lsb])
   lgpio.gpio_write(chip, CE_T, 1)
-  logging.debug("set_DAC({})".format(v))
+  logger.debug("set_DAC({})".format(v))
 
 def water_level_ADC(pv, rate):
   if rate<=0:
@@ -158,20 +162,20 @@ def readADC_MSB(chip, spi):
   bytes_received = spi.xfer2([0x00, 0x00])
   lgpio.gpio_write(chip, CE_R, 1)
 
-  #logging.debug("Read:0x{0:2X} 0x{1:2X}".format(bytes_received[0], bytes_received[1]) )
-  #logging.debug("Read:0b{0:b} 0b{1:b}".format(bytes_received[0], bytes_received[1]) )
+  #logger.debug("Read:0x{0:2X} 0x{1:2X}".format(bytes_received[0], bytes_received[1]) )
+  #logger.debug("Read:0b{0:b} 0b{1:b}".format(bytes_received[0], bytes_received[1]) )
 
   MSB_1 = bytes_received[1]
-  #logging.debug(f"MSB_1:0b{MSB_1:0b}")
+  #logger.debug(f"MSB_1:0b{MSB_1:0b}")
   MSB_1 = MSB_1 >> 1  # shift right 1 bit to remove B01 from the LSB mode
-  #logging.debug(f"MSB_1:0b{MSB_1:0b}")
+  #logger.debug(f"MSB_1:0b{MSB_1:0b}")
   MSB_0 = bytes_received[
       0] & 0b00011111  # mask the 2 unknown bits and the null bit
-  #logging.debug(f"MSB_0:0b{bytes_received[0]:0b}")
-  #logging.debug(f"MSB_0:0b{MSB_0:0b}")
+  #logger.debug(f"MSB_0:0b{bytes_received[0]:0b}")
+  #logger.debug(f"MSB_0:0b{MSB_0:0b}")
   MSB_0 = MSB_0 << 7  # shift left 7 bits (i.e. the first MSB 5 bits of 12 bits)
-  #logging.debug(f"MSB_0<<7:0b{MSB_0:0b}")
-  logging.debug(
+  #logger.debug(f"MSB_0<<7:0b{MSB_0:0b}")
+  logger.debug(
       f"MSB_0+MSB_1:0b{MSB_0+MSB_1:0b} 0x{MSB_0+MSB_1:2X} {MSB_0+MSB_1}")
   return MSB_0 + MSB_1
 
@@ -202,6 +206,15 @@ def save_motor_state(chip):
   (m0,m1,m2) = get_all_motors(chip)
   config.save_motors((m0,m1,m2))
 
+def get_temp():
+    with open('/sys/devices/virtual/thermal/thermal_zone0/temp') as f:
+        temp_str = f.read()
+
+    try:
+        return int(temp_str) / 1000
+    except (IndexError, ValueError,) as e:
+        raise RuntimeError('Could not parse temperature output.') from e
+
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
   RepeatThread에서 주기적으로 호출되어 수위 입력을 처리함
@@ -213,17 +226,16 @@ def tank_monitor(**kwargs):
   pv: PV = kwargs['pv']
 
   adc_level = check_water_level(chip, spi)
-  #adc_level = 1500
   time_now = datetime.datetime.now()
-  logging.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
+  logger.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
   level = water_level_rate(pv, adc_level)
 
   last_level = pv.water_level
 
-  logging.debug("level:%d", level)
-  logging.debug("pv.setting_adc_invalid:%d", pv.setting_adc_invalid)
+  logger.debug("level:%d", level)
+  logger.debug("pv.setting_adc_invalid:%d", pv.setting_adc_invalid)
   (c,b,a) = get_all_motors(chip)
-  logging.debug("get_all_motors:(%d, %d, %d)", c,b,a)
+  logger.debug("get_all_motors:(%d, %d, %d)", c,b,a)
 
   # 수위 입력이 없음
   if level < water_level_rate(pv, pv.setting_adc_invalid):  #100
@@ -238,16 +250,16 @@ def tank_monitor(**kwargs):
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
       pv.water_level = ml.get_future_level(time_now)
-      if (not pv.water_level) and ml.train():
-        pv.water_level = ml.get_future_level(time_now)
+      if (not pv.water_level) and ml.train(pv=pv):
+        pv.water_level = ml.get_future_level(pv=pv, t=time_now)
       else:
-        logging.info("Training failed.")
+        logger.info("Training failed.")
         pv.water_level = last_level
 
       # get prediction from ML model
       # 예측 모델 적용할 때까지 임시
       if is_motor_running(chip):
-        logging.debug("is_motor_running() true")
+        logger.debug("is_motor_running() true")
         pv.water_level += 2
       else:
         if pv.water_level > 0:
@@ -301,6 +313,7 @@ def tank_monitor(**kwargs):
 #          set_motor_state(chip, m, True, pv)
 #          pv.last_pump = m
 
+  mqtt_pub.mqtt_publish(topic=pv.mqtt_topic, level=str(pv.water_level), client=pv.mqtt_client)
 
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),
@@ -308,11 +321,11 @@ def tank_monitor(**kwargs):
       get_motor_state(chip, 1), get_motor_state(chip, 2), pv.source
   ])
 
-  logging.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
+  logger.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
   #writeDAC(chip, level, spi)
 
   #writeDAC(chip, water_level_ADC(pv, pv.water_level), spi)
-  writeDAC(chip, int(water_level_ADC(pv, 80)), spi)
+  writeDAC(chip, int(water_level_ADC(pv, level)), spi)
   sm.update_idle()
 
 
@@ -357,10 +370,10 @@ def main():
 
     while not is_shutdown:
       ADC_output_code = readADC_MSB(chip, spi)
-      logging.debug(
+      logger.debug(
           "MCP3201 output code (MSB-mode): {}".foramt(ADC_output_code))
       ADC_voltage = convert_to_voltage(ADC_output_code)
-      logging.debug("MCP3201 voltage: {%0.2f}V".format(ADC_voltage))
+      logger.debug("MCP3201 voltage: {%0.2f}V".format(ADC_voltage))
       conn.send(ADC_voltage)
 
       sleep(0.1)  # wait minimum of 100 ms between ADC measurements
@@ -382,19 +395,19 @@ if __name__ == '__main__':
   # systemd
   #==============================================================================
   def stop(sig, frame):
-    logging.info(f"SIGTERM at {datetime.datetime.now()}")
+    logger.info(f"SIGTERM at {datetime.datetime.now()}")
     global is_shutdown
     is_shutdown = True
 
   def ignore(sig, frame):
-    logging.info(f"SIGHUP at {datetime.datetime.now()}")
+    logger.info(f"SIGHUP at {datetime.datetime.now()}")
 
   signal.signal(signal.SIGTERM, stop)
   #signal.signal(signal.SIGHUP, stop)
 
-  logging.info(f"=================================================")
-  logging.info(f"START at {datetime.datetime.now()}")
-  logging.info(f"=================================================")
+  logger.info(f"=================================================")
+  logger.info(f"START at {datetime.datetime.now()}")
+  logger.info(f"=================================================")
 
   main()
 '''
