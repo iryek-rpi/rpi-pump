@@ -179,14 +179,6 @@ class PV():
     self._mbl[ma.M6_PUMP3_STATE] = s 
 
   @property
-  def setting_high(self):
-    return self._mbl[ma.M8_AUTO_H]
-
-  @setting_high.setter
-  def setting_high(self, level):
-    self._mbl[ma.M8_AUTO_H] = level 
-
-  @property
   def setting_hh(self):
     return self._mbl[ma.M9_AUTO_HH]
 
@@ -195,28 +187,36 @@ class PV():
     self._mbl[ma.M9_AUTO_HH] = level 
 
   @property
-  def setting_low(self):
-    return self._mbl[ma.M10_AUTO_L]
-
-  @setting_low.setter
-  def setting_low(self, level):
-    self._mbl[ma.M10_AUTO_L] = level 
-
-  @property
   def setting_ll(self):
-    return self._mbl[ma.M11_AUTO_LL]
+    return self._mbl[ma.M10_AUTO_LL]
 
   @setting_ll.setter
   def setting_ll(self, level):
-    self._mbl[ma.M11_AUTO_LL] = level 
+    self._mbl[ma.M10_AUTO_LL] = level 
 
   @property
-  def solo_mode(self):
-    return self._mbl[ma.M12_SOLO_MODE]
+  def setting_high(self):
+    return self._mbl[ma.M11_AUTO_H]
 
-  @solo_mode.setter
-  def solo_mode(self, m):
-    self._mbl[ma.M12_SOLO_MODE] = m 
+  @setting_high.setter
+  def setting_high(self, level):
+    self._mbl[ma.M11_AUTO_H] = level 
+
+  @property
+  def setting_low(self):
+    return self._mbl[ma.M12_AUTO_L]
+
+  @setting_low.setter
+  def setting_low(self, level):
+    self._mbl[ma.M12_AUTO_L] = level 
+
+  #@property
+  #def solo_mode(self):
+  #  return self._mbl[ma.M13_PUMP_OP_MODE]
+
+  #@solo_mode.setter
+  #def solo_mode(self, m):
+  #  self._mbl[ma.M13_PUMP_OP_MODE] = m 
 
   @property
   def op_mode(self):
@@ -259,20 +259,40 @@ class PV():
     self._mbl[ma.M17_PUMP_COUNT] = n 
 
   @property
+  def mqtt_on(self):
+    return self._mbl[ma.M25_MQTT_ON]
+
+  @mqtt_on.setter
+  def mqtt_on(self, n):
+    self._mbl[ma.M15_PUMP2_ON] = n 
+
+
+  @property
+  def mqtt_topic_ai(self):
+    return self._mbl[ma.M26_MQTT_TOPIC_AI]
+
+  @mqtt_topic_ai.setter
+  def mqtt_topic_ai(self, n):
+    self._mbl[ma.M26_MQTT_TOPIC_AI] = n 
+
+
+  @property
   def mqtt_timeout(self):
-    return self._mbl[ma.M18_MQTT_TIMEOUT]
+    return self._mbl[ma.M27_MQTT_TIMEOUT]
 
   @mqtt_timeout.setter
   def mqtt_timeout(self, n):
-    self._mbl[ma.M18_MQTT_TIMEOUT] = n 
+    self._mbl[ma.M27_MQTT_TIMEOUT] = n 
+
 
   @property
   def mqtt_port(self):
-    return self._mbl[ma.M19_MQTT_PORT]
+    return self._mbl[ma.M28_MQTT_PORT]
 
   @mqtt_port.setter
   def mqtt_port(self, n):
-    self._mbl[ma.M19_MQTT_PORT] = n 
+    self._mbl[ma.M28_MQTT_PORT] = n 
+
 
   @property
   def mqtt_broker(self):
@@ -281,6 +301,7 @@ class PV():
   @mqtt_broker.setter
   def mqtt_broker(self, broker):
     self._mqtt_broker = broker 
+
 
   def get_modbus_sequence(self, address, count):
     if address < 0:
