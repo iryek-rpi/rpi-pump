@@ -313,7 +313,7 @@ def tank_monitor(**kwargs):
 #          set_motor_state(chip, m, True, pv)
 #          pv.last_pump = m
 
-  mqtt_pub.mqtt_publish(topic=pv.mqtt_topic, level=str(pv.water_level), client=pv.mqtt_client)
+  #mqtt_pub.mqtt_publish(topic=pv.mqtt_topic, level=str(pv.water_level), client=pv.mqtt_client)
 
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),

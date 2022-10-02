@@ -25,16 +25,6 @@ def mqtt_init(client_name, broker, port):
   return client
 
 
-#client = mqtt.Client("iot gateway 1")
-#client.connect(broker, port)
-
-#while True:
-#    num = uniform(1,10)
-#    client.publish("Iotgateway/MFMmeter", num)
-#    print("just published" + str(num) + " to" + str(broker) +  "on topic EdgeGrid/Iotgateway/MFMmeter")
-#    time.sleep(1)
-
-
 def mqtt_thread_func(**kwargs):
   _pipe = kwargs['pipe']
   pv = kwargs['pv']
@@ -56,18 +46,16 @@ def mqtt_pub_proc(**kwargs):
   _client_name = kwargs['mqtt_client_name']
   _topic = kwargs['mqtt_topic']
 
-  client = mqtt_client.Client(_client_name)
+  client = mqtt.client.Client(_client_name)
   r = None
   try:
     r = client.connect(_broker, int(_port))
     logger.info(f"MQTT connect() returns:{r}")
   except Exception:
-    print("\nException creating a MQTT connection\n")
-    pass
+    print("\nException creating a MQTT connection. Exiting MQTT Publisher\n")
+    return
 
   while 1:
-    if r:
-      r = _pipe.recv()
-    else:
-      logging.error(f"No MQTT Connection. Exit...")
-      break
+    level = _pipe.recv()
+    client.publish(topic=_topic, payload=level)
+    logger.info(f"mqtt topic:{_topic} payload:{level}")
