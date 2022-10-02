@@ -29,6 +29,28 @@ M0_IN = 26  #cur_sw0
 M1_IN = 19  #cur_sw1
 M2_IN = 13  #cur_sw2
 
+def get_motor_in(chip, m):
+  if m == 0:
+    return lgpio.gpio_read(chip, M0_IN)
+  elif m == 1:
+    return lgpio.gpio_read(chip, M1_IN)
+  elif m == 2:
+    return lgpio.gpio_read(chip, M2_IN)
+  else:
+    return -1
+
+def get_all_motors_in(chip):
+  """2대의 모터 상태를 [x,x]로 리턴
+  """
+  #ms = [0, 0, 0]
+  ms = [0, 0, 0]
+  if lgpio.gpio_read(chip, M0_IN):
+    ms[0] = True
+  if lgpio.gpio_read(chip, M1_IN):
+    ms[1] = True
+  if lgpio.gpio_read(chip, M2_IN):
+    ms[2] = True
+  return ms
 
 def get_motor_state(chip, m):
   if m == 0:
@@ -78,6 +100,25 @@ def set_all_motors(chip, m):
   lgpio.gpio_write(chip, M2_OUT, c)
 
   logger.info(f"SET MOTORS{(M0_OUT, M1_OUT, M2_OUT)} = {(a,b,c)}")
+
+def init_gpio():
+    c = lgpio.gpiochip_open(0)
+    print(f"chip open return:{c}")
+    r=lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
+    print(f"return:{r}")
+    r = lgpio.gpio_get_mode(c, M0_IN)
+    print(f"mode:{r}")
+
+    r=lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
+    print(f"return:{r}")
+    r = lgpio.gpio_get_mode(c, M1_IN)
+    print(f"mode:{r}")
+
+    r=lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
+    print(f"return:{r}")
+    r = lgpio.gpio_get_mode(c, M2_IN)
+    print(f"mode:{r}")
+    return c
 
 
 #==============================================================================
