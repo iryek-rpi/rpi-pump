@@ -52,8 +52,8 @@ def init_setting(pv: PV):
     co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd'}
     co['MQTT'] = {
       'ON': 1,  # 0
-      'TOPIC': 'ai_value'  # sensor_value
-      'CLIENT_NAME': 'AI' # SENSOR
+      'TOPIC': 'ai_value',  # sensor_value
+      'CLIENT_NAME': 'AI', # SENSOR
       'TIMEOUT': 10,
       'PORT': 1883,
       'BROKER': 'X230T.local'
