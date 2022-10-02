@@ -51,9 +51,12 @@ def init_setting(pv: PV):
     }
     co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd'}
     co['MQTT'] = {
-      'BROKER': 'X230T.local',
+      'ON': 1,  # 0
+      'TOPIC': 'ai_value'  # sensor_value
+      'CLIENT_NAME': 'AI' # SENSOR
+      'TIMEOUT': 10,
       'PORT': 1883,
-      'TIMEOUT': 10
+      'BROKER': 'X230T.local'
     }
 
     with open(SETTING_NAME, 'w') as f:
