@@ -246,6 +246,7 @@ def tank_monitor(**kwargs):
     if td.seconds > pv.setting_tolerance_to_ai:  # 일정 시간 입력이 없으면
       if pv.source == pump_variables.SOURCE_SENSOR:
         pv.source = pump_variables.SOURCE_AI
+        set_run_mode(chip, 1)
         #현재 회로 구성에서는 CFLOW_PASS를 사용 못하므로 항상 CFLOW_CPU 로 설정되어 있음
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
@@ -264,14 +265,13 @@ def tank_monitor(**kwargs):
       else:
         if pv.water_level > 0:
           pv.water_level -=2 
-      
-
     else:
       pv.water_level = last_level  # 일시적인 현상으로 간주하고 level 값 버림
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
     if pv.source == pump_variables.SOURCE_AI:
       pv.source = pump_variables.SOURCE_SENSOR
+      set_run_mode(chip, 0)
 
     pv.no_input_starttime = None
     pv.water_level = pv.filter_data(level)
