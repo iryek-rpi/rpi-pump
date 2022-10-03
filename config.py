@@ -205,7 +205,7 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
   if ('MONITOR' in co) and ('MONITOR_INTERVAL' in co['MONITOR']) and co['MONITOR']['MONITOR_INTERVAL'].isdigit():
     pv.setting_monitor_interval = int(co['MONITOR']['MONITOR_INTERVAL'])
   else:
-    pv.setting_monitor_interval = 5
+    pv.setting_monitor_interval = 1
 
   if ('MONITOR' in co) and ('SAVE_INTERVAL' in co['MONITOR']) and co['MONITOR']['SAVE_INTERVAL'].isdigit():
     pv.setting_save_interval = int(co['MONITOR']['SAVE_INTERVAL'])*3600
@@ -215,12 +215,12 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
   if ('MONITOR' in co) and ('TOLERANCE_TO_AI' in co['MONITOR']) and co['MONITOR']['TOLERANCE_TO_AI'].isdigit():
     pv.setting_tolerance_to_ai = int(co['MONITOR']['TOLERANCE_TO_AI'])
   else:
-    pv.setting_tolerance_to_ai = 60
+    pv.setting_tolerance_to_ai = 3
 
   if ('MONITOR' in co) and ('TOLERANCE_TO_SENSOR' in co['MONITOR']) and co['MONITOR']['TOLERANCE_TO_SENSOR'].isdigit():
     pv.setting_tolerance_to_sensor = int(co['MONITOR']['TOLERANCE_TO_SENSOR'])
   else:
-    pv.setting_tolerance_to_sensor = 60
+    pv.setting_tolerance_to_sensor = 3
 
   if ('MONITOR' in co) and ('ADC_IGNORE_SPIKE' in co['MONITOR']) and co['MONITOR']['ADC_IGNORE_SPIKE'].isdigit():
     pv.setting_adc_ignore_spike = int(co['MONITOR']['ADC_IGNORE_SPIKE'])
