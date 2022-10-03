@@ -84,7 +84,6 @@ def get_all_motors(chip):
   logger.info("(MS0, MS1, MS2): (%d, %d, %d)", ms0, ms1, ms2)
   return (ms0, ms1, ms2)
 
-
 def set_motor_state(chip, m, on_off, pv):
   if m == 0:
     lgpio.gpio_write(chip, M0_OUT, on_off)
@@ -235,6 +234,10 @@ def tank_monitor(**kwargs):
   logger.debug("level:%d", level)
   logger.debug("pv.setting_adc_invalid:%d", pv.setting_adc_invalid)
   (c,b,a) = get_all_motors(chip)
+  pv.motor1 = a
+  pv.motor2 = b
+  pv.motor3 = c
+
   logger.debug("get_all_motors:(%d, %d, %d)", c,b,a)
 
   # 수위 입력이 없음
@@ -386,6 +389,10 @@ def init_spi_rw(chip, pv, speed=4800):
 
   return spi
 
+def init_motors(c):
+    lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
+    lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
+    lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
 
 def main():
   from pump_variables import PV, pv

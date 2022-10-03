@@ -136,7 +136,7 @@ class PV():
 
   @water_level.setter
   def water_level(self, level):
-    self._mbl[ma.M1_LEVEL_SENSOR] = level 
+    self._mbl[ma.M1_LEVEL_SENSOR] = int(level*10) 
 
   @property
   def water_level_ai(self):
@@ -144,7 +144,7 @@ class PV():
 
   @water_level_ai.setter
   def water_level_ai(self, level):
-    self._mbl[ma.M2_LEVEL_AI] = level 
+    self._mbl[ma.M2_LEVEL_AI] = int(level*10) 
 
   @property
   def source(self):

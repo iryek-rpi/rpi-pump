@@ -127,7 +127,7 @@ def main():
     pv().chip = chip
     spi = pump_monitor.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
-
+    pump_monitor.init_motors(chip)
     pump_screen.scr_init_msg(pv())
 
     #lgpio.gpio_claim_output(chip, FAN, 1)
