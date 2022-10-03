@@ -44,10 +44,10 @@ def init_setting(pv: PV):
         'ADC_INVALID': 100,
     }
     co['MONITOR'] = {
-        'MONITOR_INTERVAL': 5, #sec
+        'MONITOR_INTERVAL': 1, #sec
         'SAVE_INTERVAL': 24,   #hour
-        'TOLERANCE_TO_AI': 60,
-        'TOLERANCE_TO_SENSOR': 60,
+        'TOLERANCE_TO_AI': 3,
+        'TOLERANCE_TO_SENSOR': 3,
         'ADC_IGNORE_SPIKE': 100
     }
     co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd', 'DEVICE_ROLE': 'control'}
