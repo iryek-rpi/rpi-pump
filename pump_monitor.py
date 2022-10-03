@@ -84,16 +84,13 @@ def get_all_motors(chip):
   logger.info("(MS0, MS1, MS2): (%d, %d, %d)", ms0, ms1, ms2)
   return (ms0, ms1, ms2)
 
-def set_motor_state(chip, m, on_off, pv):
+def set_motor_state(chip, m, on_off):
   if m == 0:
     lgpio.gpio_write(chip, M0_OUT, on_off)
-    #pv.motor1 = on_off
   elif m == 1:
     lgpio.gpio_write(chip, M1_OUT, on_off)
-    #pv.motor2 = on_off
   elif m == 2:
     lgpio.gpio_write(chip, M2_OUT, on_off)
-    #pv.motor3 = on_off
 
   logger.info("SET MOTOR#{%d}/(1,2,3) = {%d}", m + 1, on_off)
 
@@ -271,50 +268,68 @@ def tank_monitor(**kwargs):
 
     else:
       pv.water_level = last_level  # 일시적인 현상으로 간주하고 level 값 버림
-  else:
-    #수위 입력이 있으면 예측모드에서 수위계모드로 변경
+  else:  # 수위 입력이 있음
+    # 예측모드에서 수위계모드로 변경
     if pv.source == pump_variables.SOURCE_AI:
       pv.source = pump_variables.SOURCE_SENSOR
-      #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
-      #set_current_flow(chip=chip, cflow=CFLOW_PASS)
 
     pv.no_input_starttime = None
     pv.water_level = pv.filter_data(level)
 
   if pv.op_mode == pump_variables.OP_AUTO:  # 설정값(LL,L,H,HH)에 따라 룰 기반으로 자동 운전
-    if pv.water_level >= pv.setting_high:
-      if is_motor_running(chip):
-        (m0, m1, m2) = get_all_motors(chip)
-        config.save_motors((m0,m1,m2))
-        set_all_motors(chip, (False, False, False), pv)
-    elif pv.water_level <= pv.setting_low:
-      if not is_motor_running(chip):
-        m0 = config.read_config('MOTOR', 'MOTOR1')
-        m1 = config.read_config('MOTOR', 'MOTOR2')
-        m2 = config.read_config('MOTOR', 'MOTOR3')
-        ms = {0:m0, 1:m1, 2:m2}
+    if pv.water_level >= pv.setting_high and pv.previous_state!=2:
+      if pv.motor1_mode > 0:
+        set_motor_state(chip, 0, 0)
+      if pv.motor2_mode > 0:
+        set_motor_state(chip, 1, 0)
+      if pv.motor_count>2 and pv.motor3_mode>0:
+        set_motor_state(chip, 2, 0)
+      pv.previous_state = 2
+    elif pv.water_level <= pv.setting_low and pv.previous_state!=0:
+      if pv.motor_index==0:
+        if pv.motor1_mode>0:
+          set_motor_state(chip, 0, 1)
+          pv.motor_index = 1
+        elif pv.motor2_mode>0:
+          set_motor_state(chip, 1, 1)
+          pv.motor_index=2
+        elif pv.motor_count>2 and pv.motor3_mode>0:
+          set_motor_state(chip, 2, 1)
+          pv.motor_index=3
+        if pv.motor_count>0:
+          pv.motor_index = pv.motor_index % pv.motor_count
+        else:
+          pv.motor_index = 0
+      elif pv.motor_index==1:
+        if pv.motor2_mode>0:
+          set_motor_state(chip, 1, 1)
+          pv.motor_index=2
+        elif pv.motor_count>2 and pv.motor3_mode>0:
+          set_motor_state(chip, 2, 1)
+          pv.motor_index=3
+        elif pv.motor1_mode>0:
+          set_motor_state(chip, 0, 1)
+          pv.motor_index=1
+        if pv.motor_count>0:
+          pv.motor_index = pv.motor_index % pv.motor_count
+        else:
+          pv.motor_index = 0
+      elif pv.motor_count>2 and pv.motor_index==2:
+        if pv.motor3_mode>0:
+          set_motor_state(chip, 2, 1)
+          pv.motor_index=3
+        elif pv.motor1_mode>0:
+          set_motor_state(chip, 0, 1)
+          pv.motor_index=1
+        elif pv.motor2_mode>0:
+          set_motor_state(chip, 1, 1)
+          pv.motor_index=2
+        if pv.motor_count>0:
+          pv.motor_index = pv.motor_index % pv.motor_count
+        else:
+          pv.motor_index = 0
 
-        k=0
-        for i, n in enumerate(pv.motor_valid):
-          if ms[n]: # 이 전에 가동했으면
-            k = i+1  # 다음 모터를 가동 대상으로
-
-        k = k%len(pv.motor_valid) 
-
-        set_motor_state(chip, pv.motor_valid[k], True, pv)
-        threading.Timer(pv.motor_lead_time, save_motor_state, [chip])  # 일정 시간 후에 모터 상태를 읽어서 저장
-
-#        if pv.motor_count == 1:
-          #motor_num = random.choice(pv.motor_valid)
-          #set_motor_state(chip, motor_num - 1, True, pv)
-#          set_motor_state(chip, 0, True, pv)
-#        else:
-          #motor_numbers = random.sample(pv.motor_valid, pv.motor_count)
-          #for n in motor_numbers:
-          #  set_motor_state(chip, n - 1, True, pv)
-#          m = (pv.last_pump + 1) % pv.motor_count
-#          set_motor_state(chip, m, True, pv)
-#          pv.last_pump = m
+      pv.previous_state = 0
 
   #mqtt_pub.mqtt_publish(topic=pv.mqtt_topic, level=str(pv.water_level), client=pv.mqtt_client)
 

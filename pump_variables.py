@@ -63,23 +63,13 @@ class PV():
 
     self._mbl = [0 for _ in range(ma.M_END)]
 
-    #self.water_level = 0  # 현재 수위
-    #self.source = SOURCE_SENSOR  # PLC/AI 운전모드
-    
-    #self.motor1 = 0  # motor 1,2,3의 마지막 구동 상태
-    #self.motor2 = 0
-    #self.motor3 = 0
-
     self.modbus_id = 0
-
-    #self.setting_high = 80  # 고수위(%)
-    #self.setting_hh = 80  # 고수위(%)
-    #self.setting_low = 20  # 저수위(%)
-    #self.setting_ll = 20  # 저수위(%)
 
     self.solo_mode = MODE_PLC
     self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
 
+    self.motor_index = 0
+    self.previous_state = 1  # 0:low, 1:mid  3:high
 
     self.temperature = 0
     # 현재 모터 상태는 항상 MOTOR_INPUT 단자에서 읽어옴
@@ -132,7 +122,7 @@ class PV():
 
   @property
   def water_level(self):
-    return self._mbl[ma.M1_LEVEL_SENSOR]
+    return self._mbl[ma.M1_LEVEL_SENSOR]/10.
 
   @water_level.setter
   def water_level(self, level):
@@ -220,10 +210,14 @@ class PV():
 
   @property
   def op_mode(self):
+    if self._mbl[ma.M13_PUMP_OP_MODE] > 1:
+      self.self._mbl[ma.M13_PUMP_OP_MODE] = 1
     return self._mbl[ma.M13_PUMP_OP_MODE]
 
   @op_mode.setter
   def op_mode(self, m):
+    if m>1:
+      m=1
     self._mbl[ma.M13_PUMP_OP_MODE] = m 
 
   @property
@@ -257,6 +251,34 @@ class PV():
   @pump_count.setter
   def pump_count(self, n):
     self._mbl[ma.M17_PUMP_COUNT] = n 
+
+
+  @property
+  def motor1_mode(self):
+    return self._mbl[ma.M18_PUMP_OP_1]
+
+  @pump_count.setter
+  def motor1_mode(self, n):
+    self._mbl[ma.M18_PUMP_OP_1] = n 
+
+
+  @property
+  def motor2_mode(self):
+    return self._mbl[ma.M19_PUMP_OP_2]
+
+  @pump_count.setter
+  def motor2_mode(self, n):
+    self._mbl[ma.M19_PUMP_OP_2] = n 
+
+
+  @property
+  def motor3_mode(self):
+    return self._mbl[ma.M20_PUMP_OP_3]
+
+  @pump_count.setter
+  def motor3_mode(self, n):
+    self._mbl[ma.M20_PUMP_OP_3] = n 
+
 
   @property
   def mqtt_on(self):
@@ -340,6 +362,15 @@ class PV():
 
     for i in range(count):
       self._mbl[address+i] = values[i]
+
+    import config
+    config.update_config(section='CONTROLLER', key='AUTO_H', value=self._mbl[ma.M11_AUTO_H])
+    config.update_config(section='CONTROLLER', key='AUTO_L', value=self._mbl[ma.M12_AUTO_L])
+    config.update_config(section='MOTOR', key='PUMP_COUNT', value=self._mbl[ma.M17_PUMP_COUNT])
+    config.update_config(section='MOTOR', key='MOTOR1_MODE', value=self._mbl[ma.M18_PUMP_OP_1])
+    config.update_config(section='MOTOR', key='MOTOR2_MODE', value=self._mbl[ma.M19_PUMP_OP_2])
+    config.update_config(section='MOTOR', key='MOTOR3_MODE', value=self._mbl[ma.M20_PUMP_OP_3])
+    config.update_config(section='MANAGE', key='DEVICE_ROLE', value=self._mbl[ma.M33_DEVICE_ROLE])
 
 #  def update(self):
 #    self.source = SOURCE_SENSOR  # 수위값 출처

@@ -67,9 +67,15 @@ def scr_init_msg(pv):
 def scr_idle_1(pv):
   logger.debug("scr_idle_1:level:{}".format(pv.water_level))
   if pv.source == SOURCE_AI:
-    s1 = f"AI PWL:{int(pv.water_level)} "
+    if pv.device_role!='control':
+      s1 = f"SEN PWL:{int(pv.water_level)} "
+    else:
+      s1 = f"AI PWL:{int(pv.water_level)} "
   else:
-    s1 = f"PLC WL:{int(pv.water_level)} "
+    if pv.device_role!='control':
+      s1 = f"SEN PWL:{int(pv.water_level)} "
+    else:
+      s1 = f"PLC WL:{int(pv.water_level)} "
 
   (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
 

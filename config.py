@@ -31,11 +31,12 @@ def init_setting(pv: PV):
         'AUTO_LL': 100,
     }
     co['MOTOR'] = {
-        'INSTALLED_MOTORS' : '[1,0,0]', # 모터가 연결된 단자에 1, 연결 안된 단자는 0 
-        'MOTOR1' : 0,   # MOTOR1,2,3 마지막 가동 상태. 교번 운전에 반영
-        'MOTOR2' : 0,
-        'MOTOR3' : 0,
+        'PUMP_COUNT' : 2,
+        'MOTOR1_MODE' : 1,   # MOTOR1,2,3 마지막 가동 상태. 교번 운전에 반영
+        'MOTOR2_MODE' : 0,
+        'MOTOR3_MODE' : 0,
         'LEAD_TIME' : 10, # 모터 가동에 걸리는 시간 (교번운전을 위해 가동된 모터를 확인하여 기록하기 위함)
+        'INSTALLED_MOTORS' : '[1,0,0]', # 모터가 연결된 단자에 1, 연결 안된 단자는 0 
     }
     co['SENSOR'] = {
         '4MA_REF': 700,
@@ -127,7 +128,7 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
     pv.setting_hh = 900
 
   if ('CONTROLLER' in co) and ('AUTO_L' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_L'].isdigit():
-    pv.setting_high = int(co['CONTROLLER']['AUTO_L'])
+    pv.setting_low = int(co['CONTROLLER']['AUTO_L'])
   else:
     pv.setting_low = 200
 
@@ -138,6 +139,26 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
 
   if ('CONTROLLER' in co) and ('LAST_PUMP' in co['CONTROLLER']) and co['CONTROLLER']['LAST_PUMP'].isdigit():
     pv.last_pump = int(co['CONTROLLER']['LAST_PUMP'])
+
+  if ('MOTOR' in co) and ('PUMP_COUNT' in co['MOTOR']) and co['MOTOR']['PUMP_COUNT'].isdigit():
+    pv.motor_count = int(co['MOTOR']['PUMP_COUNT'])
+  else:
+    pv.motor_count = 2
+
+  if ('MOTOR' in co) and ('MOTOR1_MODE' in co['MOTOR']) and co['MOTOR']['MOTOR1_MODE'].isdigit():
+    pv.motor1_mode = int(co['MOTOR']['MOTOR1_MODE'])
+  else:
+    pv.motor1_mode = 1
+
+  if ('MOTOR' in co) and ('MOTOR2_MODE' in co['MOTOR']) and co['MOTOR']['MOTOR2_MODE'].isdigit():
+    pv.motor2_mode = int(co['MOTOR']['MOTOR2_MODE'])
+  else:
+    pv.motor2_mode = 1
+
+  if ('MOTOR' in co) and ('MOTOR3_MODE' in co['MOTOR']) and co['MOTOR']['MOTOR3_MODE'].isdigit():
+    pv.motor3_mode = int(co['MOTOR']['MOTOR3_MODE'])
+  else:
+    pv.motor3_mode = 1
 
   if ('MOTOR' in co) and ('INSTALLED_MOTORS' in co['MOTOR']):
     installed_motors = ast.literal_eval(co['MOTOR']['INSTALLED_MOTORS'])
