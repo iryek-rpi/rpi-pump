@@ -9,6 +9,7 @@ import picologging as logging
 
 import pump_util as util
 import modbus_address as ma
+import config
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
@@ -301,6 +302,15 @@ class PV():
   @mqtt_broker.setter
   def mqtt_broker(self, broker):
     self._mqtt_broker = broker 
+
+  @property
+  def device_role(self):
+    return self._mbl[ma.M33_DEVICE_ROLE]
+
+  @device_role.setter
+  def device_role(self, role):
+    self._mbl[ma.M33_DEVICE_ROLE] = role 
+    config.update_config(sectin='MANAGE', key='DEVICE_ROLE', value=role)
 
 
   def get_modbus_sequence(self, address, count):

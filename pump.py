@@ -5,6 +5,7 @@
 # https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load?answertab=votes#tab-top
 # https://github.com/adafruit/Adafruit_Python_SSD1306
 
+import sys
 import pathlib
 import picologging as logging
 from pathlib import Path
@@ -110,6 +111,8 @@ def main():
 
     pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
     config.init_setting(pv())
+    if not pv().device_role:
+      pv().device_role = 'controller'
 
     pv().mqtt_timeout = config.read_config('MQTT', 'TIMEOUT')
     pv().mqtt_port = config.read_config('MQTT', 'PORT')
@@ -163,8 +166,12 @@ def main():
     #   * args={p_req}
 
     # 수위 모니터링을 위한 스레드
+    monitor_func = pump_monitor.tank_monitor
+    if pv().device_role == "water-sensor":
+      monitor_func = pump_monitor.water_sensor_monitor
+
     monitor = pump_thread.RepeatThread(interval=pv().setting_monitor_interval,
-                                       execute=pump_monitor.tank_monitor,
+                                       execute=monitor_func,
                                        kwargs={
                                            'chip': chip,
                                            'spi': spi,
@@ -257,6 +264,22 @@ def main():
 
 if __name__ == '__main__':
   main()
+
+'''
+if __name__ == '__main__':
+  role = "controller"
+  for i, arg in enumerate(sys.argv):
+    if not i:
+      continue
+    arg = sys.argv[i]
+    l = arg.split('=')
+    if len(l)>1 and l[1]=="water-sensor":
+      role = l[1]
+  
+  main(role=role)
+'''
+
+
 '''
 #==============================================================================
 # Communication
