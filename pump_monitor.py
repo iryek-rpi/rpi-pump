@@ -328,6 +328,46 @@ def tank_monitor(**kwargs):
   writeDAC(chip, int(water_level_ADC(pv, level)), spi)
   sm.update_idle()
 
+def water_sensor_monitor(**kwargs):
+  """수위계 출력을 수위조절기에 전달
+  * 성능검사를 위해 수위계 출력을 그래프 출력하기 위해 모니터링하며 mqtt로 전송
+  """
+
+  chip = kwargs['chip']
+  spi = kwargs['spi']
+  sm = kwargs['sm']
+  pv: PV = kwargs['pv']
+
+  if pv.source == pump_variables.SOURCE_AI:
+    pv.source = pump_variables.SOURCE_SENSOR
+
+  adc_level = check_water_level(chip, spi)
+  time_now = datetime.datetime.now()
+  logger.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
+  level = water_level_rate(pv, adc_level)
+
+  #last_level = pv.water_level
+
+  logger.debug("level:%d", level)
+  logger.debug("pv.setting_adc_invalid:%d", pv.setting_adc_invalid)
+
+  # 수위 입력이 없음
+  if level < water_level_rate(pv, pv.setting_adc_invalid):  #100
+    if pv.no_input_starttime is None:
+      pv.no_input_starttime = time_now
+
+    pv.no_input_starttime = None
+    pv.water_level = pv.filter_data(level)
+
+  pv.append_data([
+      time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),
+  ])
+
+  logger.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
+
+  writeDAC(chip, int(water_level_ADC(pv, level)), spi)
+  sm.update_idle()
+
 
 def init_spi_rw(chip, pv, speed=4800):
   #현재 회로 구성에서는 CFLOW_PASS를 사용 못함

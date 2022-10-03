@@ -49,7 +49,7 @@ def init_setting(pv: PV):
         'TOLERANCE_TO_SENSOR': 60,
         'ADC_IGNORE_SPIKE': 100
     }
-    co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd'}
+    co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd', 'DEVICE_ROLE': 'control'}
     co['MQTT'] = {
       'ON': 1,  # 0
       'TOPIC': 'ai_value',  # sensor_value
@@ -214,3 +214,6 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
   if ('MANAGE' in co) and ('USER_ID' in co['MANAGE']):
     pv.user_id = co['MANAGE']['USER_ID']
     pv.password = co['MANAGE']['PASSWORD']
+
+  if ('MANAGE' in co) and ('DEVICE_ROLE' in co['MANAGE']):
+    pv.device_role = co['MANAGE']['DEVICE_ROLE']
