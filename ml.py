@@ -44,6 +44,7 @@ def train(pv):
     pv.forcast = forcast
 
 def get_future_level(t):
-    if pv.forcast:
-        return pv.forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
+    return 70
+    #if pv.forcast:
+    #    return pv.forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
     

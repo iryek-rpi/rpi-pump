@@ -238,11 +238,13 @@ def tank_monitor(**kwargs):
   logger.debug("get_all_motors:(%d, %d, %d)", c,b,a)
 
   # 수위 입력이 없음
-  if level < water_level_rate(pv, pv.setting_adc_invalid):  #100
+  logger.info(f"level:{level} rate:{water_level_rate(pv,pv.setting_adc_invalid)}")
+  if level <= water_level_rate(pv, pv.setting_adc_invalid):  #100
     if pv.no_input_starttime is None:
       pv.no_input_starttime = time_now
 
     td = time_now - pv.no_input_starttime
+    logger.info(f"Tolerance:{pv.setting_tolerance_to_ai}")
     if td.seconds > pv.setting_tolerance_to_ai:  # 일정 시간 입력이 없으면
       if pv.source == pump_variables.SOURCE_SENSOR:
         pv.source = pump_variables.SOURCE_AI
@@ -250,7 +252,8 @@ def tank_monitor(**kwargs):
         #현재 회로 구성에서는 CFLOW_PASS를 사용 못하므로 항상 CFLOW_CPU 로 설정되어 있음
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
-      pv.water_level = ml.get_future_level(time_now)
+      #pv.water_level 
+      temp= ml.get_future_level(time_now)
       if (not pv.water_level) and ml.train(pv=pv):
         pv.water_level = ml.get_future_level(pv=pv, t=time_now)
       else:
