@@ -101,6 +101,10 @@ def set_all_motors(chip, m):
 
   logger.info(f"SET MOTORS{(M0_OUT, M1_OUT, M2_OUT)} = {(a,b,c)}")
 
+def set_mode(chip, m):
+  lgpio.gpio_write(chip, RUN_MODE_OUT, m)
+  logger.info(f"set_mode{RUN_MODE_OUT} = {m}")
+
 def init_gpio():
     c = lgpio.gpiochip_open(0)
     print(f"chip open return:{c}")
