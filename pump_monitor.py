@@ -276,8 +276,11 @@ def tank_monitor(**kwargs):
     pv.no_input_starttime = None
     pv.water_level = pv.filter_data(level)
 
+  logger.info(f"op_mode:{pv.opmode} level:{pv.water_level}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}")
   if pv.op_mode == pump_variables.OP_AUTO:  # 설정값(LL,L,H,HH)에 따라 룰 기반으로 자동 운전
+    logger.info("1")
     if pv.water_level >= pv.setting_high and pv.previous_state!=2:
+      logger.info("2")
       if pv.motor1_mode > 0:
         set_motor_state(chip, 0, 0)
       if pv.motor2_mode > 0:
@@ -286,14 +289,18 @@ def tank_monitor(**kwargs):
         set_motor_state(chip, 2, 0)
       pv.previous_state = 2
     elif pv.water_level <= pv.setting_low and pv.previous_state!=0:
+      logger.info("3")
       if pv.motor_index==0:
         if pv.motor1_mode>0:
+          logger.info("3.1")
           set_motor_state(chip, 0, 1)
           pv.motor_index = 1
         elif pv.motor2_mode>0:
+          logger.info("3.2")
           set_motor_state(chip, 1, 1)
           pv.motor_index=2
         elif pv.motor_count>2 and pv.motor3_mode>0:
+          logger.info("3.3")
           set_motor_state(chip, 2, 1)
           pv.motor_index=3
         if pv.motor_count>0:
@@ -301,6 +308,7 @@ def tank_monitor(**kwargs):
         else:
           pv.motor_index = 0
       elif pv.motor_index==1:
+        logger.info("4")
         if pv.motor2_mode>0:
           set_motor_state(chip, 1, 1)
           pv.motor_index=2
