@@ -12,13 +12,18 @@ network:
     wifis:
         wlan0:
             access-points:
-                "Lee LAB":
-                    password: "1q2w3e4r"
-                "PUMP_WIRELESS":
+                "SMTECH": 
+                    password: "01052439397"
+                SMTECH2: {}
+                "PUMP":
                     password: "12345678"
                 "HWAN_WIRELESS":
                     password: "14091200"
                 "HWAN_WIRELESS_5G":
                     password: "14091200"
+                "Lee LAB":
+                    password: "1q2w3e4r"
+                "Lee LAB_5G":
+                    password: "1q2w3e4r"
             dhcp4: true
             optional: true

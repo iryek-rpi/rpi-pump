@@ -1,6 +1,8 @@
 import pandas as pd
 from prophet import Prophet
 
+from pump_variables import pv
+
 from prophet.serialize import model_to_json, model_from_json
 
 def save_model(model_name:str, model):
@@ -34,8 +36,8 @@ def train(pv):
     
     forcast = model.predict(future)
     #forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
-    forecast['yhat-s']=forecast['yhat']
-    forecast['yhat-s']=((forecast['yhat-s']-forecast['yhat'].mean())*5)+forecast['yhat'].mean()
+    forcast['yhat-s']=forcast['yhat']
+    forcast['yhat-s']=((forcast['yhat-s']-forcast['yhat'].mean())*5)+forcast['yhat'].mean()
 
     forcast = forcast[['ds','yhat-s']].copy()
     forcast = forcast.resample(rule='1sec', on='ds').mean()
@@ -43,5 +45,5 @@ def train(pv):
 
 def get_future_level(t):
     if pv.forcast:
-        return forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
+        return pv.forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
     

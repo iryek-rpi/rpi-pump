@@ -12,6 +12,7 @@ import picologging as logging
 
 import lgpio
 import spidev
+import mqtt_pub
 
 import csv
 
@@ -20,7 +21,7 @@ from pump_util import *
 import pump_variables
 from pump_variables import PV, pv
 import config
-import mqtt_pub
+import ml
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
@@ -249,8 +250,8 @@ def tank_monitor(**kwargs):
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
       pv.water_level = ml.get_future_level(time_now)
-      if (not pv.water_level) and ml.train():
-        pv.water_level = ml.get_future_level(time_now)
+      if (not pv.water_level) and ml.train(pv=pv):
+        pv.water_level = ml.get_future_level(pv=pv, t=time_now)
       else:
         logger.info("Training failed.")
         pv.water_level = last_level
@@ -312,7 +313,7 @@ def tank_monitor(**kwargs):
 #          set_motor_state(chip, m, True, pv)
 #          pv.last_pump = m
 
-  mqtt_pub.mqtt_publish(topic=pv.mqtt_topic, level=str(pv.water_level), client=pv.mqtt_client)
+  #mqtt_pub.mqtt_publish(topic=pv.mqtt_topic, level=str(pv.water_level), client=pv.mqtt_client)
 
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),

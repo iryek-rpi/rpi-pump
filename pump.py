@@ -117,8 +117,8 @@ def main():
     pv().mqtt_topic = config.read_config('MQTT', 'TOPIC')
     pv().mqtt_client_name = config.read_config('MQTT', 'CLIENT_NAME')
 
-    client = mqtt_pub.mqtt_init(client_name=pv().mqtt_client_name, broker=pv().mqtt_broker, port=pv().mqtt_port)
-    pv().mqtt_client = client
+    #client = mqtt_pub.mqtt_init(client_name=pv().mqtt_client_name, broker=pv().mqtt_broker, port=pv().mqtt_port)
+    #pv().mqtt_client = client
 
     chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
     pv().chip = chip
@@ -201,6 +201,27 @@ def main():
                            })
     comm_proc.start()
 
+    pipe_mqtt_sensor, pipe_mqtt_pub = mp.Pipe()
+    mqtt_thread = pump_thread.RepeatThread(
+                          interval=5,
+                          execute=mqtt_pub.mqtt_thread_func,
+                          kwargs={
+                              'pipe': pipe_mqtt_sensor,
+                              'pv': pv()
+                          })
+    mqtt_thread.start()
+
+    mqtt_pub_proc = mp.Process(name="MQTT PUBLISHER",
+                               target=mqtt_pub.mqtt_pub_proc,
+                               kwargs={
+                                   'pipe_pub': pipe_mqtt_pub,
+                                   'mqtt_broker': "ubuntu1t.local",
+                                   'mqtt_port': 3881,
+                                   'mqtt_client_name': "client1",
+                                   'mqtt_topic': "topic1"
+                               })
+    mqtt_pub_proc.start()
+
     logger.info("Starting fan control")
     # fan control process
     fan_logger = logging.getLogger(name = util.FAN_LOGGER_NAME)
@@ -212,11 +233,19 @@ def main():
     while not is_shutdown:
       pass
 
+    p_respond.close()
+    p_req.close()
+    pipe_mqtt_pub.close()
+    pipe_mqtt_sensor.close()
+
     # 스레드와 프로세스 정리
     monitor.stop()
     responder.stop()
     saver.stop()
     comm_proc.join()
+    mqtt_thread.stop()
+    mqtt_pub_proc.join()
+    
 
     pump_variables.save_data(pv=pv())
     lcd().clear()
