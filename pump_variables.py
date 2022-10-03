@@ -9,7 +9,6 @@ import picologging as logging
 
 import pump_util as util
 import modbus_address as ma
-import config
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
@@ -309,8 +308,9 @@ class PV():
 
   @device_role.setter
   def device_role(self, role):
+    import config
     self._mbl[ma.M33_DEVICE_ROLE] = role 
-    config.update_config(sectin='MANAGE', key='DEVICE_ROLE', value=role)
+    config.update_config(section='MANAGE', key='DEVICE_ROLE', value=role)
 
 
   def get_modbus_sequence(self, address, count):
