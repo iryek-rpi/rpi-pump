@@ -94,7 +94,7 @@ def str_to_list(s:str):
   return s.strip('[]').split(',')
 
 def config_to_pv(co: configparser.ConfigParser, pv: PV):
-  
+
   if ('CONTROLLER' in co) and ('MODBUS_ID' in co['CONTROLLER']) and co['CONTROLLER']['MODBUS_ID'].isdigit():
     logger.info("modbus id from setting:%s", co['CONTROLLER']['MODBUS_ID'])
     pv.modbus_id = int(co['CONTROLLER']['MODBUS_ID'])
@@ -111,11 +111,6 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
     pv.op_mode = pump_variables.OP_AUTO
   else:
     pv.op_mode = pump_variables.OP_MANUAL
-
-  #if ('CONTROLLER' in co) and ('MOTOR_COUNT' in co['CONTROLLER']) and co['CONTROLLER']['MOTOR_COUNT'].isdigit():
-  #  pv.motor_count = int(co['CONTROLLER']['MOTOR_COUNT'])
-  #else:
-  #  pv.motor_count = 2
 
   if ('CONTROLLER' in co) and ('AUTO_H' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_H'].isdigit():
     pv.setting_high = int(co['CONTROLLER']['AUTO_H'])

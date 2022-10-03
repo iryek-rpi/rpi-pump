@@ -130,7 +130,7 @@ class PV():
 
   @property
   def water_level_ai(self):
-    return self._mbl[ma.M2_LEVEL_AI]
+    return self._mbl[ma.M2_LEVEL_AI]/10.
 
   @water_level_ai.setter
   def water_level_ai(self, level):
@@ -186,7 +186,7 @@ class PV():
 
   @property
   def setting_high(self):
-    return self._mbl[ma.M11_AUTO_H]
+    return self._mbl[ma.M11_AUTO_H]/10.
 
   @setting_high.setter
   def setting_high(self, level):
@@ -194,7 +194,7 @@ class PV():
 
   @property
   def setting_low(self):
-    return self._mbl[ma.M12_AUTO_L]
+    return self._mbl[ma.M12_AUTO_L]/10.
 
   @setting_low.setter
   def setting_low(self, level):
@@ -257,7 +257,7 @@ class PV():
   def motor1_mode(self):
     return self._mbl[ma.M18_PUMP_OP_1]
 
-  @pump_count.setter
+  @motor1_mode.setter
   def motor1_mode(self, n):
     self._mbl[ma.M18_PUMP_OP_1] = n 
 
@@ -266,7 +266,7 @@ class PV():
   def motor2_mode(self):
     return self._mbl[ma.M19_PUMP_OP_2]
 
-  @pump_count.setter
+  @motor2_mode.setter
   def motor2_mode(self, n):
     self._mbl[ma.M19_PUMP_OP_2] = n 
 
@@ -275,7 +275,7 @@ class PV():
   def motor3_mode(self):
     return self._mbl[ma.M20_PUMP_OP_3]
 
-  @pump_count.setter
+  @motor3_mode.setter
   def motor3_mode(self, n):
     self._mbl[ma.M20_PUMP_OP_3] = n 
 
