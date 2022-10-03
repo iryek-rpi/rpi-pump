@@ -51,7 +51,7 @@ def init_setting(pv: PV):
     }
     co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd', 'DEVICE_ROLE': 'control'}
     co['MQTT'] = {
-      'ON': 1,  # 0
+      'MQTT_ON': 1,  # 0
       'TOPIC': 'ai_value',  # sensor_value
       'CLIENT_NAME': 'AI', # SENSOR
       'TIMEOUT': 10,
