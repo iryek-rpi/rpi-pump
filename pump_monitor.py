@@ -224,6 +224,11 @@ def tank_monitor(**kwargs):
   adc_level = check_water_level(chip, spi)
   time_now = datetime.datetime.now()
   logger.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
+
+  if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>10):
+    pv.previous_adc = adc_level
+    pv.same_input_starttime = time_now
+
   level = water_level_rate(pv, adc_level)
 
   last_level = pv.water_level
@@ -239,14 +244,16 @@ def tank_monitor(**kwargs):
 
   # 수위 입력이 없음
   logger.info(f"level:{level} rate:{water_level_rate(pv,pv.setting_adc_invalid)}")
-  if level <= water_level_rate(pv, pv.setting_adc_invalid):  #100
+  invalid_rate = water_level_rate(pv, pv.setting_adc_invalid)
+  if (level <= invalid_rate) or (abs(adc_level-pv.previous_adc)<10):  
     if pv.no_input_starttime is None:
       pv.no_input_starttime = time_now
 
     td = time_now - pv.no_input_starttime
+    td_adc = time_now - pv.same_input_starttime
     logger.info(f"Tolerance:{pv.setting_tolerance_to_ai}")
-    logger.info(f"td.seconds:{td.seconds}")
-    if td.seconds > pv.setting_tolerance_to_ai:  # 일정 시간 입력이 없으면
+    logger.info(f"td.seconds:{td.seconds} td_adc.seconds:{td_adc.seconds}")
+    if (td.seconds > pv.setting_tolerance_to_ai) or (td_adc.seconds>pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
       logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
       if pv.source == pump_variables.SOURCE_SENSOR:
         pv.source = pump_variables.SOURCE_AI
@@ -281,6 +288,8 @@ def tank_monitor(**kwargs):
 
     pv.no_input_starttime = None
     pv.water_level = pv.filter_data(level)
+
+    pv.same_input
 
   logger.info(f"op_mode:{pv.op_mode} level:{pv.water_level}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}")
   if pv.op_mode == pump_variables.OP_AUTO:  # 설정값(LL,L,H,HH)에 따라 룰 기반으로 자동 운전
