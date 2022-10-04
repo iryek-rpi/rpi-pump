@@ -127,21 +127,6 @@ def water_level_ADC(pv, rate):
   
   return v
 
-def water_level_rate(pv, wl=None):
-  if wl == None:
-    wl = pv.water_level
-
-  rate = 0.0
-  if wl >= pv.setting_20ma_ref:
-    rate = 100.0
-  elif wl < pv.setting_4ma_ref:
-    rate = 0.0
-  else:
-    rate = ((wl - pv.setting_4ma_ref) /
-            (pv.setting_20ma_ref - pv.setting_4ma_ref)) * 100.0
-
-  return rate
-
 
 def check_water_level(chip, spi):
   return readADC_MSB(chip, spi)
@@ -215,26 +200,26 @@ def tank_monitor(**kwargs):
   """수위 모니터링 스레드
   RepeatThread에서 주기적으로 호출되어 수위 입력을 처리함
   """
-
   chip = kwargs['chip']
   spi = kwargs['spi']
   sm = kwargs['sm']
   pv: PV = kwargs['pv']
 
   adc_level = check_water_level(chip, spi)
+  if adc_level<pv.adc_invalid_rate:
+    adc_level = 0
+
   time_now = datetime.datetime.now()
-  logger.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
+  logger.debug("ADC:{}".format(adc_level))
 
-  if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>10):
+  if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
     pv.previous_adc = adc_level
-    pv.same_input_starttime = time_now
+    pv.no_input_starttime = time_now
 
-  level = water_level_rate(pv, adc_level)
-
+  level_rate = pv.water_level_rate(adc_level)
   last_level = pv.water_level
+  logger.info(f"level_rate:{level_rate} last_level:{last_level} adc:{adc_level} previous_adc:{pv.previous_adc}")# invalid rate:{invalid_rate}")
 
-  logger.debug("level:%d", level)
-  logger.debug("pv.setting_adc_invalid:%d", pv.setting_adc_invalid)
   (c,b,a) = get_all_motors(chip)
   pv.motor1 = a
   pv.motor2 = b
@@ -243,17 +228,10 @@ def tank_monitor(**kwargs):
   logger.debug("get_all_motors:(%d, %d, %d)", c,b,a)
 
   # 수위 입력이 없음
-  logger.info(f"level:{level} rate:{water_level_rate(pv,pv.setting_adc_invalid)}")
-  invalid_rate = water_level_rate(pv, pv.setting_adc_invalid)
-  if (level <= invalid_rate) or (abs(adc_level-pv.previous_adc)<10):  
-    if pv.no_input_starttime is None:
-      pv.no_input_starttime = time_now
-
+  if abs(adc_level-pv.previous_adc)<30:  
     td = time_now - pv.no_input_starttime
-    td_adc = time_now - pv.same_input_starttime
-    logger.info(f"Tolerance:{pv.setting_tolerance_to_ai}")
-    logger.info(f"td.seconds:{td.seconds} td_adc.seconds:{td_adc.seconds}")
-    if (td.seconds > pv.setting_tolerance_to_ai) or (td_adc.seconds>pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
+    logger.info(f"Tolerance:{pv.setting_tolerance_to_ai} td.seconds:{td.seconds}")
+    if (td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
       logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
       if pv.source == pump_variables.SOURCE_SENSOR:
         pv.source = pump_variables.SOURCE_AI
@@ -261,10 +239,11 @@ def tank_monitor(**kwargs):
         #현재 회로 구성에서는 CFLOW_PASS를 사용 못하므로 항상 CFLOW_CPU 로 설정되어 있음
         #set_current_flow(chip=chip, cflow=CFLOW_CPU)
 
-      #pv.water_level 
-      temp= ml.get_future_level(time_now)
-      if (not pv.water_level) and ml.train(pv=pv):
-        pv.water_level = ml.get_future_level(pv=pv, t=time_now)
+      #temp= ml.get_future_level(time_now)
+      #if (not pv.water_level) and ml.train(pv=pv):
+      if 1: #ml.train(pv=pv):
+        pv.water_level = 100 #ml.get_future_level(pv=pv, t=time_now)
+        logger.info(f"predicted level: {pv.water_level}")
       else:
         logger.info("Training failed.")
         pv.water_level = last_level
@@ -286,12 +265,10 @@ def tank_monitor(**kwargs):
       pv.source = pump_variables.SOURCE_SENSOR
       set_run_mode(chip, 0)
 
-    pv.no_input_starttime = None
-    pv.water_level = pv.filter_data(level)
+    pv.no_input_starttime = time_now
+    pv.water_level = pv.filter_data(level_rate)
 
-    pv.same_input
-
-  logger.info(f"op_mode:{pv.op_mode} level:{pv.water_level}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}")
+  logger.info(f"op_mode:{pv.op_mode} pv.water_level:{pv.water_level}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}")
   if pv.op_mode == pump_variables.OP_AUTO:  # 설정값(LL,L,H,HH)에 따라 룰 기반으로 자동 운전
     logger.info("1")
     if pv.water_level >= pv.setting_high and pv.previous_state!=2:
@@ -355,19 +332,15 @@ def tank_monitor(**kwargs):
 
       pv.previous_state = 0
 
-  #mqtt_pub.mqtt_publish(topic=pv.mqtt_topic, level=str(pv.water_level), client=pv.mqtt_client)
-
   pv.append_data([
-      time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),
+      time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
       get_motor_state(chip, 0),
       get_motor_state(chip, 1), get_motor_state(chip, 2), pv.source
   ])
 
-  logger.debug(f"writeDAC(level:{level}, filtered:{pv.water_level})")
-  #writeDAC(chip, level, spi)
+  logger.debug(f"writeDAC(level_rate:{level_rate}, filtered:{pv.water_level})")
 
-  #writeDAC(chip, water_level_ADC(pv, pv.water_level), spi)
-  writeDAC(chip, int(water_level_ADC(pv, level)), spi)
+  writeDAC(chip, int(water_level_ADC(pv, level_rate)), spi)
   sm.update_idle()
 
 def water_sensor_monitor(**kwargs):

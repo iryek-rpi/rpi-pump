@@ -11,7 +11,6 @@ from pump_variables import SOURCE_AI
 from pump_util import get_time, get_my_ipwlan, list_to_number
 from pump_btn import buttons
 import pump_monitor
-from pump_monitor import water_level_rate
 
 import pump_util as util
 
@@ -65,7 +64,7 @@ def scr_init_msg(pv):
   lcd().string(s1, L1)
 
 def scr_idle_1(pv):
-  logger.debug("scr_idle_1:level:{}".format(pv.water_level))
+  logger.debug("scr_idle_1:level:{} pv.source:{}".format(pv.water_level, pv.source))
   if pv.source == SOURCE_AI:
     if pv.device_role!='control':
       s1 = f"SEN PWL:{int(pv.water_level)} "
@@ -103,7 +102,6 @@ def scr_idle_1(pv):
   else:
     s1 = 'X'
 
-  #rate = water_level_rate(pv)
   rate = pv.water_level
 
   lcd().string(s1, L1)

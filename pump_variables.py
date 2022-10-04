@@ -79,7 +79,6 @@ class PV():
     self.motor_lead_time = 10
 
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
-    self.same_input_starttime = None  # 동일한 입력이 들어오기 시각한 시간
     self.previous_adc = 0 # 이전 ADC reading 값 
     self.data = []
     self.train = []
@@ -91,7 +90,8 @@ class PV():
     self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
     self.setting_4ma = 0.0  # 4mA 수위(수위계 캘리브레이션)
     self.setting_20ma = 100.0  # 20mA 수위(수위계 캘리브레이션)
-    self.setting_adc_invalid = 100  # ADC 값이 이 값 이하이면 입력이 없는 것으로 간주함
+    self._setting_adc_invalid = 100  # ADC 값이 이 값 이하이면 입력이 없는 것으로 간주함
+    self.adc_invalid_rate = self.water_level_rate(self._setting_adc_invalid)  # %
 
     # 수위 기록 인터벌 1, 10, 30, 60(1min), 180(3min), 300(5min), 600(10min), 3600(1hr)
     self.setting_monitor_interval = 5  # 수위 모니터링 주기(초)
@@ -122,6 +122,17 @@ class PV():
     self.data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                                   'data')
 
+  def water_level_rate(self, adc):
+    rate = 0.0
+    if adc >= self.setting_20ma_ref:
+      rate = 100.0
+    elif adc < self.setting_4ma_ref:
+      rate = 0.0
+    else:
+      rate = ((adc - self.setting_4ma_ref) /
+          (self.setting_20ma_ref - self.setting_4ma_ref)) * 100.0
+    return rate
+
   @property
   def water_level(self):
     return self._mbl[ma.M1_LEVEL_SENSOR]/10.
@@ -129,6 +140,15 @@ class PV():
   @water_level.setter
   def water_level(self, level):
     self._mbl[ma.M1_LEVEL_SENSOR] = int(level*10) 
+
+  @property
+  def setting_adc_invalid(self):
+    return self._setting_adc_invalid
+
+  @setting_adc_invalid.setter
+  def setting_adc_invalid(self, v):
+    self._setting_adc_invalid =  v
+    self.adc_invalid_rate = self.water_level_rate(v)
 
   @property
   def water_level_ai(self):
