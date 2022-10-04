@@ -245,7 +245,9 @@ def tank_monitor(**kwargs):
 
     td = time_now - pv.no_input_starttime
     logger.info(f"Tolerance:{pv.setting_tolerance_to_ai}")
+    logger.info(f"td.seconds:{td.seconds}")
     if td.seconds > pv.setting_tolerance_to_ai:  # 일정 시간 입력이 없으면
+      logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
       if pv.source == pump_variables.SOURCE_SENSOR:
         pv.source = pump_variables.SOURCE_AI
         set_run_mode(chip, 1)
@@ -272,6 +274,7 @@ def tank_monitor(**kwargs):
       pv.water_level = last_level  # 일시적인 현상으로 간주하고 level 값 버림
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
+    logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
     if pv.source == pump_variables.SOURCE_AI:
       pv.source = pump_variables.SOURCE_SENSOR
       set_run_mode(chip, 0)
