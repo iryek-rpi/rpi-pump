@@ -423,6 +423,7 @@ def init_motors(c):
     lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
     lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
     lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
+    set_run_mode(c, 0)
 
 def main():
   from pump_variables import PV, pv
