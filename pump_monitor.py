@@ -68,7 +68,7 @@ def tank_monitor(**kwargs):
       logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
       if pv.source == pump_variables.SOURCE_SENSOR:
         pv.source = pump_variables.SOURCE_AI
-        set_run_mode(chip, 1)
+        motor.set_run_mode(chip, 1)
       #temp= ml.get_future_level(time_now)
       #if (not pv.water_level) and ml.train(pv=pv):
       if 1: #ml.train(pv=pv):
@@ -80,7 +80,7 @@ def tank_monitor(**kwargs):
 
       # get prediction from ML model
       # 예측 모델 적용할 때까지 임시
-      if is_motor_running(chip):
+      if motor.is_motor_running(chip):
         logger.debug("is_motor_running() true")
         pv.water_level += 2
       else:
