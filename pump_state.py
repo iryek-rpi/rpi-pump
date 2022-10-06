@@ -16,9 +16,10 @@ from pump_state_set_time import SetTimeStateMachine
 from pump_state_set_level import SetLevelStateMachine
 from pump_btn import buttons
 
-TRANSITION_LOGFILE_NAME = f"./logs/{util.get_time_str()}_transition.log"
+#TRANSITION_LOGFILE_NAME = f"./logs/{util.get_time_str()}_transition.log"
 
-_ = util.make_logger(name='transitions', filename=TRANSITION_LOGFILE_NAME)
+#_ = util.make_logger(name='transitions', filename=TRANSITION_LOGFILE_NAME)
+logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 #logging.getLogger('transitions').setLevel(logging.WARNING)
 #trasition_logger = logging.getLogger('transitions')

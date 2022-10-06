@@ -30,7 +30,7 @@ MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
 MODBUS_CLIENT_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_client.log"
 MODBUS_SERVER_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_server.log"
 FAN_LOGFILE_NAME = f"./logs/{get_time_str()}_fan.log"
-TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
+#TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
 pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
 #logfile = pathlib.Path(MAIN_LOGFILE_NAME)
 #logfile.touch(exist_ok=True)
