@@ -212,7 +212,8 @@ def tank_monitor(**kwargs):
   time_now = datetime.datetime.now()
   logger.debug("ADC:{}".format(adc_level))
 
-  if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
+  #if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
+  if pv.previous_adc == 0  or (not pv.no_input_starttime):
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
@@ -265,6 +266,7 @@ def tank_monitor(**kwargs):
       pv.source = pump_variables.SOURCE_SENSOR
       set_run_mode(chip, 0)
 
+    pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
     pv.water_level = pv.filter_data(level_rate)
 
