@@ -37,41 +37,38 @@ def tank_monitor(**kwargs):
   sm = kwargs['sm']
   pv: PV = kwargs['pv']
 
+  time_now = datetime.datetime.now()
   adc_level = ADC.check_water_level(chip, spi)
   if adc_level<pv.adc_invalid_rate:
     adc_level = 0
 
-  time_now = datetime.datetime.now()
-  logger.debug("ADC:{}".format(adc_level))
+  level_rate = pv.water_level_rate(adc_level)
+  orig_level_rate = pv.water_level
 
   #if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
   if pv.previous_adc == 0  or (not pv.no_input_starttime):
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
-  level_rate = pv.water_level_rate(adc_level)
-  last_level = pv.water_level
-  logger.info(f"level_rate:{level_rate} last_level:{last_level} adc:{adc_level} previous_adc:{pv.previous_adc}")# invalid rate:{invalid_rate}")
+  logger.info("")
+  logger.info(f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate} orig_level_rate:{orig_level_rate}")# invalid rate:{invalid_rate}")
 
   (c,b,a) = motor.get_all_motors(chip)
   pv.motor1 = a
   pv.motor2 = b
   pv.motor3 = c
 
-  logger.debug("get_all_motors:(%d, %d, %d)", c,b,a)
+  logger.debug("get_all_motors:(%d, %d, %d)", a,b,c)
 
   # 수위 입력이 없음
   if abs(adc_level-pv.previous_adc)<30:  
     td = time_now - pv.no_input_starttime
-    logger.info(f"Tolerance:{pv.setting_tolerance_to_ai} td.seconds:{td.seconds}")
+    logger.info(f"td.seconds:{td.seconds} Tolerance:{pv.setting_tolerance_to_ai}")
     if (td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
       logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
       if pv.source == pump_variables.SOURCE_SENSOR:
         pv.source = pump_variables.SOURCE_AI
         set_run_mode(chip, 1)
-        #현재 회로 구성에서는 CFLOW_PASS를 사용 못하므로 항상 CFLOW_CPU 로 설정되어 있음
-        #set_current_flow(chip=chip, cflow=CFLOW_CPU)
-
       #temp= ml.get_future_level(time_now)
       #if (not pv.water_level) and ml.train(pv=pv):
       if 1: #ml.train(pv=pv):
@@ -79,7 +76,7 @@ def tank_monitor(**kwargs):
         logger.info(f"predicted level: {pv.water_level}")
       else:
         logger.info("Training failed.")
-        pv.water_level = last_level
+        pv.water_level = orig_level_rate
 
       # get prediction from ML model
       # 예측 모델 적용할 때까지 임시
@@ -90,7 +87,7 @@ def tank_monitor(**kwargs):
         if pv.water_level > 0:
           pv.water_level -=2 
     else:
-      pv.water_level = last_level  # 일시적인 현상으로 간주하고 level 값 버림
+      pv.water_level = orig_level_rate  # 일시적인 현상으로 간주하고 level 값 버림
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
     logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
@@ -197,8 +194,6 @@ def water_sensor_monitor(**kwargs):
   time_now = datetime.datetime.now()
   logger.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
   level_rate = pv.water_level_rate(adc_level)
-
-  #last_level = pv.water_level
 
   logger.debug("level_rate:%d", level_rate)
   logger.debug("pv.setting_adc_invalid:%d", pv.setting_adc_invalid)
