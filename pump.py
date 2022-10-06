@@ -33,6 +33,8 @@ from pump_state_set_level import SetLevelStateMachine
 from pump_state_set_time import SetTimeStateMachine
 import pump_monitor
 import pump_thread
+import motor
+import ADC
 
 import modbus_server_serial
 import modbus_respond
@@ -125,9 +127,9 @@ def main():
 
     chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
     pv().chip = chip
-    spi = pump_monitor.init_spi_rw(chip, pv(),
+    spi = ADC.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
-    pump_monitor.init_motors(chip)
+    motor.init_motors(chip)
     pump_screen.scr_init_msg(pv())
 
     #lgpio.gpio_claim_output(chip, FAN, 1)

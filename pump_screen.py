@@ -11,6 +11,7 @@ from pump_variables import SOURCE_AI
 from pump_util import get_time, get_my_ipwlan, list_to_number
 from pump_btn import buttons
 import pump_monitor
+import motor
 
 import pump_util as util
 
@@ -76,7 +77,7 @@ def scr_idle_1(pv):
     else:
       s1 = f"PLC WL:{int(pv.water_level)} "
 
-  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
+  (m3,m2,m1) = motor.get_all_motors(pv.chip)
 
   # O : 펌프 가동 중
   # - : 펌프 중지 중
@@ -114,7 +115,7 @@ def scr_idle_2(pv):
   else:
     s1 = f"PLC WL:{pv.water_level:.1f}"
 
-  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
+  (m3,m2,m1) = motor.get_all_motors(pv.chip)
   mt1 = ""
   mt2 = ""
   mt3 = ""
@@ -152,7 +153,7 @@ def scr_idle_3(pv):
   else:
     s1 = f"PLC WL:{pv.water_level:.1f} "
 
-  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
+  (m3,m2,m1) = motor.get_all_motors(pv.chip)
 
   # O : 펌프 가동 중
   # - : 펌프 중지 중

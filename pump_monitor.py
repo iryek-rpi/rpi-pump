@@ -101,10 +101,11 @@ def tank_monitor(**kwargs):
 
   determine_motor_state(pv, chip)
 
+  (m0,m1,m2) = motor.get_all_motors(chip)
+
   pv.append_data([
       time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
-      motor.get_motor_state(chip, 0),
-      motor.get_motor_state(chip, 1), get_motor_state(chip, 2), pv.source
+      m0, m1,m2, pv.source
   ])
 
   logger.debug(f"writeDAC(level_rate:{level_rate}, filtered:{pv.water_level})")
@@ -112,7 +113,7 @@ def tank_monitor(**kwargs):
   ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, level_rate)), spi)
   sm.update_idle()
 
-def determin_motor_state(pv, chip):
+def determine_motor_state(pv, chip):
   logger.info(f"op_mode:{pv.op_mode} pv.water_level:{pv.water_level}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}")
   if pv.op_mode == pump_variables.OP_AUTO:  # 설정값(LL,L,H,HH)에 따라 룰 기반으로 자동 운전
     logger.info("1")
@@ -215,29 +216,6 @@ def water_sensor_monitor(**kwargs):
   ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, level_rate)), spi)
   sm.update_idle()
 
-
-def init_spi_rw(chip, pv, speed=4800):
-  #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
-  #set_current_flow(chip=chip, cflow=CFLOW_PASS)
-  #set_current_flow(chip=chip, cflow=CFLOW_CPU)
-
-  lgpio.gpio_claim_output(chip, CE_T, 1)
-  lgpio.gpio_claim_output(chip, CE_R, 1)
-  time.sleep(0.1)
-
-  spi = spidev.SpiDev()
-  spi.open(bus=0, device=0)
-  spi.max_speed_hz = speed
-  spi.mode = 0
-  spi.no_cs = True
-
-  return spi
-
-def init_motors(c):
-    lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
-    lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
-    lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
-    set_run_mode(c, 0)
 
 def main():
   from pump_variables import PV, pv

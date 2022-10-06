@@ -1,18 +1,12 @@
 import lgpio
 import picologging as logging
+import pump_util as util
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 #==============================================================================
 # Device Properties
 #==============================================================================
-
-# /boot/firmware/config.txt
-# Free CE0(8), CE1(7), and then control them as GPIO-7 & GPIO-8
-# GPIO 24 & 25 are held by SPI driver. So they cannot be used for other purposes.
-#   dtoverlay=spi0-2cs,cs0_pin=24,cs1_pin=25
-CE_R = 7  # CE1
-CE_T = 8  # CE0
 
 M0_OUT = 2  #24v
 M1_OUT = 3  #24v
@@ -24,6 +18,13 @@ M0_IN = 26  #cur_sw0
 M1_IN = 19  #cur_sw1
 M2_IN = 13  #cur_sw2
 
+
+def init_motors(c):
+    lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
+    lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
+    lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
+    set_run_mode(c, 0)
+
 def set_run_mode(chip, v):
   '''
   아래 2개 중 어떤 모드를 출력해야 하나?
@@ -31,6 +32,17 @@ def set_run_mode(chip, v):
   (2) 수위계/AI
   '''
   lgpio.gpio_write(chip, RUN_MODE_OUT, v)
+
+def get_all_motors(chip):
+  """3대의 모터 상태를 (M2,M1,M0)로 리턴
+  """
+  #ms = [0, 0, 0]
+  ms0 = lgpio.gpio_read(chip, M0_IN)
+  ms1 = lgpio.gpio_read(chip, M1_IN)
+  ms2 = lgpio.gpio_read(chip, M2_IN)
+
+  logger.info("(MS0, MS1, MS2): (%d, %d, %d)", ms0, ms1, ms2)
+  return (ms0, ms1, ms2)
 
 
 def get_motor_state(chip, m):
@@ -50,17 +62,6 @@ def is_motor_running(chip):
   return get_motor_state(chip, 0) or get_motor_state(
       chip, 1) or get_motor_state(chip, 2)
 
-
-def get_all_motors(chip):
-  """3대의 모터 상태를 (M2,M1,M0)로 리턴
-  """
-  #ms = [0, 0, 0]
-  ms0 = lgpio.gpio_read(chip, M0_IN)
-  ms1 = lgpio.gpio_read(chip, M1_IN)
-  ms2 = lgpio.gpio_read(chip, M2_IN)
-
-  logger.info("(MS0, MS1, MS2): (%d, %d, %d)", ms0, ms1, ms2)
-  return (ms0, ms1, ms2)
 
 def set_motor_state(chip, m, on_off):
   if m == 0:

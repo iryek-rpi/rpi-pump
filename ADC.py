@@ -1,7 +1,36 @@
-import lgpio
+import time
 import picologging as logging
 
+import lgpio
+import spidev
+
+import pump_util as util
+
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
+
+# /boot/firmware/config.txt
+# Free CE0(8), CE1(7), and then control them as GPIO-7 & GPIO-8
+# GPIO 24 & 25 are held by SPI driver. So they cannot be used for other purposes.
+#   dtoverlay=spi0-2cs,cs0_pin=24,cs1_pin=25
+CE_R = 7  # CE1
+CE_T = 8  # CE0
+
+def init_spi_rw(chip, pv, speed=4800):
+  #현재 회로 구성에서는 CFLOW_PASS를 사용 못함
+  #set_current_flow(chip=chip, cflow=CFLOW_PASS)
+  #set_current_flow(chip=chip, cflow=CFLOW_CPU)
+
+  lgpio.gpio_claim_output(chip, CE_T, 1)
+  lgpio.gpio_claim_output(chip, CE_R, 1)
+  time.sleep(0.1)
+
+  spi = spidev.SpiDev()
+  spi.open(bus=0, device=0)
+  spi.max_speed_hz = speed
+  spi.mode = 0
+  spi.no_cs = True
+
+  return spi
 
 def writeDAC(chip, v, spi):
   msb = (v >> 8) & 0x0F
