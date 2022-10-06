@@ -23,6 +23,7 @@ def init_motors(c):
     lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
     lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
     lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
+    set_all_motors(c, (0,0,0))
     set_run_mode(c, 0)
 
 def set_run_mode(chip, v):
@@ -74,15 +75,12 @@ def set_motor_state(chip, m, on_off):
   logger.info("SET MOTOR#{%d}/(1,2,3) = {%d}", m + 1, on_off)
 
 
-def set_all_motors(chip, m, pv):
+def set_all_motors(chip, m):
   '''(M0, M1, M2)'''
   a, b, c = m
   lgpio.gpio_write(chip, M0_OUT, a)
   lgpio.gpio_write(chip, M1_OUT, b)
   lgpio.gpio_write(chip, M2_OUT, c)
-  #pv.motor1 = c
-  #pv.motor2 = b
-  #pv.motor3 = a
 
 
 
