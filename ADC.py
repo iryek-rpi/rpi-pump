@@ -1,4 +1,5 @@
 import lgpio
+import picologging as logging
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
