@@ -79,9 +79,9 @@ def tank_monitor(**kwargs):
         diff4 = (pv.data[-4][1]-pv.data[-5][1])*0.5
 
         pv.water_level = level_rate+(diff1+diff2+diff3+diff4)//4 #ml.get_future_level(pv=pv, t=time_now)
-        logger.info(f"predicted level: {pv.water_level}")
+        logger.info(f"##### Predicted level: {pv.water_level}")
       else:
-        logger.info("Training failed.")
+        logger.info("###### Training failed. returning original value")
         pv.water_level = orig_level_rate
       # get prediction from ML model
     else:
