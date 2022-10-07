@@ -1,7 +1,7 @@
 import pandas as pd
 from prophet import Prophet
 
-from pump_variables import pv
+from pump_variables import PV
 
 from prophet.serialize import model_to_json, model_from_json
 
@@ -16,7 +16,7 @@ def read_model(model_name:str):
 
     return m
 
-def train(pv):
+def train(pv:PV):
     tdf = pd.DataFrame(pv.train, columns=['ds','y','a','b','c','d'])
     tdf['ds'] = pd.DatetimeIndex(tdf['ds'])
     tdf = tdf.set_index('ds')

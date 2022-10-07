@@ -85,7 +85,9 @@ class PV():
     self.forcast = None
     self.lock = threading.Lock()
 
-    self.setting_max_train = 518400 # 3600*24*30 (30일)
+    # setting_monitor_interval 초기화 될 때 함께 초기화 됨)
+    self._setting_max_train = 518400 # 3600*24*30 (1초 샘플링일 경우 30일)
+
     self.setting_4ma_ref = 700  # 4mA ADC 출력
     self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
     self.setting_4ma = 0.0  # 4mA 수위(수위계 캘리브레이션)
@@ -94,7 +96,9 @@ class PV():
     self.adc_invalid_rate = self.water_level_rate(self._setting_adc_invalid)  # %
 
     # 수위 기록 인터벌 1, 10, 30, 60(1min), 180(3min), 300(5min), 600(10min), 3600(1hr)
-    self.setting_monitor_interval = 5  # 수위 모니터링 주기(초)
+    # setting.ini에서 읽어와서 초기화 됨
+    self._setting_monitor_interval = 5  # 수위 모니터링 주기(초) 
+
     self.setting_save_interval = 60 * 60 * 24  # 저장 주기(초)
     self.setting_tolerance_to_ai = 10  #600  # AI 모드로 전환하기 위한 입력 없는 time(sec)
     self.setting_tolerance_to_sensor = 10  #600  # 수위계 입력 모드로 전환하기 위한 입력 유지 time(sec)
@@ -103,7 +107,7 @@ class PV():
 
     #
     self.setting_adc_avg_interval = 10  # 평균을 계산할 adc 입력 기간(sec)
-    self.adc_avg_count = self.setting_adc_avg_interval // self.setting_monitor_interval
+    self.adc_avg_count = self.setting_adc_avg_interval // self._setting_monitor_interval
     if self.adc_avg_count < 1:
       self.adc_avg_count = 1
 
@@ -140,6 +144,19 @@ class PV():
   @water_level.setter
   def water_level(self, level):
     self._mbl[ma.M1_LEVEL_SENSOR] = int(level*10) 
+
+  @property
+  def setting_monitor_interval(self):
+    return self._setting_monitor_interval
+
+  @setting_monitor_interval.setter
+  def setting_monitor_interval(self, interval):
+    self._seting_max_train = (60*60*24*30)//interval  #1개월 
+    self._setting_monitor_interval = interval
+
+  @property
+  def setting_max_train(self):
+    return self._setting_max_train
 
   @property
   def setting_adc_invalid(self):
