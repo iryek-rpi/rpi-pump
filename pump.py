@@ -72,19 +72,26 @@ FAN = 12
 #==============================================================================
 is_shutdown = False
 
+def ctrl_c_handler(sig, frame):
+  logger.info(f"SIGINT at {datetime.datetime.now()}")
+  logger.info('You pressed Ctrl+C!')
+  print(f"frame:{frame}")
+  global is_shutdown
+  is_shutdown=True
 
 def stop(sig, frame):
   logger.info(f"SIGTERM at {datetime.datetime.now()}")
+  print(f"frame:{frame}")
   global is_shutdown
   is_shutdown = True
 
-
 def ignore(sig, frame):
   logger.info(f"SIGHUP at {datetime.datetime.now()}")
-
+  print(f"frame:{frame}")
 
 signal.signal(signal.SIGTERM, stop)
-#signal.signal(signal.SIGHUP, stop)
+#signal.signal(signal.SIGINT, ctrl_c_handler)
+#signal.signal(signal.SIGHUP, ignore)
 
 logger.info(f"=================================================")
 logger.info(f"START at {datetime.datetime.now()}")
@@ -210,6 +217,7 @@ def main():
                                'modbus_id': pv().modbus_id
                            })
     comm_proc.start()
+    logger.info(f"@@@@@@@ comm_proc: {comm_proc.pid}")
 
     pipe_mqtt_sensor, pipe_mqtt_pub = mp.Pipe()
     mqtt_thread = pump_thread.RepeatThread(
@@ -231,6 +239,7 @@ def main():
                                    'mqtt_topic': "topic1"
                                })
     mqtt_pub_proc.start()
+    logger.info(f"@@@@@@ mqtt_proc: {mqtt_pub_proc.pid}")
 
     logger.info("Starting fan control")
     # fan control process
@@ -240,8 +249,14 @@ def main():
                            kwargs = {'logger': fan_logger})
     fan_proc.start()
 
+    logger.info(f"@@@@@@ fan_proc: {fan_proc.pid}")
+
     while not is_shutdown:
       pass
+
+    logger.info("################### out of main loop ##################")
+    logger.info(f"lcd():{lcd()}")
+    lcd().clear()
 
     p_respond.close()
     p_req.close()
@@ -253,13 +268,17 @@ def main():
     responder.stop()
     saver.stop()
     
+    comm_proc.terminate()
     comm_proc.join()
     mqtt_thread.stop()
+    mqtt_pub_proc.terminate()
     mqtt_pub_proc.join()
+    fan_proc.terminate()
     fan_proc.join()
+    #fan_proc.kill()
 
     util.save_data(pv=pv())
-    lcd().clear()
+
 
   except KeyboardInterrupt:
     pass
