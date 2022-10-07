@@ -43,14 +43,14 @@ def tank_monitor(**kwargs):
     adc_level = 0
 
   level_rate = pv.water_level_rate(adc_level)
-  orig_level_rate = pv.water_level
+  orig_level_rate = level_rate #pv.water_level
 
   #if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
   if pv.previous_adc == 0  or (not pv.no_input_starttime):
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
-  logger.info("")
+  logger.info("========================================================")
   logger.info(f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate} orig_level_rate:{orig_level_rate}")# invalid rate:{invalid_rate}")
 
   (c,b,a) = motor.get_all_motors(chip)
@@ -71,21 +71,19 @@ def tank_monitor(**kwargs):
         motor.set_run_mode(chip, 1)
       #temp= ml.get_future_level(time_now)
       #if (not pv.water_level) and ml.train(pv=pv):
-      if 1: #ml.train(pv=pv):
-        pv.water_level = 100 #ml.get_future_level(pv=pv, t=time_now)
+
+      if len(pv.data)>5: #ml.train(pv=pv):
+        diff1 = (pv.data[-1][1]-pv.data[-2][1])*1.5
+        diff2 = (pv.data[-2][1]-pv.data[-3][1])*1.2
+        diff3 = (pv.data[-3][1]-pv.data[-4][1])*0.8
+        diff4 = (pv.data[-4][1]-pv.data[-5][1])*0.5
+
+        pv.water_level = level_rate+(diff1+diff2+diff3+diff4)//4 #ml.get_future_level(pv=pv, t=time_now)
         logger.info(f"predicted level: {pv.water_level}")
       else:
         logger.info("Training failed.")
         pv.water_level = orig_level_rate
-
       # get prediction from ML model
-      # 예측 모델 적용할 때까지 임시
-      if motor.is_motor_running(chip):
-        logger.debug("is_motor_running() true")
-        pv.water_level += 2
-      else:
-        if pv.water_level > 0:
-          pv.water_level -=2 
     else:
       pv.water_level = orig_level_rate  # 일시적인 현상으로 간주하고 level 값 버림
   else:  # 수위 입력이 있음
