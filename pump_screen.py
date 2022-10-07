@@ -6,11 +6,9 @@ import picologging as logging
 import lgpio
 from pump_lcd import lcd
 from pump_variables import PV
-from pump_variables import SOURCE_SENSOR
-from pump_variables import SOURCE_AI
+import constant
 from pump_util import get_time, get_my_ipwlan, list_to_number
 from pump_btn import buttons
-import pump_monitor
 import motor
 
 import pump_util as util
@@ -66,7 +64,7 @@ def scr_init_msg(pv):
 
 def scr_idle_1(pv):
   logger.debug("scr_idle_1:level:{} pv.source:{}".format(pv.water_level, pv.source))
-  if pv.source == SOURCE_AI:
+  if pv.source == constant.SOURCE_AI:
     if pv.device_role!='control':
       s1 = f"SEN PWL:{int(pv.water_level)} "
     else:
@@ -110,7 +108,7 @@ def scr_idle_1(pv):
 
 
 def scr_idle_2(pv):
-  if pv.source == SOURCE_AI:
+  if pv.source == constant.SOURCE_AI:
     s1 = f"AI PWL:{pv.water_level:.1f}"
   else:
     s1 = f"PLC WL:{pv.water_level:.1f}"
@@ -148,7 +146,7 @@ def scr_idle_2(pv):
 
 
 def scr_idle_3(pv):
-  if pv.source == SOURCE_AI:
+  if pv.source == constant.SOURCE_AI:
     s1 = f"AI PWL:{pv.water_level:.1f} "
   else:
     s1 = f"PLC WL:{pv.water_level:.1f} "

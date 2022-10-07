@@ -8,7 +8,6 @@ import picologging as logging
 
 import pump_util as util
 
-import pump_monitor
 from pump_screen import *
 from pump_variables import PV
 #from pump_util import ThreadSafeSingleton
@@ -100,15 +99,12 @@ class LCDStateMachine():
     self.init()
 
   def idle_1(self):
-    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_1(self.pv)
 
   def idle_2(self):
-    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_2(self.pv)
 
   def idle_3(self):
-    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_3(self.pv)
 
   def idle_4(self):

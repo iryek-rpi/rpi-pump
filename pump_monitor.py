@@ -16,6 +16,7 @@ import mqtt_pub
 
 import csv
 
+import constant
 import pump_util as util
 from pump_util import *
 import pump_variables
@@ -65,9 +66,9 @@ def tank_monitor(**kwargs):
     td = time_now - pv.no_input_starttime
     logger.info(f"td.seconds:{td.seconds} Tolerance:{pv.setting_tolerance_to_ai}")
     if (td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
-      logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
-      if pv.source == pump_variables.SOURCE_SENSOR:
-        pv.source = pump_variables.SOURCE_AI
+      logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}")
+      if pv.source == constant.SOURCE_SENSOR:
+        pv.source = constant.SOURCE_AI
         motor.set_run_mode(chip, 1)
       #temp= ml.get_future_level(time_now)
       #if (not pv.water_level) and ml.train(pv=pv):
@@ -88,9 +89,9 @@ def tank_monitor(**kwargs):
       pv.water_level = orig_level_rate  # 일시적인 현상으로 간주하고 level 값 버림
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
-    logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{pump_variables.SOURCE_AI} SOURCE_SENSOR:{pump_variables.SOURCE_SENSOR}")
-    if pv.source == pump_variables.SOURCE_AI:
-      pv.source = pump_variables.SOURCE_SENSOR
+    logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}")
+    if pv.source == constant.SOURCE_AI:
+      pv.source = constant.SOURCE_SENSOR
       set_run_mode(chip, 0)
 
     pv.previous_adc = adc_level
@@ -113,7 +114,7 @@ def tank_monitor(**kwargs):
 
 def determine_motor_state(pv, chip):
   logger.info(f"op_mode:{pv.op_mode} pv.water_level:{pv.water_level}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}")
-  if pv.op_mode == pump_variables.OP_AUTO:  # 설정값(LL,L,H,HH)에 따라 룰 기반으로 자동 운전
+  if pv.op_mode == constant.OP_AUTO:  # 설정값(LL,L,H,HH)에 따라 룰 기반으로 자동 운전
     logger.info("1")
     if pv.water_level >= pv.setting_high and pv.previous_state!=2:
       logger.info("2")
@@ -186,8 +187,8 @@ def water_sensor_monitor(**kwargs):
   sm = kwargs['sm']
   pv: PV = kwargs['pv']
 
-  if pv.source == pump_variables.SOURCE_AI:
-    pv.source = pump_variables.SOURCE_SENSOR
+  if pv.source == constant.SOURCE_AI:
+    pv.source = constant.SOURCE_SENSOR
 
   adc_level = ADC.check_water_level(chip, spi)
   time_now = datetime.datetime.now()
@@ -222,7 +223,7 @@ def main():
 
     chip = lgpio.gpiochip_open(0)
     #set_current_flow(chip=chip, cflow=CFLOW_CPU)
-    pv().source = SOURCE_SENSOR
+    pv().source = constant.SOURCE_SENSOR
 
     lgpio.gpio_claim_output(chip, CE_T, 1)
     lgpio.gpio_claim_output(chip, CE_R, 1)

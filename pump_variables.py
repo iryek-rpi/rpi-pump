@@ -7,23 +7,11 @@ import csv
 
 import picologging as logging
 
+import constant
 import pump_util as util
 import modbus_address as ma
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
-
-# 수위계 입력에 의한 수위값인지, 예측에 의한 수위값인지
-SOURCE_SENSOR = 0
-SOURCE_AI = 1
-
-# 펌프 가동을 자동으로 할 지 여부
-OP_MANUAL = 0
-OP_AUTO = 1
-
-# PLC와 연동해서 동작할 지, 단독으로 동작할 지
-MODE_PLC = 0  # PLC에서 pump control
-MODE_SOLO = 1  # 수위조절기에서 pump control
-
 
 def pv(inst=None):
   if inst != None:
@@ -65,8 +53,8 @@ class PV():
 
     self.modbus_id = 0
 
-    self.solo_mode = MODE_PLC
-    self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
+    self.solo_mode = constant.MODE_PLC
+    self.op_mode = constant.OP_AUTO  # MANUAL/AUTO 운전모드
 
     self.motor_index = 0
     self.previous_state = 1  # 0:low, 1:mid  3:high
@@ -470,18 +458,3 @@ class PV():
     self.lock.release()
     return new_list
 
-
-def save_data(**kwargs):
-  pv = kwargs['pv']
-  n = datetime.datetime.now()
-
-  data = pv.dump_data()
-  if len(data) > 0:
-    fname = os.path.join(pv.data_path, n.strftime("%Y-%m-%d-%H-%M-%S.csv"))
-    logger.debug(f"save file name:{fname}")
-    try:
-      with open(fname, 'w') as f:
-        w = csv.writer(f)
-        w.writerows(data)
-    except:
-      logger.debug("Error save data")

@@ -1,11 +1,9 @@
-import pump_variables
-from pump_variables import PV
-
 import configparser
 import pathlib
 import picologging as logging
 import ast
 
+import constant
 import pump_util as util
 
 SETTING_DIR = "./setting/"
@@ -15,7 +13,7 @@ SETTING_NAME = SETTING_DIR + "setting.ini"
 #import pump_util as util
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
-def init_setting(pv: PV):
+def init_setting(pv):
   co = configparser.ConfigParser()
 
   if not pathlib.Path(SETTING_NAME).is_file():
@@ -93,7 +91,7 @@ def read_config(section, key, config_name=SETTING_NAME):
 def str_to_list(s:str):
   return s.strip('[]').split(',')
 
-def config_to_pv(co: configparser.ConfigParser, pv: PV):
+def config_to_pv(co: configparser.ConfigParser, pv):
 
   if ('CONTROLLER' in co) and ('MODBUS_ID' in co['CONTROLLER']) and co['CONTROLLER']['MODBUS_ID'].isdigit():
     logger.info("modbus id from setting:%s", co['CONTROLLER']['MODBUS_ID'])
@@ -103,14 +101,14 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
     pv.modbus_id = 1
 
   if ('CONTROLLER' in co) and ('SOLO_MODE' in co['CONTROLLER']) and co['CONTROLLER']['SOLO_MODE'] == 'MODE_SOLO':
-    pv.solo_mode = pump_variables.MODE_SOLO
+    pv.solo_mode = constant.MODE_SOLO
   else:
-    pv.solo_mode = pump_variables.MODE_PLC
+    pv.solo_mode = constant.MODE_PLC
 
   if ('CONTROLLER' in co) and ('OP_MODE' in co['CONTROLLER']) and co['CONTROLLER']['OP_MODE'] == 'OP_AUTO':
-    pv.op_mode = pump_variables.OP_AUTO
+    pv.op_mode = constant.OP_AUTO
   else:
-    pv.op_mode = pump_variables.OP_MANUAL
+    pv.op_mode = constant.OP_MANUAL
 
   if ('CONTROLLER' in co) and ('AUTO_H' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_H'].isdigit():
     pv.setting_high = int(co['CONTROLLER']['AUTO_H'])

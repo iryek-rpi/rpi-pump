@@ -10,11 +10,12 @@ from subprocess import check_output
 from re import findall            
 import os
 import pathlib
-import picologging as logging
 import threading
-
 import datetime
 from datetime import timedelta
+
+import picologging as logging
+import csv
 
 def get_time_str():
   return datetime.datetime.now().strftime("%Y-%2m-%2d_%H-%M-%S")
@@ -63,7 +64,23 @@ def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
   return logger
 
 print("make_logger")
-_ = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME)
+logger = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME)
+
+def save_data(**kwargs):
+  pv = kwargs['pv']
+
+  n = datetime.datetime.now()
+
+  data = pv.dump_data()
+  if len(data) > 0:
+    fname = os.path.join(pv.data_path, n.strftime("%Y-%m-%d-%H-%M-%S.csv"))
+    logger.debug(f"save file name:{fname}")
+    try:
+      with open(fname, 'w') as f:
+        w = csv.writer(f)
+        w.writerows(data)
+    except:
+      logger.debug("Error save data")
 
 def change_list_digit(lst, idx, amount=1):
   lst[idx] = change_digit(lst[idx], idx, amount)

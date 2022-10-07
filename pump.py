@@ -23,7 +23,7 @@ import picologging as logging
 import pump_util as util
 from pump_util import *
 
-from pump_variables import PV, pv
+from pump_variables import pv
 import pump_variables
 from pump_lcd import Lcd, lcd
 import pump_screen
@@ -111,6 +111,7 @@ def main():
   try:
     lcd.instance = lcd_instance
 
+    from pump_variables import PV
     pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
     config.init_setting(pv())
     if not pv().device_role:
@@ -186,7 +187,7 @@ def main():
     logger.info(f"datapath: {pv().data_path}")
     Path(pv().data_path).mkdir(parents=True, exist_ok=True)
     saver = pump_thread.RepeatThread(interval=pv().setting_save_interval,
-                                     execute=pump_variables.save_data,
+                                     execute=util.save_data,
                                      kwargs={'pv': pv()})
     saver.start()
 
@@ -256,7 +257,7 @@ def main():
     mqtt_pub_proc.join()
     
 
-    pump_variables.save_data(pv=pv())
+    util.save_data(pv=pv())
     lcd().clear()
 
   except KeyboardInterrupt:
