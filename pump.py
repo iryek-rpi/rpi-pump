@@ -252,10 +252,11 @@ def main():
     monitor.stop()
     responder.stop()
     saver.stop()
+    
     comm_proc.join()
     mqtt_thread.stop()
     mqtt_pub_proc.join()
-    
+    fan_proc.join()
 
     util.save_data(pv=pv())
     lcd().clear()
