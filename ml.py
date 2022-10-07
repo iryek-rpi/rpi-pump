@@ -1,21 +1,14 @@
 import pandas as pd
 from prophet import Prophet
+from prophet.serialize import model_to_json, model_from_json
 
 from pump_variables import PV
 
-from prophet.serialize import model_to_json, model_from_json
-
-def save_model(model_name:str, model):
-    with open(f'./model/{model_name}', 'w') as fout:
-        fout.write(model_to_json(model))  # Save model
-
-def read_model(model_name:str):
-    m = None
-    with open(f'./model/{model_name}', 'r') as fin:
-        m = model_from_json(fin.read())  # Load model
-
-    return m
-
+def get_future_level(t):
+    return 70
+    #if pv.forcast:
+    #    return pv.forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
+    
 def train(pv:PV):
     tdf = pd.DataFrame(pv.train, columns=['ds','y','a','b','c','d'])
     tdf['ds'] = pd.DatetimeIndex(tdf['ds'])
@@ -43,8 +36,13 @@ def train(pv:PV):
     forcast = forcast.resample(rule='1sec', on='ds').mean()
     pv.forcast = forcast
 
-def get_future_level(t):
-    return 70
-    #if pv.forcast:
-    #    return pv.forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
-    
+def save_model(model_name:str, model):
+    with open(f'./model/{model_name}', 'w') as fout:
+        fout.write(model_to_json(model))  # Save model
+
+def read_model(model_name:str):
+    m = None
+    with open(f'./model/{model_name}', 'r') as fin:
+        m = model_from_json(fin.read())  # Load model
+
+    return m
