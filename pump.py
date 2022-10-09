@@ -7,17 +7,15 @@
 
 import sys
 import pathlib
-import picologging as logging
 from pathlib import Path
 from datetime import timedelta
-import multiprocessing as mp
-
-import lgpio
-import signal
-import time
 import datetime
+import time
+import multiprocessing as mp
+import signal
 
 import picologging as logging
+import lgpio
 
 # logger 생성하기 위해 가장 먼저 import 해야 함
 import pump_util as util
@@ -89,7 +87,7 @@ def ignore(sig, frame):
   logger.info(f"SIGHUP at {datetime.datetime.now()}")
   print(f"frame:{frame}")
 
-signal.signal(signal.SIGTERM, stop)
+#signal.signal(signal.SIGTERM, stop)
 #signal.signal(signal.SIGINT, ctrl_c_handler)
 #signal.signal(signal.SIGHUP, ignore)
 
@@ -270,9 +268,11 @@ def main():
     
     comm_proc.terminate()
     comm_proc.join()
+
     mqtt_thread.stop()
     mqtt_pub_proc.terminate()
     mqtt_pub_proc.join()
+
     fan_proc.terminate()
     fan_proc.join()
     #fan_proc.kill()

@@ -172,28 +172,19 @@ class PV():
     self._mbl[ma.M3_SOURCE] = s 
 
   @property
-  def motor1(self):
-    return self._mbl[ma.M4_PUMP1_STATE]
-
-  @motor1.setter
-  def motor1(self, s):
-    self._mbl[ma.M4_PUMP1_STATE] = s 
+  def motor1_state(self):
+    return motor.get_motor_state(self.chip, 0)
+    #return self._mbl[ma.M4_PUMP1_STATE]
 
   @property
-  def motor2(self):
-    return self._mbl[ma.M5_PUMP2_STATE]
-
-  @motor2.setter
-  def motor2(self, s):
-    self._mbl[ma.M5_PUMP2_STATE] = s 
+  def motor2_state(self):
+    return motor.get_motor_state(self.chip, 1)
+    #return self._mbl[ma.M5_PUMP2_STATE]
 
   @property
-  def motor3(self):
-    return self._mbl[ma.M6_PUMP3_STATE]
-
-  @motor3.setter
-  def motor3(self, s):
-    self._mbl[ma.M6_PUMP3_STATE] = s 
+  def motor3_state(self):
+    return motor.get_motor_state(self.chip, 2)
+    #return self._mbl[ma.M6_PUMP3_STATE]
 
   @property
   def setting_hh(self):
@@ -247,28 +238,22 @@ class PV():
       m=1
     self._mbl[ma.M13_PUMP_OP_MODE] = m 
 
-  @property
-  def pump1_on(self):
-    return self._mbl[ma.M14_PUMP1_ON]
-
   @pump1_on.setter
   def pump1_on(self, s):
+    if self.op_mode() == constant.OP_MANUAL:
+      motor.set_motor_state(self.chip, 0, s)
     self._mbl[ma.M14_PUMP1_ON] = s 
-
-  @property
-  def pump2_on(self):
-    return self._mbl[ma.M15_PUMP2_ON]
 
   @pump2_on.setter
   def pump2_on(self, s):
+    if self.op_mode() == constant.OP_MANUAL:
+      motor.set_motor_state(self.chip, 1, s)
     self._mbl[ma.M15_PUMP2_ON] = s 
-
-  @property
-  def pump3_on(self):
-    return self._mbl[ma.M16_PUMP3_ON]
 
   @pump3_on.setter
   def pump3_on(self, s):
+    if self.op_mode() == constant.OP_MANUAL:
+      motor.set_motor_state(self.chip, 2, s)
     self._mbl[ma.M16_PUMP3_ON] = s 
 
   @property
@@ -373,6 +358,14 @@ class PV():
     if (address+count)<=0:
       count = 0
 
+    for i in range(count):
+      if address+i == ma.M4_PUMP1_STATE:
+        self._mbl[address+i] = self.motor1_state()
+      elif address+i == ma.M5_PUMP2_STATE:
+        self._mbl[address+i] = self.motor2_state()
+      elif address+i == ma.M6_PUMP3_STATE:
+        self._mbl[address+i] = self.motor3_state()
+
     return self._mbl[address:address+count].copy()
 
   def set_modbus_sequence(self, address, values):
@@ -389,6 +382,13 @@ class PV():
 
     for i in range(count):
       self._mbl[address+i] = values[i]
+      if address+i == ma.M14_PUMP1_ON:
+        self.pump1_on(values[i])
+      elif address+i == ma.M15_PUMP2_ON:
+        self.pump2_on(values[i])
+      elif address+i == ma.M15_PUMP3_ON:
+        self.pump3_on(values[i])
+
 
     import config
     config.update_config(section='CONTROLLER', key='AUTO_H', value=self._mbl[ma.M11_AUTO_H])

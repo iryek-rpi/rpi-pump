@@ -55,10 +55,6 @@ def tank_monitor(**kwargs):
   logger.info(f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate} orig_level_rate:{orig_level_rate}")# invalid rate:{invalid_rate}")
 
   (c,b,a) = motor.get_all_motors(chip)
-  pv.motor1 = a
-  pv.motor2 = b
-  pv.motor3 = c
-
   logger.debug("get_all_motors:(%d, %d, %d)", a,b,c)
 
   # 수위 입력이 없음
@@ -92,7 +88,7 @@ def tank_monitor(**kwargs):
     logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}")
     if pv.source == constant.SOURCE_AI:
       pv.source = constant.SOURCE_SENSOR
-      set_run_mode(chip, 0)
+      motor.set_run_mode(chip, 0)
 
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now

@@ -163,23 +163,6 @@ def config_to_pv(co: configparser.ConfigParser, pv):
     logger.info("installed motors: %s", str(installed_motors))
     logger.info("pv.motors: %s", str(pv.motors))
 
-
-  # MOTOR1,2,3 마지막 가동 상태. 교번 운전에 반영
-  if ('MOTOR' in co) and ('MOTOR1' in co['MOTOR']) and co['MOTOR']['MOTOR1'].isdigit():
-    pv.motor1 = int(co['MOTOR']['MOTOR1'])
-  else:
-    pv.motor1 = 0
-
-  if ('MOTOR' in co) and ('MOTOR2' in co['MOTOR']) and co['MOTOR']['MOTOR2'].isdigit():
-    pv.motor2 = int(co['MOTOR']['MOTOR2'])
-  else:
-    pv.motor2 = 0
-
-  if ('MOTOR' in co) and ('MOTOR3' in co['MOTOR']) and co['MOTOR']['MOTOR3'].isdigit():
-    pv.motor3 = int(co['MOTOR']['MOTOR3'])
-  else:
-    pv.motor3 = 0
-
   if ('MOTOR' in co) and ('LEAD_TIME' in co['MOTOR']) and co['MOTOR']['LEAD_TIME'].isdigit():
     pv.motor_lead_time = int(co['MOTOR']['LEAD_TIME'])
   else:
