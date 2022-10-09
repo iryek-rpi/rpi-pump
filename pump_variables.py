@@ -10,6 +10,7 @@ import picologging as logging
 import constant
 import pump_util as util
 import modbus_address as ma
+import motor
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
@@ -238,17 +239,29 @@ class PV():
       m=1
     self._mbl[ma.M13_PUMP_OP_MODE] = m 
 
+  @property
+  def pump1_on(self):
+    return 0
+
   @pump1_on.setter
   def pump1_on(self, s):
     if self.op_mode() == constant.OP_MANUAL:
       motor.set_motor_state(self.chip, 0, s)
     self._mbl[ma.M14_PUMP1_ON] = s 
 
+  @property
+  def pump2_on(self):
+    return 0
+
   @pump2_on.setter
   def pump2_on(self, s):
     if self.op_mode() == constant.OP_MANUAL:
       motor.set_motor_state(self.chip, 1, s)
     self._mbl[ma.M15_PUMP2_ON] = s 
+
+  @property
+  def pump3_on(self):
+    return 0
 
   @pump3_on.setter
   def pump3_on(self, s):
@@ -360,11 +373,11 @@ class PV():
 
     for i in range(count):
       if address+i == ma.M4_PUMP1_STATE:
-        self._mbl[address+i] = self.motor1_state()
+        self._mbl[address+i] = self.motor1_state
       elif address+i == ma.M5_PUMP2_STATE:
-        self._mbl[address+i] = self.motor2_state()
+        self._mbl[address+i] = self.motor2_state
       elif address+i == ma.M6_PUMP3_STATE:
-        self._mbl[address+i] = self.motor3_state()
+        self._mbl[address+i] = self.motor3_state
 
     return self._mbl[address:address+count].copy()
 
