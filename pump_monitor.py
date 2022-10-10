@@ -47,7 +47,10 @@ def tank_monitor(**kwargs):
   orig_level_rate = level_rate #pv.water_level
 
   #if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
-  if pv.previous_adc == 0  or (not pv.no_input_starttime):
+  #if pv.previous_adc == 0  or (not pv.no_input_starttime):
+  # previous_adc : 수위입력이 있을 때만 갱신됨
+  # no_input_starttime : 수위입력이 있을 때만 갱신됨  
+  if not (pv.previous_adc and pv.no_input_starttime): # 초기화가 필요한 경우 
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
@@ -55,7 +58,7 @@ def tank_monitor(**kwargs):
   logger.info(f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate} orig_level_rate:{orig_level_rate}")# invalid rate:{invalid_rate}")
 
   (c,b,a) = motor.get_all_motors(chip)
-  logger.debug("get_all_motors:(%d, %d, %d)", a,b,c)
+  logger.info("get_all_motors:(%d, %d, %d)", a,b,c)
 
   # 수위 입력이 없음
   if abs(adc_level-pv.previous_adc)<30:  
