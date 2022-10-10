@@ -464,6 +464,14 @@ class PV():
     self.train.append(ld)
     self.lock.release()
 
+  def find_data(self, stime):
+    self.lock.acquire()
+    for i, l in enumerate(self.data):
+      if l[0]==stime:
+        break
+    self.lock.release()
+    return i
+
   def dump_data(self):
     self.lock.acquire()
     new_list = self.data.copy()

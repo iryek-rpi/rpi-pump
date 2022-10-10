@@ -39,6 +39,7 @@ def tank_monitor(**kwargs):
   pv: PV = kwargs['pv']
 
   time_now = datetime.datetime.now()
+  time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
   adc_level = ADC.check_water_level(chip, spi)
   if adc_level<pv.adc_invalid_rate:
     adc_level = 0
@@ -72,11 +73,13 @@ def tank_monitor(**kwargs):
       #temp= ml.get_future_level(time_now)
       #if (not pv.water_level) and ml.train(pv=pv):
 
-      if len(pv.data)>5: #ml.train(pv=pv):
-        diff1 = (pv.data[-1][1]-pv.data[-2][1])*1.5
-        diff2 = (pv.data[-2][1]-pv.data[-3][1])*1.2
-        diff3 = (pv.data[-3][1]-pv.data[-4][1])*0.8
-        diff4 = (pv.data[-4][1]-pv.data[-5][1])*0.5
+      i = pv.find_data(time_str)
+      ltr = pv.data[:i+1]
+      if len(ltr)>5: #ml.train(pv=pv):
+        diff1 = (ltr[-1][1]-ltr[-2][1])*1.5
+        diff2 = (ltr[-2][1]-ltr[-3][1])*1.2
+        diff3 = (ltr[-3][1]-ltr[-4][1])*0.8
+        diff4 = (ltr[-4][1]-ltr[-5][1])*0.5
 
         pv.water_level = level_rate+(diff1+diff2+diff3+diff4)//4 #ml.get_future_level(pv=pv, t=time_now)
         logger.info(f"##### Predicted level: {pv.water_level}")
@@ -102,7 +105,7 @@ def tank_monitor(**kwargs):
   (m0,m1,m2) = motor.get_all_motors(chip)
 
   pv.append_data([
-      time_now.strftime("%Y-%m-%d %H:%M:%S"), pv.water_level,
+      time_str, pv.water_level,
       m0, m1,m2, pv.source
   ])
 
