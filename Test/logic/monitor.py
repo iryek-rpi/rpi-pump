@@ -20,7 +20,7 @@ def tank_monitor(adc):
 
   if NO_INPUT_START:
     print(
-        f"\n0 adc:{adc_level} PREVIOUS:{PREVIOUS_ADC} NO_INPUT:{NO_INPUT_START.strftime('%D:%M:%S')} SOURCE:{SOURCE} WATER_LEVEL:{WATER_LEVEL}"
+        f"\n0 adc:{adc_level} PREVIOUS:{PREVIOUS_ADC} NO_INPUT:{NO_INPUT_START.strftime('%H:%M:%S')} SOURCE:{SOURCE} WATER_LEVEL:{WATER_LEVEL}"
     )
   else:
     print(
@@ -34,7 +34,7 @@ def tank_monitor(adc):
     NO_INPUT_START = time_now
 
   print(
-      f"1 adc:{adc_level} PREVIOUS:{PREVIOUS_ADC} NO_INPUT:{NO_INPUT_START.strftime('%D:%M:%S')} SOURCE:{SOURCE} WATER_LEVEL:{WATER_LEVEL}"
+      f"1 adc:{adc_level} PREVIOUS:{PREVIOUS_ADC} NO_INPUT:{NO_INPUT_START.strftime('%H:%M:%S')} SOURCE:{SOURCE} WATER_LEVEL:{WATER_LEVEL}"
   )
   # 수위 입력이 없음
   if abs(adc_level - PREVIOUS_ADC) < 30:
@@ -42,9 +42,9 @@ def tank_monitor(adc):
     print(f"NO INPUT 0: td.seconds:{td.seconds} Tolerance:{30}")
     if (td.seconds >= 30):  # 일정 시간 입력이 없으면
       print(f"NO INPUT 1: td.seconds:{td.seconds} Tolerance:{30}")
-      print(f"RUN_MODE:{SOURCE}")
       if SOURCE == 0:
         SOURCE = 1
+      print(f"RUN_MODE:{SOURCE}")
       if len(data) > 5:
         WATER_LEVEL = adc_level + 10000
         print(f"##### Predicted level: {WATER_LEVEL}")
@@ -60,10 +60,10 @@ def tank_monitor(adc):
       print(f"3 SOURCE:{SOURCE} WATER_LEVEL:{WATER_LEVEL}")
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
-    print(f"RUN_MODE:{SOURCE}")
     if SOURCE == 1:
       SOURCE = 0
       print(f"4 SOURCE:{SOURCE} WATER_LEVEL:{WATER_LEVEL}")
+    print(f"RUN_MODE:{SOURCE}")
 
     PREVIOUS_ADC = adc_level
     NO_INPUT_START = time_now
@@ -71,7 +71,7 @@ def tank_monitor(adc):
 
   append_data([time_now.strftime("%Y-%m-%d %H:%M:%S"), WATER_LEVEL, SOURCE])
   print(
-      f"5 adc:{adc_level} PREVIOUS:{PREVIOUS_ADC} NO_INPUT:{NO_INPUT_START.strftime('%D:%M:%S')} SOURCE:{SOURCE} WATER_LEVEL:{WATER_LEVEL}"
+      f"5 adc:{adc_level} PREVIOUS:{PREVIOUS_ADC} NO_INPUT:{NO_INPUT_START.strftime('%H:%M:%S')} SOURCE:{SOURCE} WATER_LEVEL:{WATER_LEVEL}"
   )
 
 
