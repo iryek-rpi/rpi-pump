@@ -247,7 +247,8 @@ class PV():
   def pump1_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
     motor.set_motor_state(self.chip, 0, s)
-    self._mbl[ma.M14_PUMP1_ON] = s 
+    #logger.info(f"@@@ pump1_on: s:{s}")
+    #self._mbl[ma.M14_PUMP1_ON] = s 
 
   @property
   def pump2_on(self):
@@ -257,7 +258,7 @@ class PV():
   def pump2_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
     motor.set_motor_state(self.chip, 1, s)
-    self._mbl[ma.M15_PUMP2_ON] = s 
+    #self._mbl[ma.M15_PUMP2_ON] = s 
 
   @property
   def pump3_on(self):
@@ -267,7 +268,7 @@ class PV():
   def pump3_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
     motor.set_motor_state(self.chip, 2, s)
-    self._mbl[ma.M16_PUMP3_ON] = s 
+    #self._mbl[ma.M16_PUMP3_ON] = s 
 
   @property
   def pump_count(self):
@@ -393,13 +394,16 @@ class PV():
     if (address+count)<=0:
       count = 0
 
+    #logger.info(f"@ address:{address} values:{str(values)} motor1_mode:{self.motor1_mode}")
     for i in range(count):
       self._mbl[address+i] = values[i]
-      if address+i == ma.M14_PUMP1_ON and self.motor1_mode:
+      #logger.info(f"@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode}")
+      if address+i == ma.M14_PUMP1_ON and not self.motor1_mode:
+        #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode}")
         self.pump1_on = values[i]
-      elif address+i == ma.M15_PUMP2_ON and self.motor2_mode:
+      elif address+i == ma.M15_PUMP2_ON and not self.motor2_mode:
         self.pump2_on = values[i]
-      elif address+i == ma.M16_PUMP3_ON and self.motor3_mode:
+      elif address+i == ma.M16_PUMP3_ON and not self.motor3_mode:
         self.pump3_on = values[i]
 
 
