@@ -98,7 +98,7 @@ def tank_monitor(**kwargs):
 
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
-    pv.water_level = pv.filter_data(level_rate)
+    pv.water_level = level_rate #pv.filter_data(level_rate)
 
   determine_motor_state(pv, chip)
 
@@ -115,7 +115,7 @@ def tank_monitor(**kwargs):
   sm.update_idle()
 
 def determine_motor_state(pv, chip):
-  logger.info(f"pv.water_level:{pv.water_level}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}")
+  logger.info(f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}")
   logger.info("1")
   if pv.water_level >= pv.setting_high and pv.previous_state!=2:
     logger.info("2")
