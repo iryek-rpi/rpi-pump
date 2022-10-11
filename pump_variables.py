@@ -55,7 +55,7 @@ class PV():
     self.modbus_id = 0
 
     self.solo_mode = constant.MODE_PLC
-    self.op_mode = constant.OP_AUTO  # MANUAL/AUTO 운전모드
+    #self.op_mode = constant.OP_AUTO  # MANUAL/AUTO 운전모드
 
     self.motor_index = 0
     self.previous_state = 1  # 0:low, 1:mid  3:high
@@ -227,17 +227,17 @@ class PV():
   #def solo_mode(self, m):
   #  self._mbl[ma.M13_PUMP_OP_MODE] = m 
 
-  @property
-  def op_mode(self):
-    if self._mbl[ma.M13_PUMP_OP_MODE] > 1:
-      self.self._mbl[ma.M13_PUMP_OP_MODE] = 1
-    return self._mbl[ma.M13_PUMP_OP_MODE]
+  #@property
+  #def op_mode(self):
+  #  if self._mbl[ma.M13_PUMP_OP_MODE] > 1:
+  #    self.self._mbl[ma.M13_PUMP_OP_MODE] = 1
+  #  return self._mbl[ma.M13_PUMP_OP_MODE]
 
-  @op_mode.setter
-  def op_mode(self, m):
-    if m>1:
-      m=1
-    self._mbl[ma.M13_PUMP_OP_MODE] = m 
+  #@op_mode.setter
+  #def op_mode(self, m):
+  #  if m>1:
+  #    m=1
+  #  self._mbl[ma.M13_PUMP_OP_MODE] = m 
 
   @property
   def pump1_on(self):
@@ -245,8 +245,8 @@ class PV():
 
   @pump1_on.setter
   def pump1_on(self, s):
-    if self.op_mode() == constant.OP_MANUAL:
-      motor.set_motor_state(self.chip, 0, s)
+    #if self.op_mode() == constant.OP_MANUAL:
+    motor.set_motor_state(self.chip, 0, s)
     self._mbl[ma.M14_PUMP1_ON] = s 
 
   @property
@@ -255,8 +255,8 @@ class PV():
 
   @pump2_on.setter
   def pump2_on(self, s):
-    if self.op_mode() == constant.OP_MANUAL:
-      motor.set_motor_state(self.chip, 1, s)
+    #if self.op_mode() == constant.OP_MANUAL:
+    motor.set_motor_state(self.chip, 1, s)
     self._mbl[ma.M15_PUMP2_ON] = s 
 
   @property
@@ -265,8 +265,8 @@ class PV():
 
   @pump3_on.setter
   def pump3_on(self, s):
-    if self.op_mode() == constant.OP_MANUAL:
-      motor.set_motor_state(self.chip, 2, s)
+    #if self.op_mode() == constant.OP_MANUAL:
+    motor.set_motor_state(self.chip, 2, s)
     self._mbl[ma.M16_PUMP3_ON] = s 
 
   @property
@@ -395,12 +395,12 @@ class PV():
 
     for i in range(count):
       self._mbl[address+i] = values[i]
-      if address+i == ma.M14_PUMP1_ON:
-        self.pump1_on(values[i])
-      elif address+i == ma.M15_PUMP2_ON:
-        self.pump2_on(values[i])
-      elif address+i == ma.M15_PUMP3_ON:
-        self.pump3_on(values[i])
+      if address+i == ma.M14_PUMP1_ON and self.motor1_mode:
+        self.pump1_on = values[i]
+      elif address+i == ma.M15_PUMP2_ON and self.motor2_mode:
+        self.pump2_on = values[i]
+      elif address+i == ma.M16_PUMP3_ON and self.motor3_mode:
+        self.pump3_on = values[i]
 
 
     import config

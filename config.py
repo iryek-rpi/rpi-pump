@@ -22,7 +22,7 @@ def init_setting(pv):
     co['CONTROLLER'] = {
         'MODBUS_ID': 1,
         'SOLO_MODE': 'MODE_PLC',
-        'OP_MODE': 'OP_AUTO',
+        #'OP_MODE': 'OP_AUTO',
         'AUTO_H': 800,
         'AUTO_HH': 900,
         'AUTO_L': 200,
@@ -105,10 +105,10 @@ def config_to_pv(co: configparser.ConfigParser, pv):
   else:
     pv.solo_mode = constant.MODE_PLC
 
-  if ('CONTROLLER' in co) and ('OP_MODE' in co['CONTROLLER']) and co['CONTROLLER']['OP_MODE'] == 'OP_AUTO':
-    pv.op_mode = constant.OP_AUTO
-  else:
-    pv.op_mode = constant.OP_MANUAL
+  #if ('CONTROLLER' in co) and ('OP_MODE' in co['CONTROLLER']) and co['CONTROLLER']['OP_MODE'] == 'OP_AUTO':
+  #  pv.op_mode = constant.OP_AUTO
+  #else:
+  #  pv.op_mode = constant.OP_MANUAL
 
   if ('CONTROLLER' in co) and ('AUTO_H' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_H'].isdigit():
     pv.setting_high = int(co['CONTROLLER']['AUTO_H'])
