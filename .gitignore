@@ -129,14 +129,4 @@ dmypy.json
 .pyre/
 rpi/systemd/data/2022-01-14-07-03-07.csv
 setting/setting.ini
-data/2022-07-16-07-31-37.csv
-data/2022-07-16-08-31-37.csv
-data/2022-07-16-09-31-37.csv
-data/2022-07-16-10-31-37.csv
-data/2022-07-16-11-31-37.csv
-data/2022-07-17-19-56-23.csv
-data/2022-07-17-22-05-38.csv
-data/2022-07-17-23-05-39.csv
-data/2022-07-18-01-54-57.csv
-data/2022-07-18-02-54-57.csv
-data/2022-10-09-08-22-55.csv
+data/*.csv
