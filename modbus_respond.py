@@ -9,6 +9,7 @@ import pump_util as util
 
 #logger = logging.getLogger(util.MODBUS_LOGGER_NAME)
 logger = util.make_logger(name=util.MODBUS_CLIENT_LOGGER_NAME, filename=util.MODBUS_CLIENT_LOGFILE_NAME)
+logger.setLevel(logging.CRITICAL)
 
 def respond(**kwargs):
   """Main 프로세스의 RespondThread에서 실행되는 Modbus 요청에 대한 응답 루틴

@@ -8,6 +8,8 @@ import signal
 import pump_util as util
 
 from gpiozero import OutputDevice
+import picologging as logging
+
 
 ON_THRESHOLD = 60
 OFF_THRESHOLD = 50 
@@ -51,9 +53,10 @@ def get_temp():
 
 def fan_proc(**kwargs):
     logger = util.make_logger(name=util.FAN_LOGGER_NAME, filename=util.FAN_LOGFILE_NAME)
-    #logger = kwargs['fan_logger']
 
     logger.info(f"############## fan_proc: {os.getpid()}")
+    logger.setLevel(logging.CRITICAL)
+
     global is_shutdown 
     
     fan = OutputDevice(GPIO_PIN)

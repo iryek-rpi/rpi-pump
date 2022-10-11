@@ -55,11 +55,11 @@ def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
 
   logger.addHandler(console_handler)
 
-  if filename:
-    file_handler = logging.FileHandler(filename)
-    file_handler.setLevel(level)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+#  if filename:
+#    file_handler = logging.FileHandler(filename)
+#    file_handler.setLevel(level)
+#    file_handler.setFormatter(formatter)
+#    logger.addHandler(file_handler)
 
   return logger
 

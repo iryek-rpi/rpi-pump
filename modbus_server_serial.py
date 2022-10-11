@@ -28,6 +28,7 @@ import modbus_address as ma
 import pump_util as util
 
 logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME)
+logger.setLevel(logging.CRITICAL)
 
 # --------------------------------------------------------------------------- #
 # configure the service logging
