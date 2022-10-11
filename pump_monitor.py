@@ -81,14 +81,14 @@ def tank_monitor(**kwargs):
         diff4 = (ltr[-4][1]-ltr[-5][1])*0.5
 
         predicted = level_rate+(diff1+diff2+diff3+diff4)//4 #ml.get_future_level(pv=pv, t=time_now)
-        pv.water_level = pv.filter_data(predicted)
+        pv.water_level = predicted #pv.filter_data(predicted)
         logger.info(f"# Predicted level: {predicted}")
       else:
         logger.info("# Training failed. returning filtered ADC value")
-        pv.water_level = pv.filter_data(level_rate)
+        pv.water_level = level_rate #pv.filter_data(level_rate)
       # get prediction from ML model
     else:
-      pv.water_level = pv.filter_data(level_rate)  # 일시적인 현상으로 간주하고 level 값 버림
+      pv.water_level = level_rate #pv.filter_data(level_rate)  # 일시적인 현상으로 간주하고 level 값 버림
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
     logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}")
