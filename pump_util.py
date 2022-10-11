@@ -25,7 +25,9 @@ def get_time_str():
 #          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
 
 # picologging의 제약사항으로 thread name 출력이 안됨
-LOG_FORMAT = '%(asctime)s p:%(process)d t:%(thread)d [%(filename)s:%(lineno)d] %(message)s'
+# log 파일 크기를 줄이기 위해 process id와 thread id는 제외
+#LOG_FORMAT = '%(asctime)s p:%(process)d t:%(thread)d [%(filename)s:%(lineno)d] %(message)s'
+LOG_FORMAT = '%(asctime)s [%(filename)s:%(lineno)d] %(message)s'
 
 MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
 MODBUS_CLIENT_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_client.log"
