@@ -15,9 +15,9 @@ logging.basicConfig(
 
 logger = logging.getLogger()
 
-logger.info(f"=================================================")
-logger.info(f"START at {datetime.datetime.now()}")
-logger.info(f"=================================================")
+print(f"=================================================")
+print(f"START at {datetime.datetime.now()}")
+print(f"=================================================")
 
 M0_OUT = 2  #24v
 M1_OUT = 3  #24v
@@ -90,7 +90,7 @@ def set_motor_state(chip, m, on_off):
   elif m == 2:
     lgpio.gpio_write(chip, M2_OUT, on_off)
 
-  logger.info("SET MOTOR{%d} = {%d}", m + 1, on_off)
+  print("SET MOTOR{%d} = {%d}", m + 1, on_off)
 
 
 def set_all_motors(chip, m):
@@ -99,11 +99,11 @@ def set_all_motors(chip, m):
   lgpio.gpio_write(chip, M1_OUT, b)
   lgpio.gpio_write(chip, M2_OUT, c)
 
-  logger.info(f"SET MOTORS{(M0_OUT, M1_OUT, M2_OUT)} = {(a,b,c)}")
+  print(f"SET MOTORS{(M0_OUT, M1_OUT, M2_OUT)} = {(a,b,c)}")
 
 def set_mode(chip, m):
   lgpio.gpio_write(chip, RUN_MODE_OUT, m)
-  logger.info(f"set_mode{RUN_MODE_OUT} = {m}")
+  print(f"set_mode{RUN_MODE_OUT} = {m}")
 
 def init_gpio():
     c = lgpio.gpiochip_open(0)
