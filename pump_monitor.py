@@ -54,10 +54,10 @@ def tank_monitor(**kwargs):
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
-  logger.info("========================================================")
-  logger.info(f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate}")# invalid rate:{invalid_rate}")
+  logger.info("===========================")
+  logger.info(f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate:.1f}")# invalid rate:{invalid_rate}")
 
-  (c,b,a) = motor.get_all_motors(chip)
+  (a,b,c) = motor.get_all_motors(chip)
   logger.info("get_all_motors:(%d, %d, %d)", a,b,c)
 
   # 수위 입력이 없음
@@ -82,9 +82,9 @@ def tank_monitor(**kwargs):
 
         predicted = level_rate+(diff1+diff2+diff3+diff4)//4 #ml.get_future_level(pv=pv, t=time_now)
         pv.water_level = pv.filter_data(predicted)
-        logger.info(f"##### Predicted level: {predicted}")
+        logger.info(f"# Predicted level: {predicted}")
       else:
-        logger.info("###### Training failed. returning filtered ADC value")
+        logger.info("# Training failed. returning filtered ADC value")
         pv.water_level = pv.filter_data(level_rate)
       # get prediction from ML model
     else:
@@ -109,7 +109,7 @@ def tank_monitor(**kwargs):
       m0, m1,m2, pv.source
   ])
 
-  logger.debug(f"writeDAC(level_rate:{level_rate}, filtered:{pv.water_level})")
+  logger.debug(f"writeDAC(level_rate:{level_rate:.1f}, filtered:{pv.water_level:.1f})")
 
   ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, level_rate)), spi)
   sm.update_idle()

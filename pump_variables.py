@@ -429,8 +429,7 @@ class PV():
     self.lock.release()
 
   def filter_data(self, level):
-    logger.debug("### filtering: level: {}".format(level))
-    logger.debug("### filtering: q_level: {}".format(self.q_level.queue))
+    logger.debug(f"# filtering: level:{level:.1f} q_level:{self.q_level.queue:.1f}".format(level))
 
     self.lock.acquire()
 
@@ -452,7 +451,7 @@ class PV():
 
     self.lock.release()
 
-    logger.debug("### filtering: returning average from Queue: {}".format(avg))
+    logger.debug(f"# filtering: return average from Q: {avg:.1f}")
     return avg
 
   def append_data(self, ld):

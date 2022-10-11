@@ -42,7 +42,6 @@ def get_all_motors(chip):
   ms1 = lgpio.gpio_read(chip, M1_IN)
   ms2 = lgpio.gpio_read(chip, M2_IN)
 
-  logger.info("(MS0, MS1, MS2): (%d, %d, %d)", ms0, ms1, ms2)
   return (ms0, ms1, ms2)
 
 
