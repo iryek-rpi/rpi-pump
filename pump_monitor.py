@@ -78,7 +78,7 @@ def tank_monitor(**kwargs):
       #if (not pv.water_level) and ml.train(pv=pv):
 
       i = pv.find_data(pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S"))
-      logger.info(f"find_data(no_input_starttime:{pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S")})=>{i}")
+      logger.info(f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i}")
       ltr = pv.data[:i + 1]
       if len(ltr) > 5:  #ml.train(pv=pv):
         diff1 = (ltr[-1][1] - ltr[-2][1]) * 1.5
