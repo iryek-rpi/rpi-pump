@@ -26,8 +26,8 @@ import ml
 import motor
 import ADC
 
-
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
+
 
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
@@ -41,7 +41,7 @@ def tank_monitor(**kwargs):
   time_now = datetime.datetime.now()
   time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
   adc_level = ADC.check_water_level(chip, spi)
-  if adc_level<pv.adc_invalid_rate:
+  if adc_level < pv.adc_invalid_rate:
     adc_level = 0
 
   level_rate = pv.water_level_rate(adc_level)
@@ -49,134 +49,146 @@ def tank_monitor(**kwargs):
   #if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
   #if pv.previous_adc == 0  or (not pv.no_input_starttime):
   # previous_adc : 수위입력이 있을 때만 갱신됨
-  # no_input_starttime : 수위입력이 있을 때만 갱신됨  
-  if not (pv.previous_adc and pv.no_input_starttime): # 초기화가 필요한 경우 
+  # no_input_starttime : 수위입력이 있을 때만 갱신됨
+  if not (pv.previous_adc and pv.no_input_starttime):  # 초기화가 필요한 경우
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
   logger.info("===========================")
-  logger.info(f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate:.1f}")# invalid rate:{invalid_rate}")
+  logger.info(
+      f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate:.1f}"
+  )  # invalid rate:{invalid_rate}")
 
-  (a,b,c) = motor.get_all_motors(chip)
-  logger.info("get_all_motors:(%d, %d, %d)", a,b,c)
+  (a, b, c) = motor.get_all_motors(chip)
+  logger.info("get_all_motors:(%d, %d, %d)", a, b, c)
 
   # 수위 입력이 없음
-  if abs(adc_level-pv.previous_adc)<30:  
+  if (abs(adc_level - pv.previous_adc) < 30) or (not adc_level):
     td = time_now - pv.no_input_starttime
-    logger.info(f"td.seconds:{td.seconds} Tolerance:{pv.setting_tolerance_to_ai}")
+    logger.info(
+        f"td.seconds:{td.seconds} Tolerance:{pv.setting_tolerance_to_ai}")
     if (td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
-      logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}")
+      logger.info(
+          f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}"
+      )
       if pv.source == constant.SOURCE_SENSOR:
         pv.source = constant.SOURCE_AI
         motor.set_run_mode(chip, 1)
       #temp= ml.get_future_level(time_now)
       #if (not pv.water_level) and ml.train(pv=pv):
 
-      i = pv.find_data(time_str)
-      ltr = pv.data[:i+1]
-      if len(ltr)>5: #ml.train(pv=pv):
-        diff1 = (ltr[-1][1]-ltr[-2][1])*1.5
-        diff2 = (ltr[-2][1]-ltr[-3][1])*1.2
-        diff3 = (ltr[-3][1]-ltr[-4][1])*0.8
-        diff4 = (ltr[-4][1]-ltr[-5][1])*0.5
+      i = pv.find_data(pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S"))
+      logger.info(f"find_data(no_input_starttime:{pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S")})=>{i}")
+      ltr = pv.data[:i + 1]
+      if len(ltr) > 5:  #ml.train(pv=pv):
+        diff1 = (ltr[-1][1] - ltr[-2][1]) * 1.5
+        diff2 = (ltr[-2][1] - ltr[-3][1]) * 1.2
+        diff3 = (ltr[-3][1] - ltr[-4][1]) * 0.8
+        diff4 = (ltr[-4][1] - ltr[-5][1]) * 0.5
 
-        predicted = level_rate+(diff1+diff2+diff3+diff4)//4 #ml.get_future_level(pv=pv, t=time_now)
-        pv.water_level = predicted #pv.filter_data(predicted)
+        predicted = level_rate + (diff1 + diff2 + diff3 + diff4
+                                 ) // 4  #ml.get_future_level(pv=pv, t=time_now)
+        pv.water_level = predicted  #pv.filter_data(predicted)
         logger.info(f"# Predicted level: {predicted}")
       else:
         logger.info("# Training failed. returning filtered ADC value")
-        pv.water_level = level_rate #pv.filter_data(level_rate)
+        pv.water_level = level_rate  #pv.filter_data(level_rate)
       # get prediction from ML model
     else:
-      pv.water_level = level_rate #pv.filter_data(level_rate)  # 일시적인 현상으로 간주하고 level 값 버림
+      pv.water_level = level_rate  #pv.filter_data(level_rate)  # 일시적인 현상으로 간주하고 level 값 버림
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
-    logger.info(f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}")
+    logger.info(
+        f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}"
+    )
     if pv.source == constant.SOURCE_AI:
       pv.source = constant.SOURCE_SENSOR
       motor.set_run_mode(chip, 0)
 
-    pv.previous_adc = adc_level
+    pv.ous_adc = adc_level
     pv.no_input_starttime = time_now
-    pv.water_level = level_rate #pv.filter_data(level_rate)
+    pv.water_level = level_rate  #pv.filter_data(level_rate)
 
   determine_motor_state(pv, chip)
 
-  (m0,m1,m2) = motor.get_all_motors(chip)
+  (m0, m1, m2) = motor.get_all_motors(chip)
 
-  pv.append_data([
-      time_str, pv.water_level,
-      m0, m1,m2, pv.source
-  ])
+  pv.append_data([time_str, pv.water_level, m0, m1, m2, pv.source])
 
-  logger.debug(f"writeDAC(level_rate:{level_rate:.1f}, filtered:{pv.water_level:.1f})")
+  logger.debug(
+      f"writeDAC(level_rate:{level_rate:.1f}, pv.water_level:{pv.water_level:.1f})"
+  )
 
   ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, level_rate)), spi)
   sm.update_idle()
 
+
 def determine_motor_state(pv, chip):
-  logger.info(f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}")
+  logger.info(
+      f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}"
+  )
   logger.info("1")
-  if pv.water_level >= pv.setting_high and pv.previous_state!=2:
+  if pv.water_level >= pv.setting_high and pv.previous_state != 2:
     logger.info("2")
     if pv.motor1_mode > 0:
       motor.set_motor_state(chip, 0, 0)
     if pv.motor2_mode > 0:
       motor.set_motor_state(chip, 1, 0)
-    if pv.motor_count>2 and pv.motor3_mode>0:
+    if pv.motor_count > 2 and pv.motor3_mode > 0:
       motor.set_motor_state(chip, 2, 0)
     pv.previous_state = 2
-  elif pv.water_level <= pv.setting_low and pv.previous_state!=0:
+  elif pv.water_level <= pv.setting_low and pv.previous_state != 0:
     logger.info("3")
     logger.info(f"motor1:{pv.motor1_mode} index:{pv.motor_index}")
-    if pv.motor_index==0:
-      if pv.motor1_mode>0:
+    if pv.motor_index == 0:
+      if pv.motor1_mode > 0:
         logger.info("3.1")
         motor.set_motor_state(chip, 0, 1)
         pv.motor_index = 1
-      elif pv.motor2_mode>0:
+      elif pv.motor2_mode > 0:
         logger.info("3.2")
         motor.set_motor_state(chip, 1, 1)
-        pv.motor_index=2
-      elif pv.motor_count>2 and pv.motor3_mode>0:
+        pv.motor_index = 2
+      elif pv.motor_count > 2 and pv.motor3_mode > 0:
         logger.info("3.3")
         motor.set_motor_state(chip, 2, 1)
-        pv.motor_index=3
-      if pv.motor_count>0:
+        pv.motor_index = 3
+      if pv.motor_count > 0:
         pv.motor_index = pv.motor_index % pv.motor_count
       else:
         pv.motor_index = 0
-    elif pv.motor_index==1:
+    elif pv.motor_index == 1:
       logger.info("4")
-      if pv.motor2_mode>0:
+      if pv.motor2_mode > 0:
         motor.set_motor_state(chip, 1, 1)
-        pv.motor_index=2
-      elif pv.motor_count>2 and pv.motor3_mode>0:
+        pv.motor_index = 2
+      elif pv.motor_count > 2 and pv.motor3_mode > 0:
         motor.set_motor_state(chip, 2, 1)
-        pv.motor_index=3
-      elif pv.motor1_mode>0:
+        pv.motor_index = 3
+      elif pv.motor1_mode > 0:
         motor.set_motor_state(chip, 0, 1)
-        pv.motor_index=1
-      if pv.motor_count>0:
+        pv.motor_index = 1
+      if pv.motor_count > 0:
         pv.motor_index = pv.motor_index % pv.motor_count
       else:
         pv.motor_index = 0
-    elif pv.motor_count>2 and pv.motor_index==2:
-      if pv.motor3_mode>0:
+    elif pv.motor_count > 2 and pv.motor_index == 2:
+      if pv.motor3_mode > 0:
         motor.set_motor_state(chip, 2, 1)
-        pv.motor_index=3
-      elif pv.motor1_mode>0:
+        pv.motor_index = 3
+      elif pv.motor1_mode > 0:
         motor.set_motor_state(chip, 0, 1)
-        pv.motor_index=1
-      elif pv.motor2_mode>0:
+        pv.motor_index = 1
+      elif pv.motor2_mode > 0:
         motor.set_motor_state(chip, 1, 1)
-        pv.motor_index=2
-      if pv.motor_count>0:
+        pv.motor_index = 2
+      if pv.motor_count > 0:
         pv.motor_index = pv.motor_index % pv.motor_count
       else:
         pv.motor_index = 0
 
     pv.previous_state = 0
+
 
 def water_sensor_monitor(**kwargs):
   """수위계 출력을 수위조절기에 전달
@@ -193,7 +205,8 @@ def water_sensor_monitor(**kwargs):
 
   adc_level = ADC.check_water_level(chip, spi)
   time_now = datetime.datetime.now()
-  logger.debug("monitor at {} : Water Level from ADC:{}".format(time_now.ctime(), adc_level))
+  logger.debug("monitor at {} : Water Level from ADC:{}".format(
+      time_now.ctime(), adc_level))
   level_rate = pv.water_level_rate(adc_level)
 
   logger.debug("level_rate:%d", level_rate)
@@ -208,7 +221,8 @@ def water_sensor_monitor(**kwargs):
     pv.water_level = pv.filter_data(level_rate)
 
   pv.append_data([
-      time_now.strftime("%Y-%m-%d %H:%M:%S"), water_level_rate(pv, pv.water_level),
+      time_now.strftime("%Y-%m-%d %H:%M:%S"),
+      water_level_rate(pv, pv.water_level),
   ])
 
   logger.debug(f"writeDAC(level_rate:{level_rate}, filtered:{pv.water_level})")
@@ -240,8 +254,7 @@ def main():
 
     while not is_shutdown:
       ADC_output_code = readADC_MSB(chip, spi)
-      logger.debug(
-          "MCP3201 output code (MSB-mode): {}".foramt(ADC_output_code))
+      logger.debug("MCP3201 output code (MSB-mode): {}".foramt(ADC_output_code))
       ADC_voltage = convert_to_voltage(ADC_output_code)
       logger.debug("MCP3201 voltage: {%0.2f}V".format(ADC_voltage))
       conn.send(ADC_voltage)
