@@ -69,7 +69,7 @@ def tank_monitor(**kwargs):
         f"td.seconds:{td.seconds} Tolerance:{pv.setting_tolerance_to_ai}")
     if (td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
       logger.info(
-          f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}"
+          f"RUN_MODE:{pv.source} AI:{constant.SOURCE_AI} SENSOR:{constant.SOURCE_SENSOR}"
       )
       if pv.source == constant.SOURCE_SENSOR:
         pv.source = constant.SOURCE_AI
@@ -78,7 +78,7 @@ def tank_monitor(**kwargs):
       #if (not pv.water_level) and ml.train(pv=pv):
 
       i = pv.find_data(pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S"))
-      logger.info(f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i}")
+      logger.info(f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i} time_str:{time_str}")
       ltr = pv.data[:i + 1]
       if len(ltr) > 5:  #ml.train(pv=pv):
         diff1 = (ltr[-1][1] - ltr[-2][1]) * 1.5
@@ -89,13 +89,14 @@ def tank_monitor(**kwargs):
         predicted = level_rate + (diff1 + diff2 + diff3 + diff4
                                  ) // 4  #ml.get_future_level(pv=pv, t=time_now)
         pv.water_level = predicted  #pv.filter_data(predicted)
-        logger.info(f"# Predicted level: {predicted}")
+        logger.info(f"Predicted: {predicted} ltr[-4:][1]:{str(ltr[-4:][1])}")
       else:
-        logger.info("# Training failed. returning filtered ADC value")
+        logger.info("Training failed. returning filtered ADC value")
         pv.water_level = level_rate  #pv.filter_data(level_rate)
       # get prediction from ML model
     else:
-      pv.water_level = level_rate  #pv.filter_data(level_rate)  # 일시적인 현상으로 간주하고 level 값 버림
+      pv.water_level = level_rate  #pv.filter_data(level_rate)  
+      logger.info("less than tolerance")
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
     logger.info(
@@ -105,7 +106,7 @@ def tank_monitor(**kwargs):
       pv.source = constant.SOURCE_SENSOR
       motor.set_run_mode(chip, 0)
 
-    pv.ous_adc = adc_level
+    pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
     pv.water_level = level_rate  #pv.filter_data(level_rate)
 
