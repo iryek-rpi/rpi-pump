@@ -68,14 +68,13 @@ def fan_proc(**kwargs):
         temp = get_temp()
 
         if temp > ON_THRESHOLD and not fan.value:
-            logger.info(f"Temperature: {temp} Turn On the Fan")
+            logger.info(f"{temp} Fan On")
             fan.on()
         elif fan.value and temp<OFF_THRESHOLD:
-            logger.info(f"Temperature: {temp} Turn Off the Fan")
+            logger.info(f"{temp} Fan Off")
             fan.off()
-        else:
-            logger.info(f"Temperature: {temp} Continue Fan State")
-          
+        #else:
+        #    logger.info(f"Temperature: {temp} Continue Fan State")
 
         time.sleep(SLEEP_INTERVAL)
 
