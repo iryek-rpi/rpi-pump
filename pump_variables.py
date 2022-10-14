@@ -68,7 +68,7 @@ class PV():
     self.motor_lead_time = 10
 
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
-    self.previous_adc = 0 # 이전 ADC reading 값 
+    self.previous_adc = None # 이전 ADC reading 값 
     self.data = []
     self.train = []
     self.forcast = None

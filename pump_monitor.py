@@ -41,7 +41,7 @@ def tank_monitor(**kwargs):
   time_now = datetime.datetime.now()
   time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
   adc_level = ADC.check_water_level(chip, spi)
-  if adc_level < pv.adc_invalid_rate:
+  if adc_level < 300: #pv.adc_invalid_rate:
     adc_level = 0
 
   level_rate = pv.water_level_rate(adc_level)
@@ -50,7 +50,8 @@ def tank_monitor(**kwargs):
   #if pv.previous_adc == 0  or (not pv.no_input_starttime):
   # previous_adc : 수위입력이 있을 때만 갱신됨
   # no_input_starttime : 수위입력이 있을 때만 갱신됨
-  if not (pv.previous_adc and pv.no_input_starttime):  # 초기화가 필요한 경우
+  if not pv.no_input_starttime:  # 초기화가 필요한 경우
+    logger.info(f"INIT: previous_adc:{pv.previous_adc} no_input:{pv.no_input_starttime}")
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
@@ -66,7 +67,7 @@ def tank_monitor(**kwargs):
   if (abs(adc_level - pv.previous_adc) < 30) or (not adc_level):
     td = time_now - pv.no_input_starttime
     logger.info(
-        f"td.seconds:{td.seconds} Tolerance:{pv.setting_tolerance_to_ai}")
+        f"td.seconds:{td.seconds} time_now:{time_now} no_input_time:{pv.no_input_starttime} Tolerance:{pv.setting_tolerance_to_ai}")
     if (td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
       logger.info(
           f"RUN_MODE:{pv.source} AI:{constant.SOURCE_AI} SENSOR:{constant.SOURCE_SENSOR}"
@@ -89,7 +90,12 @@ def tank_monitor(**kwargs):
         predicted = level_rate + (diff1 + diff2 + diff3 + diff4
                                  ) // 4  #ml.get_future_level(pv=pv, t=time_now)
         pv.water_level = predicted  #pv.filter_data(predicted)
-        logger.info(f"Predicted: {predicted} ltr[-4:][1]:{str(ltr[-4:][1])}")
+        logger.info(f"Predicted: {predicted} level:{level_rate} + avg:{(diff1+diff2+diff3+diff4)//4}")
+        logger.info(str(ltr[-5][1]))
+        logger.info(str(ltr[-4][1]))
+        logger.info(str(ltr[-3][1]))
+        logger.info(str(ltr[-2][1]))
+        logger.info(str(ltr[-1][1]))
       else:
         logger.info("Training failed. returning filtered ADC value")
         pv.water_level = level_rate  #pv.filter_data(level_rate)
@@ -100,7 +106,7 @@ def tank_monitor(**kwargs):
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
     logger.info(
-        f"RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}"
+        f"Valid Input: RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}"
     )
     if pv.source == constant.SOURCE_AI:
       pv.source = constant.SOURCE_SENSOR
