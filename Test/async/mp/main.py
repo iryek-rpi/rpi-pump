@@ -17,30 +17,43 @@ high = 65
 use = -5
 pump1 = 0
 pump2 = 0
+gcount = 0
+req_sent = 0
 
-def gen_level(pv):
-    ru = r()*2.
+
+def gen_level(pv, s1, s2):
+  global gcount
+
+  gcount += gcount + 1
+
+  if s1 > gcount or s2 < gcount:
+    ru = r() * 2.
     pv.water_level += (use - ru + pump1 + pump2)
+  else:
+    pv.water_level = 0
+
 
 def pump_ctl(pv):
-    global pump1
-    global pump2
-    global low
-    global use
-    global high
+  global pump1
+  global pump2
+  global low
+  global use
+  global high
 
-    if pv.water_level>high:
-        pump1=0
-        pump2=0
-    elif pv.water_level<low:
-        pump1=abs(use)*2
-        pump2=abs(use)*2
+  if pv.water_level > high:
+    pump1 = 0
+    pump2 = 0
+  elif pv.water_level < low:
+    pump1 = abs(use) * 2
+    pump2 = abs(use) * 2
+
 
 class PV():
 
   def __init__(self):
     self.data = []
     self.train = []
+    self.flevel = [] #future level
     self.lock = threading.Lock()
     self.water_level = 50.
     self.forcast = None
@@ -76,17 +89,42 @@ class PV():
 
 
 def monitor_func(**kwargs):
-  global pump1, pump2
+  global pump1, pump2, gcount
+
   pv: PV = kwargs['pv']
   ns = kwargs['ns']
   ev = kwargs['ev']
-
-  pump_ctl(pv)
-  gen_level(pv)
+  s1 = kwargs['stop1']
+  s2 = kwargs['stop2']
 
   time_now = datetime.datetime.now()
-  #time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
-  time_str = time_now.strftime("%H:%M:%S")
+  time_str = time_now.strftime("%H:%M:%S") #("%Y-%m-%d %H:%M:%S")
+
+  pump_ctl(pv)
+  gen_level(pv, s1, s2, gcount)
+
+  if not pv.water_level:
+    fl = pv.get_future(time_str):
+
+    if not fl:
+      print("No water level")
+      if not req_sent:
+        ns.value = pv.data
+        ev.set()
+        req_sent = 1
+        print("Request Training")
+      elif ev.is_set():
+        pv.flevel = ns.value
+        fl = pv.get_future(time_str)
+        print("Got Result")
+        pp(fl)
+      else:
+        print("Training not finished")
+    else:
+      print(f"Got future leve:{fl}")
+    
+    pv.water_level = fl
+
   (m0, m1) = pump1, pump2
 
   pv.append_data([time_str, pv.water_level, m0, m1])
@@ -95,85 +133,73 @@ def monitor_func(**kwargs):
   pp(pv.data)
 
 
-def main():
+def main(stop1, stop2):
   pv = PV()
 
-  mgr = multiprocessing.Manager()
+  mgr = mp.Manager()
   ns = mgr.Namespace()
-  ev = multiprocessing.Event()
+  ev = mp.Event()
 
-  monitor = threads.RepeatThread(interval=3, 
-          execute=monitor_func,
-          kwargs={
-              "pv":pv,
-              "ns":ns,
-              "ev":ev
-              }
-          )
+  monitor = threads.RepeatThread(interval=3,
+                                 execute=monitor_func,
+                                 kwargs={
+                                     "pv": pv,
+                                     "ns": ns,
+                                     "ev": ev,
+                                     "stop1": stop1,
+                                     "stop2": stop2
+                                 })
   monitor.start()
 
-  p_req=pv
+  p_req = pv
   train_proc = mp.Process(name="Train Proc",
-            target=train.train_proc,
-            kwargs={
-              'pv':pv,
-              "ns":ns,
-              "ev":ev,
-              'pipe_request': p_req
-            })
+                          target=train.train_proc,
+                          kwargs={
+                              'pv': pv,
+                              "ns": ns,
+                              "ev": ev,
+                              'pipe_request': p_req
+                          })
   train_proc.start()
 
   print(f"@@@@@@@ train_proc: {train_proc.pid}")
 
 
 if __name__ == '__main__':
-  main()
+  stop1 = 0
+  stop2 = 0
+  if len(sys.argv) > 2:
+    stop1 = int(sys.argv[1])
+    stop2 = int(sys.argv[2])
 
-my_2darray = np.array([[1, 2, 3], [4, 5, 6]])
-df = pd.DataFrame(my_2darray)
-print(df)
+  pp(sys.argv)
+  main(stop1=stop1, stop2=stop2)
+
 
 def producer(ns, event):
-    global df
-    ns.value = df
-    event.set()
-    time.sleep(2)
-    print("producer waiting")
-    event.wait()
-    print("producer got the event")
-    dff=ns.value
-    print(dff)
+  global df
+  ns.value = df
+  event.set()
+  time.sleep(2)
+  print("producer waiting")
+  event.wait()
+  print("producer got the event")
+  dff = ns.value
+  print(dff)
 
 
 def consumer(ns, event):
-    try:
-        print('Before event: {}'.format(ns.value))
-    except Exception as err:
-        print('Before event, error:', str(err))
-    event.wait()
-    print('After event:', ns.value)
-    dff=ns.value
-    dff[0][0]=123
-    ns.value=dff
-    print("consumer set event")
-    event.set()
-
-
-if __name__ == '__main__':
-    p = multiprocessing.Process(
-        target=producer,
-        args=(namespace, event),
-    )
-    c = multiprocessing.Process(
-        target=consumer,
-        args=(namespace, event),
-    )
-
-    c.start()
-    p.start()
-
-    c.join()
-    p.join()
+  try:
+    print('Before event: {}'.format(ns.value))
+  except Exception as err:
+    print('Before event, error:', str(err))
+  event.wait()
+  print('After event:', ns.value)
+  dff = ns.value
+  dff[0][0] = 123
+  ns.value = dff
+  print("consumer set event")
+  event.set()
 
 
 temp = '''  
