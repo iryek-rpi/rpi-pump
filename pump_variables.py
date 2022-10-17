@@ -469,13 +469,13 @@ class PV():
 
   def find_data(self, stime):
     self.lock.acquire()
-    c=0
+    idx=-1
     for i, l in enumerate(self.data):
-      c=i
       if l[0]==stime:
+        idx=i
         break
     self.lock.release()
-    return c 
+    return idx 
 
   def dump_data(self):
     self.lock.acquire()
