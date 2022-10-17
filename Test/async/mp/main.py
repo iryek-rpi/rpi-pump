@@ -24,8 +24,9 @@ req_sent = 0
 def gen_level(pv, s1, s2):
   global gcount
 
-  gcount += gcount + 1
+  gcount += 1
 
+  print(f"gen_level: gcount:{gcount} s1:{s1} s2:{s2}")
   if s1 > gcount or s2 < gcount:
     ru = r() * 2.
     pv.water_level += (use - ru + pump1 + pump2)
@@ -53,7 +54,7 @@ class PV():
   def __init__(self):
     self.data = []
     self.train = []
-    self.flevel = [] #future level
+    self.flevel = []  #future level
     self.lock = threading.Lock()
     self.water_level = 50.
     self.forcast = None
@@ -72,13 +73,15 @@ class PV():
     self.train.append(ld)
     self.lock.release()
 
-  def find_data(self, stime):
+  def find_data(self, stime, ld):
     self.lock.acquire()
-    for i, l in enumerate(self.data):
+    idx = -1
+    for i, l in enumerate(ld):
       if l[0] == stime:
+        idx = i
         break
     self.lock.release()
-    return i
+    return idx
 
   def dump_data(self):
     self.lock.acquire()
@@ -87,49 +90,58 @@ class PV():
     self.lock.release()
     return new_list
 
+  def get_future(self, t):
+    return self.find_data(t, self.flevel)
+
 
 def monitor_func(**kwargs):
   global pump1, pump2, gcount
+  global req_sent
 
   pv: PV = kwargs['pv']
   ns = kwargs['ns']
-  ev = kwargs['ev']
+  ev_req = kwargs['ev_req']
+  ev_ret = kwargs['ev_ret']
   s1 = kwargs['stop1']
   s2 = kwargs['stop2']
 
   time_now = datetime.datetime.now()
-  time_str = time_now.strftime("%H:%M:%S") #("%Y-%m-%d %H:%M:%S")
+  time_str = time_now.strftime("%H:%M:%S")  #("%Y-%m-%d %H:%M:%S")
+  print(f"\n++++++++++++ monitor at {time_str}")
 
   pump_ctl(pv)
-  gen_level(pv, s1, s2, gcount)
+  gen_level(pv, s1, s2)  #, gcount)
 
   if not pv.water_level:
-    fl = pv.get_future(time_str):
+    fl = pv.get_future(time_str)
 
-    if not fl:
+    if fl < 0:
       print("No water level")
       if not req_sent:
         ns.value = pv.data
-        ev.set()
+        print("Case#1 - Request Training")
+        ev_req.set()
         req_sent = 1
-        print("Request Training")
-      elif ev.is_set():
+      elif ev_ret.is_set():
+        ev_ret.clear()
+        req_sent = 0
+        print("Case#2 - Got Result")
         pv.flevel = ns.value
+        print("pv.flevel:")
+        pp(pv.flevel)
         fl = pv.get_future(time_str)
-        print("Got Result")
         pp(fl)
       else:
-        print("Training not finished")
+        print("Case#3 - Training not finished")
     else:
       print(f"Got future leve:{fl}")
-    
+
     pv.water_level = fl
 
   (m0, m1) = pump1, pump2
 
   pv.append_data([time_str, pv.water_level, m0, m1])
 
-  pp(f"\n---monitor")
   pp(pv.data)
 
 
@@ -138,14 +150,16 @@ def main(stop1, stop2):
 
   mgr = mp.Manager()
   ns = mgr.Namespace()
-  ev = mp.Event()
+  ev_req = mp.Event()
+  ev_ret = mp.Event()
 
   monitor = threads.RepeatThread(interval=3,
                                  execute=monitor_func,
                                  kwargs={
                                      "pv": pv,
                                      "ns": ns,
-                                     "ev": ev,
+                                     "ev_req": ev_req,
+                                     "ev_ret": ev_ret,
                                      "stop1": stop1,
                                      "stop2": stop2
                                  })
@@ -157,7 +171,8 @@ def main(stop1, stop2):
                           kwargs={
                               'pv': pv,
                               "ns": ns,
-                              "ev": ev,
+                              "ev_req": ev_req,
+                              "ev_ret": ev_ret,
                               'pipe_request': p_req
                           })
   train_proc.start()
