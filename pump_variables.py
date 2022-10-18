@@ -460,7 +460,7 @@ class PV():
     return avg
 
   def return_last_or_v(self, v=0):
-    if not self.data:
+    if self.data:
       logger.info(f"Returning previous level:{self.water_level}")
       return self.data[-1][1]
     else:
