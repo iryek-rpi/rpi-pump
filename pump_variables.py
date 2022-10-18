@@ -478,11 +478,13 @@ class PV():
 
   def get_future_level(self, stime):
     self.lock.acquire()
-    for _, l in enumerate(self.future_level):
-      if l[0]==stime:
-        return l[1]
-    self.lock.release()
+    if self.future_level:
+      for _, l in enumerate(self.future_level):
+        if l[0]==stime:
+          self.lock.release()
+          return l[1]
     logger.info(f"No entry:  get_future_level({stime})")
+    self.lock.release()
     return -1
 
   def find_data(self, stime):
