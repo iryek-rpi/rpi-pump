@@ -53,8 +53,8 @@ def train_proc(**kwargs):
     len_data = len(data)
     if len_data > 3600 * 3:
       len_data = 3600 * 3
-    logger.info(f"Start training for future {len_data} samples")
-    forcast = model.predict(len_data)
+    logger.info(f"Start training for future {len_data*2} samples")
+    forcast = model.predict(len_data*2)
     logger.info(f"Predicted:{len(forcast)} samples")
     df = forcast.pd_dataframe()
     ll=[[i,v[0]] for i, v in zip(df.index.strftime("%Y-%m-%d %H:%M:%S"), df.values)]
