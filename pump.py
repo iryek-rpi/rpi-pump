@@ -13,7 +13,6 @@ import datetime
 import time
 import multiprocessing as mp
 import signal
-from tkinter import W
 
 import picologging as logging
 import lgpio
@@ -192,8 +191,7 @@ def main():
                           kwargs={
                               "ns": ns,
                               "ev_req": ev_req,
-                              "ev_ret": ev_ret,
-                              'pipe_request': p_req
+                              "ev_ret": ev_ret
                           })
     train_proc.start()
 
