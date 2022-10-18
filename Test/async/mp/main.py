@@ -57,7 +57,7 @@ class PV():
     self.flevel = []  #future level
     self.lock = threading.Lock()
     self.water_level = 50.
-    self.forcast = None
+    self.forecast = None
     self._setting_max_train = 518400  # 3600*24*30 (1초 샘플링일 경우 30일)
 
   @property

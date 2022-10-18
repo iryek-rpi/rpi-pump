@@ -72,7 +72,7 @@ class PV():
     self.data = []
     self.train = []
     self.future_level = None
-    self.forcast = None
+    self.forecast = None
     self.lock = threading.Lock()
 
     # setting_monitor_interval 초기화 될 때 함께 초기화 됨)
@@ -482,6 +482,8 @@ class PV():
       for _, l in enumerate(self.future_level):
         if l[0]==stime:
           self.lock.release()
+          if not util.repr_int(l[1]):
+            l[1] = self.return_last_or_v()
           return l[1]
     logger.info(f"No entry:  get_future_level({stime})")
     self.lock.release()

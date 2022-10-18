@@ -21,8 +21,8 @@ import pump_util as util
 
 #def get_future_level(t):
 #    return 70
-    #if pv.forcast:
-    #    return pv.forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
+    #if pv.forecast:
+    #    return pv.forecast.loc[forecast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
     
 model = None
 
@@ -48,16 +48,31 @@ def train_proc(**kwargs):
     #logger.info(df)
 
     st = TimeSeries.from_dataframe(df=df, time_col='time', value_cols=['level'], fill_missing_dates=True, freq='1S')
+    logger.info("TimeSeries of Training data ================")
+    logger.info(st)
     logger.info("model.fit()")
     model.fit(st)
     len_data = len(data)
     if len_data > 3600 * 3:
       len_data = 3600 * 3
     logger.info(f"Start training for future {len_data*2} samples")
-    forcast = model.predict(len_data*2)
-    logger.info(f"Predicted:{len(forcast)} samples")
-    df = forcast.pd_dataframe()
+    forecast = model.predict(len_data*2)
+    logger.info("\nBefore shift forecast ==========================")
+    logger.info(forecast)
+    forecast = forecast.shift(30)
+    logger.info("\nAfter shift forecast ==========================")
+    logger.info(forecast)
+
+    logger.info("\nBefore filling forecast ==========================")
+    logger.info(forecast)
+    forecast = darts.utils.missing_values.fill_missing_values(forecast, fill='auto')#, **interpolate_kwargs)
+    logger.info("\nAfter filling forecast ==========================")
+    logger.info(forecast)
+    logger.info(f"Predicted:{len(forecast)} samples")
+    df = forecast.pd_dataframe()
     ll=[[i,v[0]] for i, v in zip(df.index.strftime("%Y-%m-%d %H:%M:%S"), df.values)]
+
+
     ns.value = ll
 
     print("Train finished: set event")
@@ -83,14 +98,14 @@ def train(pv):
 
     future = future_dates.loc[future_dates['ds']>tdf[-1]]
     
-    forcast = model.predict(future)
+    forecast = model.predict(future)
     #forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
-    forcast['yhat-s']=forcast['yhat']
-    forcast['yhat-s']=((forcast['yhat-s']-forcast['yhat'].mean())*5)+forcast['yhat'].mean()
+    forecast['yhat-s']=forecast['yhat']
+    forecast['yhat-s']=((forecast['yhat-s']-forecast['yhat'].mean())*5)+forecast['yhat'].mean()
 
-    forcast = forcast[['ds','yhat-s']].copy()
-    forcast = forcast.resample(rule='1sec', on='ds').mean()
-    pv.forcast = forcast
+    forecast = forecast[['ds','yhat-s']].copy()
+    forecast = forecast.resample(rule='1sec', on='ds').mean()
+    pv.forecast = forecast
 
 def save_model(model_name:str, model):
     with open(f'./model/{model_name}', 'w') as fout:

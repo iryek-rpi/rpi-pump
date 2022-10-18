@@ -100,6 +100,15 @@ def tank_monitor(**kwargs):
           ev_ret.clear()
           pv.req_sent = False
           pv.future_level = ns.value
+          for i, l in enumerate(pv.future_level):
+            if not util.repr_int(l[1]):
+              for _, ll in enumerate(pv.future_level[i+1:]):
+                if util.repr_int(ll[1]):
+                  l[1] = ll[1] 
+                  break
+
+          logger.info("Forecast received")
+          logger.info(pv.future_level)
           pv.water_level = pv.get_future_level(time_str)
           logger.info(f"Got training result! - fl: {pv.water_level}\nFuture Level: {pv.future_level}")
         else:
