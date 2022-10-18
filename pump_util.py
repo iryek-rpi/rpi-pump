@@ -101,6 +101,13 @@ def change_digit(v, amount=1):
 
   return v
 
+def repr_int(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 def get_time():
   now = datetime.datetime.now()
   return f"{now.year}/{now.month}/{now.day} {now.hour:02d}:{now.minute:02d}" 
