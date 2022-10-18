@@ -47,7 +47,7 @@ def train_proc(**kwargs):
     logger.info(f"### Training data received: df[time].dtype:{df['time'].dtype}")
     logger.info(df)
 
-    st = TimeSeries.from_dataframe(df=df, time_col='time', value_cols=['level'])
+    st = TimeSeries.from_dataframe(df=df, time_col='time', value_cols=['level'], fill_missing_dates=True, freq=None)
     model.fit(st)
     len_data = len(data)
     if len_data > 3600 * 3:
