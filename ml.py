@@ -45,15 +45,17 @@ def train_proc(**kwargs):
     df['time'] = pd.to_datetime(df['time'])
 
     logger.info(f"### Training data received: df[time].dtype:{df['time'].dtype}")
-    logger.info(df)
+    #logger.info(df)
 
-    st = TimeSeries.from_dataframe(df=df, time_col='time', value_cols=['level'], fill_missing_dates=True, freq=None)
+    st = TimeSeries.from_dataframe(df=df, time_col='time', value_cols=['level'], fill_missing_dates=True, freq='1S')
+    logger.info("model.fit()")
     model.fit(st)
     len_data = len(data)
     if len_data > 3600 * 3:
       len_data = 3600 * 3
     logger.info(f"Start training for future {len_data} samples")
     forcast = model.predict(len_data)
+    logger.info(f"Predicted:{len(forcast)} samples")
     df = forcast.pd_dataframe()
     ll=[[i,v[0]] for i, v in zip(df.index.strftime("%Y-%m-%d %H:%M:%S"), df.values)]
     ns.value = ll
