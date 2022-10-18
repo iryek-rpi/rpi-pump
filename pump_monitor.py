@@ -103,6 +103,7 @@ def tank_monitor(**kwargs):
           pv.water_level = pv.get_future_level(time_str)
           logger.info(f"Got training result! - fl: {pv.water_level}\nFuture Level: {pv.future_level}")
         else:
+          logger.info(f'No case: req_sent:{pv.req_sent} ev_ret.is_set()={ev_ret.is_set()}')
           pv.water_level = pv.return_last_or_v(v=0)
 
       else: # get prediction from ML model
