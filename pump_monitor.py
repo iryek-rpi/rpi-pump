@@ -79,7 +79,7 @@ def tank_monitor(**kwargs):
         pv.source = constant.SOURCE_AI
         motor.set_run_mode(chip, 1)
 
-      fl = ml.get_future_level(time_str)
+      fl = pv.get_future_level(time_str)
       if fl < 0:
         logger.info("No future level")
 
