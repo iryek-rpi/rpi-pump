@@ -13,9 +13,13 @@ import datetime
 import time
 import multiprocessing as mp
 import signal
+from tkinter import W
 
 import picologging as logging
 import lgpio
+
+
+import ml
 
 # logger 생성하기 위해 가장 먼저 import 해야 함
 import pump_util as util
@@ -178,13 +182,33 @@ def main():
     if pv().device_role == "water-sensor":
       monitor_func = pump_monitor.water_sensor_monitor
 
+    mgr = mp.Manager()
+    ns = mgr.Namespace()
+    ev_req = mp.Event()
+    ev_ret = mp.Event()
+
+    train_proc = mp.Process(name="Train Proc",
+                          target=ml.train_proc,
+                          kwargs={
+                              "ns": ns,
+                              "ev_req": ev_req,
+                              "ev_ret": ev_ret,
+                              'pipe_request': p_req
+                          })
+    train_proc.start()
+
+    print(f"@@@@@@@ train_proc: {train_proc.pid}")
+
     monitor = pump_thread.RepeatThread(interval=pv().setting_monitor_interval,
                                        execute=monitor_func,
                                        kwargs={
                                            'chip': chip,
                                            'spi': spi,
                                            'sm': sm_lcd,
-                                           'pv': pv()
+                                           'pv': pv(),
+                                           'ns': ns,
+                                           'ev_req': ev_req,
+                                           'ev_ret': ev_ret
                                        })
     monitor.start()
 

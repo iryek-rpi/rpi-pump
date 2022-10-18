@@ -1,15 +1,69 @@
+import sys
+import time
+import datetime
+import multiprocessing as mp
+from multiprocessing.synchronize import Event
+import threading
+from pprint import pp
+
 import pandas as pd
-from prophet import Prophet
-from prophet.serialize import model_to_json, model_from_json
+import picologging as logging
+import darts
+from darts import TimeSeries
+from darts.models import NaiveSeasonal
 
-from pump_variables import PV
+import pump_util as util
 
-def get_future_level(t):
-    return 70
+#from prophet import Prophet
+#from prophet.serialize import model_to_json, model_from_json
+
+#from pump_variables import PV
+
+#def get_future_level(t):
+#    return 70
     #if pv.forcast:
     #    return pv.forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
     
-def train(pv:PV):
+model = None
+
+def train_proc(**kwargs):
+  global model 
+
+  logger = util.make_logger(name=util.TRAIN_LOGGER_NAME, filename=util.TRAIN_LOGFILE_NAME)
+  if not model:
+    model = NaiveSeasonal(K=12)
+
+  ns = kwargs['ns']
+  ev_req: Event = kwargs['ev_req']
+  ev_ret: Event = kwargs['ev_ret']
+
+  while ev_req.wait():
+    ev_req.clear()
+    logger.info("\n### Event set in train process")
+    data = ns.value
+    df = pd.DataFrame(data, columns=['time','level','m0','m1','m2','source'])
+    df['time'] = pd.to_datetime(df['time'])
+
+    logger.info(f"### Training data received: df[time].dtype:{df['time'].dtype}")
+    logger.info(df)
+
+    st = TimeSeries.from_dataframe(df=df, time_col='time', value_cols=['level'])
+    model.fit(st)
+    len_data = len(data)
+    if len_data > 3600 * 3:
+      len_data = 3600 * 3
+    logger.info(f"Start training for future {len_data} samples")
+    forcast = model.predict(len_data)
+    df = forcast.pd_dataframe()
+    ll=[[i,v[0]] for i, v in zip(df.index.strftime("%Y-%m-%d %H:%M:%S"), df.values)]
+    ns.value = ll
+
+    print("Train finished: set event")
+    ev_ret.set()
+
+
+trash = '''
+def train(pv):
     tdf = pd.DataFrame(pv.train, columns=['ds','y','a','b','c','d'])
     tdf['ds'] = pd.DatetimeIndex(tdf['ds'])
     tdf = tdf.set_index('ds')
@@ -46,3 +100,4 @@ def read_model(model_name:str):
         m = model_from_json(fin.read())  # Load model
 
     return m
+'''

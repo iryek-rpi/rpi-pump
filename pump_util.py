@@ -33,6 +33,7 @@ MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
 MODBUS_CLIENT_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_client.log"
 MODBUS_SERVER_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_server.log"
 FAN_LOGFILE_NAME = f"./logs/{get_time_str()}_fan.log"
+TRAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_train.log"
 #TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
 pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
 #logfile = pathlib.Path(MAIN_LOGFILE_NAME)
@@ -43,6 +44,7 @@ MODBUS_SERVER_LOGGER_NAME = "LOGGER_MODBUS_SERVER"
 MODBUS_CLIENT_LOGGER_NAME = "LOGGER_MODBUS_CLIENT"
 TRASITION_LOGGER_NAME = "transitions"
 FAN_LOGGER_NAME = "LOGGER_FAN"
+TRAIN_LOGGER_NAME = "LOGGER_TRAIN"
 
 def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
   """Make a custom logger"""

@@ -37,6 +37,9 @@ def tank_monitor(**kwargs):
   spi = kwargs['spi']
   sm = kwargs['sm']
   pv: PV = kwargs['pv']
+  ns = kwargs['ns']
+  ev_req = kwargs['ev_req']
+  ev_ret = kwargs['ev_ret']
 
   time_now = datetime.datetime.now()
   time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
@@ -75,31 +78,37 @@ def tank_monitor(**kwargs):
       if pv.source == constant.SOURCE_SENSOR:
         pv.source = constant.SOURCE_AI
         motor.set_run_mode(chip, 1)
-      #temp= ml.get_future_level(time_now)
-      #if (not pv.water_level) and ml.train(pv=pv):
 
-      i = pv.find_data(pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S"))
-      logger.info(f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i} time_str:{time_str}")
-      ltr = pv.data[:i + 1]
-      if len(ltr) > 5:  #ml.train(pv=pv):
-        diff1 = (ltr[-1][1] - ltr[-2][1]) * 1.5
-        diff2 = (ltr[-2][1] - ltr[-3][1]) * 1.2
-        diff3 = (ltr[-3][1] - ltr[-4][1]) * 0.8
-        diff4 = (ltr[-4][1] - ltr[-5][1]) * 0.5
+      fl = ml.get_future_level(time_str)
+      if fl < 0:
+        logger.info("No future level")
 
-        predicted = level_rate + (diff1 + diff2 + diff3 + diff4
-                                 ) // 4  #ml.get_future_level(pv=pv, t=time_now)
-        pv.water_level = predicted  #pv.filter_data(predicted)
-        logger.info(f"Predicted: {predicted} level:{level_rate} + avg:{(diff1+diff2+diff3+diff4)//4}")
-        logger.info(str(ltr[-5][1]))
-        logger.info(str(ltr[-4][1]))
-        logger.info(str(ltr[-3][1]))
-        logger.info(str(ltr[-2][1]))
-        logger.info(str(ltr[-1][1]))
-      else:
-        logger.info("Training failed. returning filtered ADC value")
-        pv.water_level = level_rate  #pv.filter_data(level_rate)
-      # get prediction from ML model
+        if not pv.req_sent:
+          i = pv.find_data(pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S"))
+          logger.info(f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i} time_str:{time_str}")
+          ltr = pv.data[:i + 1]
+          if len(ltr)<20:
+            logger.info(f"Case#0 : Not enough data: len(ltr):{len(ltr)}")
+            pv.water_level = pv.return_last_or_v(v=0)
+          else:
+            ns.value = ltr
+            ev_req.set()
+            pv.req_sent = True
+            pv.water_level = pv.return_last_or_v(v=0)
+            logger.info(f"Case#1 : Request Training. Returning previous level: {pv.water_level}")
+        elif ev_ret.is_set():
+          ev_ret.clear()
+          pv.req_sent = False
+          pv.future_level = ns.value
+          pv.water_level = pv.get_future_level(time_str)
+          logger.info(f"Got training result! - fl: {pv.water_level}\nFuture Level: {pv.future_level}")
+        else:
+          pv.water_level = pv.return_last_or_v(v=0)
+
+      else: # get prediction from ML model
+        logger.info(f"Got stored future level: {fl}")
+        pv.water_level = fl
+        #pv.water_level = level_rate  #pv.filter_data(level_rate)
     else:
       pv.water_level = level_rate  #pv.filter_data(level_rate)  
       logger.info("less than tolerance")
@@ -278,7 +287,7 @@ def main():
     conn.close()
 
 
-'''
+trash = '''
 4mA -> 726 -> 0.59v
        741 -> 0.6v
 19.95mA -> 3900 -> 3.15v
@@ -290,3 +299,18 @@ SimonX
 29 -> 5.8mA
 0 -> 4.8mA
 '''
+#      if len(ltr) > 5:  #ml.train(pv=pv):
+#        diff1 = (ltr[-1][1] - ltr[-2][1]) * 1.5
+#        diff2 = (ltr[-2][1] - ltr[-3][1]) * 1.2
+#        diff3 = (ltr[-3][1] - ltr[-4][1]) * 0.8
+#        diff4 = (ltr[-4][1] - ltr[-5][1]) * 0.5
+#
+#        predicted = level_rate + (diff1 + diff2 + diff3 + diff4
+#                                 ) // 4  #ml.get_future_level(pv=pv, t=time_now)
+#        pv.water_level = predicted  #pv.filter_data(predicted)
+#        logger.info(f"Predicted: {predicted} level:{level_rate} + avg:{(diff1+diff2+diff3+diff4)//4}")
+#        logger.info(str(ltr[-5][1]))
+#        logger.info(str(ltr[-4][1]))
+#        logger.info(str(ltr[-3][1]))
+#        logger.info(str(ltr[-2][1]))
+#        logger.info(str(ltr[-1][1]))

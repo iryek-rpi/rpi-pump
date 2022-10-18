@@ -48,7 +48,6 @@ class PV():
 
   def __init__(self):
     self.chip = -1
-    self.model = None
 
     self._mbl = [0 for _ in range(ma.M_END)]
 
@@ -67,10 +66,12 @@ class PV():
     self.motor_valid = [0]  # 사용할 수 있는 모터 번호 리스트(0~2)
     self.motor_lead_time = 10
 
+    self.req_sent = False # training request flag 
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
     self.previous_adc = None # 이전 ADC reading 값 
     self.data = []
     self.train = []
+    self.future_level = None
     self.forcast = None
     self.lock = threading.Lock()
 
@@ -139,9 +140,9 @@ class PV():
     return self._setting_monitor_interval
 
   @setting_monitor_interval.setter
-  def setting_monitor_interval(self, interval):
-    self._seting_max_train = (60*60*24*30)//interval  #1개월 
-    self._setting_monitor_interval = interval
+  def setting_monitor_interval(self, monitor_interval):
+    self._seting_max_train = (60*60*24*30)//monitor_interval  #1개월 
+    self._setting_monitor_interval = monitor_interval
 
   @property
   def setting_max_train(self):
@@ -458,6 +459,14 @@ class PV():
     logger.debug(f"# filtering: return average from Q: {avg:.1f}")
     return avg
 
+  def return_last_or_v(self, v=0):
+    if not self.data:
+      logger.info(f"Returning previous level:{self.water_level}")
+      return self.data[-1][1]
+    else:
+      logger.info(f"No available data. Returning {v}")
+      return v 
+
   def append_data(self, ld):
     self.lock.acquire()
     self.data.append(ld)
@@ -466,6 +475,15 @@ class PV():
       self.train = self.train[n:]   # 오래된 순으로 1/3 버림
     self.train.append(ld)
     self.lock.release()
+
+  def get_future_level(self, stime):
+    self.lock.acquire()
+    for _, l in enumerate(self.future_level):
+      if l[0]==stime:
+        return l[1]
+    self.lock.release()
+    logger.info(f"No entry:  get_future_level({stime})")
+    return -1
 
   def find_data(self, stime):
     self.lock.acquire()
