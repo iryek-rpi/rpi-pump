@@ -108,9 +108,9 @@ def tank_monitor(**kwargs):
                   break
 
           logger.info("Forecast received")
-          logger.info(pv.future_level)
+          #logger.info(pv.future_level)
           pv.water_level = pv.get_future_level(time_str)
-          logger.info(f"Got training result! - fl: {pv.water_level}\nFuture Level: {pv.future_level}")
+          logger.info(f"Got training result! - fl: {pv.water_level}")#\nFuture Level: {pv.future_level}")
         else:
           logger.info(f'No case: req_sent:{pv.req_sent} ev_ret.is_set()={ev_ret.is_set()}')
           pv.water_level = pv.return_last_or_v(v=0)
