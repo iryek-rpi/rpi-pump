@@ -48,6 +48,7 @@ def tank_monitor(**kwargs):
     adc_level = 0
 
   level_rate = pv.water_level_rate(adc_level)
+  pv.sensor_level = level_rate
 
   #if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
   #if pv.previous_adc == 0  or (not pv.no_input_starttime):
