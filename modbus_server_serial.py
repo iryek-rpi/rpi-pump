@@ -22,45 +22,25 @@ import pymodbus.datastore as ds
 #from pymodbus.framer.rtu_framer import ModbusRtuFramer
 from pymodbus.transaction import ModbusRtuFramer
 
-
-
 import modbus_address as ma
 import pump_util as util
-
-logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME)
-logger.setLevel(logging.CRITICAL)
 
 # --------------------------------------------------------------------------- #
 # configure the service logging
 # --------------------------------------------------------------------------- #
-#MODBUS_LOGFILE_NAME = "./logs/modbus_comm.log"
-#pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
-#modbus_logfile = pathlib.Path(MODBUS_LOGFILE_NAME)
-#modbus_logfile.touch(exist_ok=True)
-
-#MODBUS_LOG_FORMAT = ("%(asctime)-15s %(threadName)-15s"
-#                     " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
-#logging.basicConfig(filename=MODBUS_LOGFILE_NAME,
-#                    filemode="a",
-#                    format=MODBUS_LOG_FORMAT,
-#                    level=logger.debug,
-#                    datefmt='%Y-%m-%d %H:%M:%S')
-
-#modbus_logger = logging.getLogger('modbus_logger')
-
 PORT = "/dev/serial1"
-
 
 class PumpDataBlock(ds.ModbusSequentialDataBlock):
   """Creates a sequential modbus datastore."""
 
-  def __init__(self, address, pipe_req):
+  def __init__(self, address, pipe_req, logger):
     """Initialize the datastore.
         """
     self.address = address.copy()
     self.values = {}
     self.default_value = 0
     self.pipe_req = pipe_req
+    self.logger = logger
 
   def validate(self, address, count=1):
     """Check to see if the request is in range.
@@ -70,38 +50,36 @@ class PumpDataBlock(ds.ModbusSequentialDataBlock):
         :returns: True if the request in within range, False otherwise
         """
     #address += 40000
-    logger.info(f"validate: address({address}) in {self.address}")
+    self.logger.info(f"validate: address({address}) in {self.address}")
     return address in self.address
 
   def getValues(self, address, count=1):
     """Return the requested values of the datastore.
-
         :param address: The starting address
         :param count: The number of values to retrieve
         :returns: The requested values from a:a+c
         """
     msg = (False, address, count, [])
-    logger.info(f"MODBUS SERVER: sending request to getValues(address:{address}, count:{count}, msg:{msg})")
+    self.logger.info(f"MODBUS SERVER: sending request to getValues(address:{address}, count:{count}, msg:{msg})")
     self.pipe_req.send(msg)
     response = self.pipe_req.recv()
-    logger.info(
+    self.logger.info(
         f"MODBUS SERVER: received response:{response} for getValues(address:{address} msg:{msg})"
     )
     return response[1]
 
   def setValues(self, address, values):
     """Set the requested values of the datastore.
-
         :param address: The starting address
         :param values: The new values to be set
         """
     msg = (True, address, 0, values)
-    logger.info(
+    self.logger.info(
         f"MODBUS SERVER: sending {msg} to setValues(address:{address}, values:{values})"
     )
     self.pipe_req.send(msg)
     response = self.pipe_req.recv()
-    logger.info(
+    self.logger.info(
         f"MODBUS SERVER: received response:{response} for setValues(address:{address}, values:{values})"
     )
 
@@ -117,14 +95,17 @@ def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
   pipe_req = kwargs['pipe_request']
   modbus_id = kwargs['modbus_id']
 
-  logger.info(
-      f"Starting rtu_server_proc(pipe_req:{pipe_req}, modbus_id:{modbus_id})")
-  asyncio.run(run_server(pipe_req, modbus_id))
+  logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME)
+  logger.setLevel(logging.DEBUG)
+
+  logger.debug(
+      f"Starting rtu_server_proc(modbus_id:{modbus_id})")
+  asyncio.run(run_server(pipe_req, modbus_id, logger))
 
 
-async def run_server(pipe_req, modbus_id):
+async def run_server(pipe_req, modbus_id, logger):
   """Run server."""
-  holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req)
+  holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req, logger)
   store = ModbusSlaveContext(hr=holding_reg)
   context = ModbusServerContext(slaves={modbus_id: store}, single=False)
 
