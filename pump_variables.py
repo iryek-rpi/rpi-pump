@@ -167,10 +167,12 @@ class PV():
 
   @property
   def source(self):
+    logger.info(f"reading pv.source from _mbl[{ma.M3_SOURCE}]: {self._mbl[ma.M3_SOURCE]}")
     return self._mbl[ma.M3_SOURCE]
 
   @source.setter
   def source(self, s):
+    logger.info(f"writing pv.source to _mbl[{ma.M3_SOURCE}] with {s}")
     self._mbl[ma.M3_SOURCE] = s 
 
   @property

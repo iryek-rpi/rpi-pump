@@ -73,9 +73,10 @@ def tank_monitor(**kwargs):
         f"td.seconds:{td.seconds} time_now:{time_now} no_input_time:{pv.no_input_starttime} Tolerance:{pv.setting_tolerance_to_ai}")
     if (td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
       logger.info(
-          f"RUN_MODE:{pv.source} AI:{constant.SOURCE_AI} SENSOR:{constant.SOURCE_SENSOR}"
+          f"RUN_MODE:{pv.source} Info: AI=={constant.SOURCE_AI}"
       )
       if pv.source == constant.SOURCE_SENSOR:
+        logger.info(f"MONITOR: writing to pv.source:{constant.SOURCE_AI}")
         pv.source = constant.SOURCE_AI
         motor.set_run_mode(chip, 1)
 
@@ -125,9 +126,10 @@ def tank_monitor(**kwargs):
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
     logger.info(
-        f"Valid Input: RUN_MODE:{pv.source} SOURCE_AI:{constant.SOURCE_AI} SOURCE_SENSOR:{constant.SOURCE_SENSOR}"
+        f"Valid Input: RUN_MODE:{pv.source} info: SOURCE_AI=={constant.SOURCE_AI}"
     )
     if pv.source == constant.SOURCE_AI:
+      logger.info(f"MONITOR: writing to pv.source:{constant.SOURCE_SENSOR}")
       pv.source = constant.SOURCE_SENSOR
       motor.set_run_mode(chip, 0)
 
