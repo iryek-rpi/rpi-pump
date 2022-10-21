@@ -48,7 +48,6 @@ def tank_monitor(**kwargs):
     adc_level = 0
 
   level_rate = pv.water_level_rate(adc_level)
-  pv.sensor_level = level_rate
 
   #if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
   #if pv.previous_adc == 0  or (not pv.no_input_starttime):
@@ -148,7 +147,8 @@ def tank_monitor(**kwargs):
       f"writeDAC(level_rate:{level_rate:.1f}, pv.water_level:{pv.water_level:.1f})"
   )
 
-  ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, level_rate)), spi)
+  #ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, level_rate)), spi)
+  ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, pv.water_level)), spi)
   sm.update_idle()
 
 
