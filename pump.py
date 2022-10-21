@@ -222,7 +222,6 @@ def main():
     p_respond, p_req = mp.Pipe()
     responder = pump_thread.RespondThread(execute=modbus_respond.respond,
                                           kwargs={
-                                              'chip': chip,
                                               'pipe': p_respond,
                                               'pv': pv()
                                           })

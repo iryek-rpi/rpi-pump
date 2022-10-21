@@ -8,19 +8,18 @@ import config
 import pump_util as util
 
 #logger = logging.getLogger(util.MODBUS_LOGGER_NAME)
-logger = util.make_logger(name=util.MODBUS_CLIENT_LOGGER_NAME, filename=util.MODBUS_CLIENT_LOGFILE_NAME)
-logger.setLevel(logging.CRITICAL)
+#logger.setLevel(logging.info)
 
 def respond(**kwargs):
   """Main 프로세스의 RespondThread에서 실행되는 Modbus 요청에 대한 응답 루틴
     """
   p_respond = kwargs['pipe']
   pv: pump_variables.PV = kwargs['pv']
-  chip = kwargs['chip']
 
-  logger.info(f"Starting respond thread({kwargs})")
+  logger = util.make_logger(name=util.MODBUS_CLIENT_LOGGER_NAME, filename=util.MODBUS_CLIENT_LOGFILE_NAME)
+  logger.info(f"Starting respond thread")
   while 1:
-    logger.info(f"Receiving from Pipe:{p_respond}.......")
+    logger.info(f"Waiting for msg from...")
     msg = p_respond.recv()
     logger.info(f"Received from Pipe:{msg}")
     wr, address, count, values = msg
