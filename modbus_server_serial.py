@@ -28,7 +28,7 @@ import pump_util as util
 # --------------------------------------------------------------------------- #
 # configure the service logging
 # --------------------------------------------------------------------------- #
-PORT = "/dev/serial1"
+PORT = "/dev/serial2"
 
 class PumpDataBlock(ds.ModbusSequentialDataBlock):
   """Creates a sequential modbus datastore."""
@@ -127,9 +127,11 @@ async def run_server(pipe_req, modbus_id, logger):
                           framer=ModbusRtuFramer,
                           identity=identity,
                           port=PORT,
-                          timeout=.005,
+                          #timeout=.005,
+                          timeout=1.0,
                           baudrate=9600,
-                          autoreconnect=True)
+                          #baudrate=115200,
+                          autoreconnect=False)
   return server
 
 
