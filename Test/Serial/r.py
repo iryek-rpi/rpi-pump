@@ -3,17 +3,16 @@
 import time
 import serial
 
-port = '/dev/serial2'
+port = '/dev/serial1'
 
 ser = serial.Serial(port,
                     baudrate=9600,
                     parity=serial.PARITY_NONE,
                     stopbits=serial.STOPBITS_ONE,
                     bytesize=serial.EIGHTBITS,
-                    timeout=3)
+                    timeout=0.1)
 
 while 1:
   x=ser.readline()
-  #x = ser.read(3)
   print(x)
-  time.sleep(2)
+  time.sleep(0.1)
