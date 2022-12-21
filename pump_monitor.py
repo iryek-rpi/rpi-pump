@@ -81,7 +81,7 @@ def tank_monitor(**kwargs):
       if pv.source == constant.SOURCE_SENSOR:
         logger.info(f"MONITOR: writing to pv.source:{constant.SOURCE_AI}")
         pv.source = constant.SOURCE_AI
-        motor.set_run_mode(chip, 1)
+        motor.set_run_mode(chip, constant.SOURCE_AI)
 
       fl = pv.get_future_level(time_str)
       if fl < 0:
@@ -134,13 +134,13 @@ def tank_monitor(**kwargs):
     if pv.source == constant.SOURCE_AI:
       logger.info(f"MONITOR: writing to pv.source:{constant.SOURCE_SENSOR}")
       pv.source = constant.SOURCE_SENSOR
-      motor.set_run_mode(chip, 0)
+      motor.set_run_mode(chip, constant.SOURCE_SENSOR)
 
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
     pv.water_level = level_rate  #pv.filter_data(level_rate)
 
-  determine_motor_state(pv, chip)
+  determine_motor_state_new(pv, chip)
 
   (m0, m1, m2) = motor.get_all_motors(chip)
 
@@ -155,6 +155,34 @@ def tank_monitor(**kwargs):
   sm.update_idle()
 
   #logger.info(" Leaving pump_monitor() ===========================>>>\n")
+def determine_motor_state_new(pv, chip):
+  logger.info(
+      f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}"
+  )
+  logger.info(f"previous_state:{pv.previous_state} motor_count:{pv.motor_count} motor_index:{pv.motor_index}")
+  logger.info("1")
+  if pv.water_level >= pv.setting_high: # and pv.previous_state != 2:
+    for i, m in pv.busy_motors:
+      if m==0 and pv.motor1_mode==constant.OP_AUTO:
+        pv.pump1_on = 0
+        break
+      elif m==1 and pv.motor2_mode==constant.OP_AUTO:
+        pv.pump2_on = 0
+        break
+      elif m==2 and pv.motor3_mode==constant.OP_AUTO:
+        pv.pump3_on = 0
+        break
+  elif pv.water_level <= pv.setting_low:# and pv.previous_state != 0:
+    for i, m in pv.idle_motors:
+      if m==0 and pv.motor1_mode==constant.OP_AUTO:
+        pv.pump1_on = 1
+        break
+      elif m==1 and pv.motor2_mode==constant.OP_AUTO:
+        pv.pump2_on = 1
+        break
+      elif m==2 and pv.motor3_mode==constant.OP_AUTO:
+        pv.pump3_on = 1 
+        break
 
 def determine_motor_state(pv, chip):
   logger.info(
