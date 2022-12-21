@@ -65,6 +65,8 @@ class PV():
     self.motors = [0,0,0] # 연결된 모터는 1, 연결 안된 모터는 0 
     self.motor_valid = [0]  # 사용할 수 있는 모터 번호 리스트(0~2)
     self.motor_lead_time = 10
+    self.idle_motors = []
+    self.busy_motors = []
 
     self.req_sent = False # training request flag 
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간

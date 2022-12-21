@@ -5,6 +5,7 @@ import ast
 
 import constant
 import pump_util as util
+import motor
 
 SETTING_DIR = "./setting/"
 SETTING_NAME = SETTING_DIR + "setting.ini"
@@ -214,3 +215,11 @@ def config_to_pv(co: configparser.ConfigParser, pv):
 
   if ('MANAGE' in co) and ('DEVICE_ROLE' in co['MANAGE']):
     pv.device_role = co['MANAGE']['DEVICE_ROLE']
+
+  # 부팅 직후에는 
+  for i in range(pv.motor_count):
+    ms = motor.get_motor_state(pv.chip, i)
+    if not ms:
+      pv.idle_motors.append(i)
+    else:
+      pv.busy_motors.append(i)
