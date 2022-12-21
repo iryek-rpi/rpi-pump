@@ -117,6 +117,9 @@ def main():
   #i2c_rtc = lgpio.i2c_open(10, I2C_RTC) # 10 for RTC bus both on pump & CM4IO board
 
   try:
+    chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
+    pv().chip = chip
+
     lcd.instance = lcd_instance
 
     from pump_variables import PV
@@ -134,8 +137,6 @@ def main():
     #client = mqtt_pub.mqtt_init(client_name=pv().mqtt_client_name, broker=pv().mqtt_broker, port=pv().mqtt_port)
     #pv().mqtt_client = client
 
-    chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
-    pv().chip = chip
     spi = ADC.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
     motor.init_motors(chip)
