@@ -216,9 +216,11 @@ def config_to_pv(co: configparser.ConfigParser, pv):
   if ('MANAGE' in co) and ('DEVICE_ROLE' in co['MANAGE']):
     pv.device_role = co['MANAGE']['DEVICE_ROLE']
 
-  # 부팅 직후에는 
+  # 부팅 직후에는 모터 상태를 읽어와서 idle, busy 리스트 초기화
+  # Modbus db에 저장할 필요는 없음. Modbus에서 항상 직접 모터 상태를 읽어감
   for i in range(pv.motor_count):
     ms = motor.get_motor_state(pv.chip, i)
+
     if not ms:
       pv.idle_motors.append(i)
     else:
