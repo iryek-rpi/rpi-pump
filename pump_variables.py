@@ -259,7 +259,8 @@ class PV():
   @pump1_on.setter
   def pump1_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
-    motor.set_motor_state(self.chip, 0, s)
+    if self.motor1_mode() == constant.OP_MANUAL:
+      motor.set_motor_state(self.chip, 0, s)
     #logger.info(f"@@@ pump1_on: s:{s}")
     #self._mbl[ma.M14_PUMP1_ON] = s 
 
@@ -270,7 +271,8 @@ class PV():
   @pump2_on.setter
   def pump2_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
-    motor.set_motor_state(self.chip, 1, s)
+    if self.motor2_mode() == constant.OP_MANUAL:
+      motor.set_motor_state(self.chip, 1, s)
     #self._mbl[ma.M15_PUMP2_ON] = s 
 
   @property
@@ -280,7 +282,8 @@ class PV():
   @pump3_on.setter
   def pump3_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
-    motor.set_motor_state(self.chip, 2, s)
+    if self.motor3_mode() == constant.OP_MANUAL:
+      motor.set_motor_state(self.chip, 2, s)
     #self._mbl[ma.M16_PUMP3_ON] = s 
 
   @property
@@ -395,6 +398,9 @@ class PV():
 
     return self._mbl[address:address+count].copy()
 
+  def save_pump_state(self, pump, state):
+    self._mbl[ma.M14_PUMP_ON+pump] = state
+
   def set_modbus_sequence(self, address, values):
     if address < 0:
       address = 0
@@ -409,17 +415,21 @@ class PV():
 
     #logger.info(f"@ address:{address} values:{str(values)} motor1_mode:{self.motor1_mode}")
     for i in range(count):
-      self._mbl[address+i] = values[i]
       #logger.info(f"@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode} motor2_mode:{self.motor2_mode} motor3_mode:{self.motor3_mode}")
       if address+i == ma.M14_PUMP1_ON and not self.motor1_mode:
         #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode}")
         self.pump1_on = values[i]
+        self._mbl[address+i] = values[i]
       elif address+i == ma.M15_PUMP2_ON and not self.motor2_mode:
         #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor2_mode:{self.motor2_mode}")
         self.pump2_on = values[i]
+        self._mbl[address+i] = values[i]
       elif address+i == ma.M16_PUMP3_ON and not self.motor3_mode:
         #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor3_mode:{self.motor3_mode}")
         self.pump3_on = values[i]
+        self._mbl[address+i] = values[i]
+      else: 
+        self._mbl[address+i] = values[i]
 
 
     import config
