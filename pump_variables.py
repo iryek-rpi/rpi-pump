@@ -185,6 +185,19 @@ class PV():
     logger.info(f"writing pv.source to _mbl[{ma.M3_SOURCE}] with {s}")
     self._mbl[ma.M3_SOURCE] = s 
 
+  def change_motor_list(self, m, v):
+    if not v:
+      if m in self.busy_motors:
+        del self.busy_motors[self.busy_motors.index(m)]
+      if not (m in self.idle_motors):
+        self.idle_motors.append(m)
+    else:
+      if m in self.idle_motors:
+        del self.idle_motors[self.idle_motors.index(m)]
+      if not (m in self.busy_motors):
+        self.busy_motors.append(m)
+
+
   @property
   def motor1_state(self):
     return motor.get_motor_state(self.chip, 0)
@@ -259,8 +272,9 @@ class PV():
   @pump1_on.setter
   def pump1_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
-    if self.motor1_mode() == constant.OP_MANUAL:
-      motor.set_motor_state(self.chip, 0, s)
+    #if self.motor1_mode() == constant.OP_MANUAL:
+    motor.set_motor_state(self.chip, 0, s)
+    self.change_motor_list(0, s)
     #logger.info(f"@@@ pump1_on: s:{s}")
     #self._mbl[ma.M14_PUMP1_ON] = s 
 
@@ -271,8 +285,9 @@ class PV():
   @pump2_on.setter
   def pump2_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
-    if self.motor2_mode() == constant.OP_MANUAL:
-      motor.set_motor_state(self.chip, 1, s)
+    #if self.motor2_mode() == constant.OP_MANUAL:
+    motor.set_motor_state(self.chip, 1, s)
+    self.change_motor_list(1, s)
     #self._mbl[ma.M15_PUMP2_ON] = s 
 
   @property
@@ -282,8 +297,9 @@ class PV():
   @pump3_on.setter
   def pump3_on(self, s):
     #if self.op_mode() == constant.OP_MANUAL:
-    if self.motor3_mode() == constant.OP_MANUAL:
-      motor.set_motor_state(self.chip, 2, s)
+    #if self.motor3_mode() == constant.OP_MANUAL:
+    motor.set_motor_state(self.chip, 2, s)
+    self.change_motor_list(2, s)
     #self._mbl[ma.M16_PUMP3_ON] = s 
 
   @property
@@ -416,21 +432,20 @@ class PV():
     #logger.info(f"@ address:{address} values:{str(values)} motor1_mode:{self.motor1_mode}")
     for i in range(count):
       #logger.info(f"@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode} motor2_mode:{self.motor2_mode} motor3_mode:{self.motor3_mode}")
-      if address+i == ma.M14_PUMP1_ON and not self.motor1_mode:
+      if address+i == ma.M14_PUMP1_ON and self.motor1_mode==constant.OP_MANUAL:
         #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode}")
         self.pump1_on = values[i]
         self._mbl[address+i] = values[i]
-      elif address+i == ma.M15_PUMP2_ON and not self.motor2_mode:
+      elif address+i == ma.M15_PUMP2_ON and self.motor2_mode==constant.OP_MANUAL:
         #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor2_mode:{self.motor2_mode}")
         self.pump2_on = values[i]
         self._mbl[address+i] = values[i]
-      elif address+i == ma.M16_PUMP3_ON and not self.motor3_mode:
+      elif address+i == ma.M16_PUMP3_ON and self.motor3_mode==constant.OP_MANUAL:
         #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor3_mode:{self.motor3_mode}")
         self.pump3_on = values[i]
         self._mbl[address+i] = values[i]
       else: 
         self._mbl[address+i] = values[i]
-
 
     import config
     config.update_config(section='CONTROLLER', key='AUTO_H', value=self._mbl[ma.M11_AUTO_H])
