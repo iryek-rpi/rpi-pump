@@ -31,8 +31,8 @@ def init_setting(pv):
     co['MOTOR'] = {
         'PUMP_COUNT' : 2,
         'MOTOR1_MODE' : 1,   # MOTOR1,2,3 마지막 가동 상태. 교번 운전에 반영
-        'MOTOR2_MODE' : 0,
-        'MOTOR3_MODE' : 0,
+        'MOTOR2_MODE' : 1,
+        'MOTOR3_MODE' : 1,
         'LEAD_TIME' : 10, # 모터 가동에 걸리는 시간 (교번운전을 위해 가동된 모터를 확인하여 기록하기 위함)
         'INSTALLED_MOTORS' : '[1,0,0]', # 모터가 연결된 단자에 1, 연결 안된 단자는 0 
     }
