@@ -220,8 +220,4 @@ def config_to_pv(co: configparser.ConfigParser, pv):
   # Modbus db에 저장할 필요는 없음. Modbus에서 항상 직접 모터 상태를 읽어감
   for i in range(pv.motor_count):
     ms = motor.get_motor_state(pv.chip, i)
-
-    if not ms:
-      pv.idle_motors.append(i)
-    else:
-      pv.busy_motors.append(i)
+    pv.change_motor_list(i, ms)
