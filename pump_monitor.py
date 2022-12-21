@@ -41,6 +41,9 @@ def tank_monitor(**kwargs):
   ev_req = kwargs['ev_req']
   ev_ret = kwargs['ev_ret']
 
+  logger.info("\n")
+  logger.info("<<< Entering pump_monitor() ===========================")
+
   time_now = datetime.datetime.now()
   time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
   adc_level = ADC.check_water_level(chip, spi)
@@ -59,7 +62,6 @@ def tank_monitor(**kwargs):
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
-  logger.info("===========================")
   logger.info(
       f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate:.1f}"
   )  # invalid rate:{invalid_rate}")
@@ -152,11 +154,13 @@ def tank_monitor(**kwargs):
   ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, pv.water_level)), spi)
   sm.update_idle()
 
+  #logger.info(" Leaving pump_monitor() ===========================>>>\n")
 
 def determine_motor_state(pv, chip):
   logger.info(
       f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}"
   )
+  logger.info(f"previous_state:{pv.previous_state} motor_count:{pv.motor_count} motor_index:{pv.motor_index}")
   logger.info("1")
   if pv.water_level >= pv.setting_high and pv.previous_state != 2:
     logger.info("2")

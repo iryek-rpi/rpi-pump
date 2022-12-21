@@ -408,13 +408,15 @@ class PV():
     #logger.info(f"@ address:{address} values:{str(values)} motor1_mode:{self.motor1_mode}")
     for i in range(count):
       self._mbl[address+i] = values[i]
-      #logger.info(f"@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode}")
+      #logger.info(f"@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode} motor2_mode:{self.motor2_mode} motor3_mode:{self.motor3_mode}")
       if address+i == ma.M14_PUMP1_ON and not self.motor1_mode:
         #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode}")
         self.pump1_on = values[i]
       elif address+i == ma.M15_PUMP2_ON and not self.motor2_mode:
+        #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor2_mode:{self.motor2_mode}")
         self.pump2_on = values[i]
       elif address+i == ma.M16_PUMP3_ON and not self.motor3_mode:
+        #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor3_mode:{self.motor3_mode}")
         self.pump3_on = values[i]
 
 
