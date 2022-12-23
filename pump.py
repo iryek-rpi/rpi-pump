@@ -118,12 +118,13 @@ def main():
 
   try:
     chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
-    pv().chip = chip
 
     lcd.instance = lcd_instance
 
     from pump_variables import PV
     pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
+    pv().chip = chip
+
     config.init_setting(pv())
     if not pv().device_role:
       pv().device_role = 'controller'
