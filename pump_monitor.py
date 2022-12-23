@@ -157,12 +157,11 @@ def tank_monitor(**kwargs):
   #logger.info(" Leaving pump_monitor() ===========================>>>\n")
 def determine_motor_state_new(pv, chip):
   logger.info(
-      f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}"
+      f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state} motor_count:{pv.motor_count}"
   )
-  logger.info(f"previous_state:{pv.previous_state} motor_count:{pv.motor_count} motor_index:{pv.motor_index}")
   logger.info("1")
   if pv.water_level >= pv.setting_high: # and pv.previous_state != 2:
-    for i, m in pv.busy_motors:
+    for m in pv.busy_motors:
       if m==0 and pv.motor1_mode==constant.OP_AUTO:
         pv.pump1_on = 0
         break
@@ -173,7 +172,7 @@ def determine_motor_state_new(pv, chip):
         pv.pump3_on = 0
         break
   elif pv.water_level <= pv.setting_low:# and pv.previous_state != 0:
-    for i, m in pv.idle_motors:
+    for m in pv.idle_motors:
       if m==0 and pv.motor1_mode==constant.OP_AUTO:
         pv.pump1_on = 1
         break
