@@ -25,29 +25,29 @@
 # 40030 	펌프3제어	            쓰기	  0:정지, 1:가동
 #
 
-M1_LEVEL_SENSOR = 1
-M2_LEVEL_AI = 2
-M3_SOURCE = 3
-M4_PUMP1_STATE = 4
-M5_PUMP2_STATE = 5
-M6_PUMP3_STATE = 6
-M7_MODBUS_ID = 7
+M1_LEVEL_SENSOR = 1 #현재 수위 
+M2_LEVEL_AI = 2     #예측 수위
+M3_SOURCE = 3       #수위조절 모드(현재/예측)
+M4_PUMP1_STATE = 4  #pump1 상태(on/off)
+M5_PUMP2_STATE = 5  #pump2 상태(on/off)
+M6_PUMP3_STATE = 6  #pump3 상태(on/off)
+M7_MODBUS_ID = 7    #Modbus ID
 
 M8_SPARE = 8 
 
 M9_AUTO_HH = 9
 M10_AUTO_LL = 10
-M11_AUTO_H = 11
-M12_AUTO_L = 12
-M13_PUMP_OP_MODE = 13
-M14_PUMP1_ON = 14
-M15_PUMP2_ON = 15
-M16_PUMP3_ON = 16
-M17_PUMP_COUNT = 17
+M11_AUTO_H = 11     #수위 상한
+M12_AUTO_L = 12     #수위 하한
+M13_PUMP_OP_MODE = 13   #Not used
+M14_PUMP1_ON = 14   #pump1 on/off
+M15_PUMP2_ON = 15   #pump2 on/off
+M16_PUMP3_ON = 16   #pump3 on/off
+M17_PUMP_COUNT = 17 #pump 댓수
 
-M18_PUMP_OP_1 = 18
-M19_PUMP_OP_2 = 19
-M20_PUMP_OP_3 = 20
+M18_PUMP_OP_1 = 18  #pump1 제어모드 수동/자동
+M19_PUMP_OP_2 = 19  #pump2 제어모드 수동/자동
+M20_PUMP_OP_3 = 20  #pump3 제어모드 수동/자동
 
 M21_SPARE = 21
 M22_SPARE = 22
