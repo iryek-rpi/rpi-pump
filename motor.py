@@ -23,8 +23,8 @@ def init_motors(c):
     lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
     lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
     lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
-    set_all_motors(c, (0,0,0))
-    set_run_mode(c, 0)
+    #set_all_motors(c, (0,0,0))  # 단말 부팅 시 모터 초기화하지 않음 
+    #set_run_mode(c, 0)
 
 def set_run_mode(chip, v):
   '''
