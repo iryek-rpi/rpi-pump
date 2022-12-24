@@ -47,7 +47,7 @@ def tank_monitor(**kwargs):
   time_now = datetime.datetime.now()
   time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
   adc_level = ADC.check_water_level(chip, spi)
-  if adc_level < 300: #pv.adc_invalid_rate:
+  if adc_level < 300:  #pv.adc_invalid_rate:
     adc_level = 0
 
   level_rate = pv.water_level_rate(adc_level)
@@ -58,7 +58,9 @@ def tank_monitor(**kwargs):
   # previous_adc : 수위입력이 있을 때만 갱신됨
   # no_input_starttime : 수위입력이 있을 때만 갱신됨
   if not pv.no_input_starttime:  # 초기화가 필요한 경우
-    logger.info(f"INIT: previous_adc:{pv.previous_adc} no_input:{pv.no_input_starttime}")
+    logger.info(
+        f"INIT: previous_adc:{pv.previous_adc} no_input:{pv.no_input_starttime}"
+    )
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
 
@@ -73,11 +75,10 @@ def tank_monitor(**kwargs):
   if (abs(adc_level - pv.previous_adc) < 30) or (not adc_level):
     td = time_now - pv.no_input_starttime
     logger.info(
-        f"td.seconds:{td.seconds} time_now:{time_now} no_input_time:{pv.no_input_starttime} Tolerance:{pv.setting_tolerance_to_ai}")
+        f"td.seconds:{td.seconds} time_now:{time_now} no_input_time:{pv.no_input_starttime} Tolerance:{pv.setting_tolerance_to_ai}"
+    )
     if (td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
-      logger.info(
-          f"RUN_MODE:{pv.source} Info: AI=={constant.SOURCE_AI}"
-      )
+      logger.info(f"RUN_MODE:{pv.source} Info: AI=={constant.SOURCE_AI}")
       if pv.source == constant.SOURCE_SENSOR:
         logger.info(f"MONITOR: writing to pv.source:{constant.SOURCE_AI}")
         pv.source = constant.SOURCE_AI
@@ -89,9 +90,11 @@ def tank_monitor(**kwargs):
 
         if not pv.req_sent:
           i = pv.find_data(pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S"))
-          logger.info(f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i} time_str:{time_str}")
+          logger.info(
+              f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i} time_str:{time_str}"
+          )
           ltr = pv.data[:i + 1]
-          if len(ltr)<20:
+          if len(ltr) < 20:
             logger.info(f"Case#0 : Not enough data: len(ltr):{len(ltr)}")
             pv.water_level = pv.return_last_or_v(v=0)
           else:
@@ -99,32 +102,37 @@ def tank_monitor(**kwargs):
             ev_req.set()
             pv.req_sent = True
             pv.water_level = pv.return_last_or_v(v=0)
-            logger.info(f"Case#1 : Request Training. Returning previous level: {pv.water_level}")
+            logger.info(
+                f"Case#1 : Request Training. Returning previous level: {pv.water_level}"
+            )
         elif ev_ret.is_set():
           ev_ret.clear()
           pv.req_sent = False
           pv.future_level = ns.value
           for i, l in enumerate(pv.future_level):
             if not util.repr_int(l[1]):
-              for _, ll in enumerate(pv.future_level[i+1:]):
+              for _, ll in enumerate(pv.future_level[i + 1:]):
                 if util.repr_int(ll[1]):
-                  l[1] = ll[1] 
+                  l[1] = ll[1]
                   break
 
           logger.info("Forecast received")
           #logger.info(pv.future_level)
           pv.water_level = pv.get_future_level(time_str)
-          logger.info(f"Got training result! - fl: {pv.water_level}")#\nFuture Level: {pv.future_level}")
+          logger.info(f"Got training result! - fl: {pv.water_level}"
+                     )  #\nFuture Level: {pv.future_level}")
         else:
-          logger.info(f'No case: req_sent:{pv.req_sent} ev_ret.is_set()={ev_ret.is_set()}')
+          logger.info(
+              f'No case: req_sent:{pv.req_sent} ev_ret.is_set()={ev_ret.is_set()}'
+          )
           pv.water_level = pv.return_last_or_v(v=0)
 
-      else: # get prediction from ML model
+      else:  # get prediction from ML model
         logger.info(f"Got stored future level: {fl}")
         pv.water_level = fl
         #pv.water_level = level_rate  #pv.filter_data(level_rate)
     else:
-      pv.water_level = level_rate  #pv.filter_data(level_rate)  
+      pv.water_level = level_rate  #pv.filter_data(level_rate)
       logger.info("less than tolerance")
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
@@ -154,41 +162,54 @@ def tank_monitor(**kwargs):
   ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, pv.water_level)), spi)
   sm.update_idle()
 
+
   #logger.info(" Leaving pump_monitor() ===========================>>>\n")
 def determine_motor_state_new(pv, chip):
   logger.info(
-      f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state} motor_count:{pv.motor_count}"
+      f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low}"
   )
-  logger.info(f"busy_motors:{pv.busy_motors}")
-  logger.info(f"idle_motors:{pv.idle_motors}")
-  if pv.water_level >= pv.setting_high: # and pv.previous_state != 2:
-    for m in pv.busy_motors:
-      if m==0 and pv.pump1_mode==constant.PUMP_MODE_AUTO:
+  logger.info(f">> busy_motors:{pv.busy_motors}")
+  logger.info(f">> idle_motors:{pv.idle_motors}")
+  logger.info(f'>> previous_state:{pv.previous_state}')
+  if pv.water_level > pv.setting_high and pv.previous_state != 2:
+    for m in pv.busy_motors:  # 모든 모터를 off
+      if m == 0 and pv.pump1_mode == constant.PUMP_MODE_AUTO:
         pv.pump1_on = 0
-        break
-      elif m==1 and pv.pump2_mode==constant.PUMP_MODE_AUTO:
+      elif m == 1 and pv.pump2_mode == constant.PUMP_MODE_AUTO:
         pv.pump2_on = 0
-        break
-      elif m==2 and pv.pump3_mode==constant.PUMP_MODE_AUTO:
+      elif m == 2 and pv.pump3_mode == constant.PUMP_MODE_AUTO:
         pv.pump3_on = 0
-        break
-  elif pv.water_level <= pv.setting_low:# and pv.previous_state != 0:
-    for m in pv.idle_motors:
-      if m==0 and pv.pump1_mode==constant.PUMP_MODE_AUTO:
+      pv.change_motor_list(m, 0)
+      pv.previous_state = 2
+  elif pv.water_level < pv.setting_low and pv.previous_state != 0:
+    for m in pv.idle_motors:  # idle list에서 첫번째 모터만 on
+      if m == 0 and pv.pump1_mode == constant.PUMP_MODE_AUTO:
         pv.pump1_on = 1
+        pv.previous_state = 0
         break
-      elif m==1 and pv.pump2_mode==constant.PUMP_MODE_AUTO:
+      elif m == 1 and pv.pump2_mode == constant.PUMP_MODE_AUTO:
         pv.pump2_on = 1
+        pv.previous_state = 0
         break
-      elif m==2 and pv.pump3_mode==constant.PUMP_MODE_AUTO:
-        pv.pump3_on = 1 
+      elif m == 2 and pv.pump3_mode == constant.PUMP_MODE_AUTO:
+        pv.pump3_on = 1
+        pv.previous_state = 0
         break
+      pv.change_motor_list(m, 1)
+  else:
+    pv.previous_state = 1
+  logger.info(f'<< previous_state:{pv.previous_state}')
+  logger.info(f"<< busy_motors:{pv.busy_motors}")
+  logger.info(f"<< idle_motors:{pv.idle_motors}")
+
 
 def determine_motor_state(pv, chip):
   logger.info(
       f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state}, index:{pv.motor_index}"
   )
-  logger.info(f"previous_state:{pv.previous_state} motor_count:{pv.motor_count} motor_index:{pv.motor_index}")
+  logger.info(
+      f"previous_state:{pv.previous_state} motor_count:{pv.motor_count} motor_index:{pv.motor_index}"
+  )
   logger.info("1")
   if pv.water_level >= pv.setting_high and pv.previous_state != 2:
     logger.info("2")
