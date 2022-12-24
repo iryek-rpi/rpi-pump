@@ -10,9 +10,9 @@ import motor
 SETTING_DIR = "./setting/"
 SETTING_NAME = SETTING_DIR + "setting.ini"
 
-
 #import pump_util as util
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
+
 
 def init_setting(pv):
   co = configparser.ConfigParser()
@@ -23,19 +23,18 @@ def init_setting(pv):
     co['CONTROLLER'] = {
         'MODBUS_ID': 1,
         'SOLO_MODE': 'MODE_PLC',
-        #'OP_MODE': 'OP_AUTO',
         'AUTO_H': 800,
         'AUTO_HH': 900,
         'AUTO_L': 200,
         'AUTO_LL': 100,
     }
     co['MOTOR'] = {
-        'PUMP_COUNT' : 3,    # pump 개수는 최대로 설정하고 modbus 펌프123자동 (40018,19,20)으로 제어 
-        'MOTOR1_MODE' : 1,   # MOTOR1,2,3 마지막 가동 상태. 교번 운전에 반영
-        'MOTOR2_MODE' : 1,
-        'MOTOR3_MODE' : 1,
-        'LEAD_TIME' : 10, # 모터 가동에 걸리는 시간 (교번운전을 위해 가동된 모터를 확인하여 기록하기 위함)
-        'INSTALLED_MOTORS' : '[1,0,0]', # 모터가 연결된 단자에 1, 연결 안된 단자는 0 
+        'PUMP1_MODE':
+            constant.PUMP_MODE_AUTO,  # MOTOR1,2,3 마지막 가동 모드, 교번 운전에 반영
+        'PUMP2_MODE': constant.PUMP_MODE_AUTO,
+        'PUMP3_MODE': constant.PUMP_MODE_AUTO,
+        'LEAD_TIME': 10,  # 모터 가동에 걸리는 시간 (교번운전을 위해 가동된 모터를 확인하여 기록하기 위함)
+        'INSTALLED_MOTORS': '[1,0,0]',  # 모터가 연결된 단자에 1, 연결 안된 단자는 0 
     }
     co['SENSOR'] = {
         '4MA_REF': 700,
@@ -43,20 +42,24 @@ def init_setting(pv):
         'ADC_INVALID': 100,
     }
     co['MONITOR'] = {
-        'MONITOR_INTERVAL': 1, #sec
-        'SAVE_INTERVAL': 24,   #hour
+        'MONITOR_INTERVAL': 1,  #sec
+        'SAVE_INTERVAL': 24,  #hour
         'TOLERANCE_TO_AI': 3,
         'TOLERANCE_TO_SENSOR': 3,
         'ADC_IGNORE_SPIKE': 100
     }
-    co['MANAGE'] = {'USER_ID': 'hwan', 'PASSWORD': 'rudakwkd', 'DEVICE_ROLE': 'control'}
+    co['MANAGE'] = {
+        'USER_ID': 'hwan',
+        'PASSWORD': 'rudakwkd',
+        'DEVICE_ROLE': 'control'
+    }
     co['MQTT'] = {
-      'MQTT_ON': 1,  # 0
-      'TOPIC': 'ai_value',  # sensor_value
-      'CLIENT_NAME': 'AI', # SENSOR
-      'TIMEOUT': 10,
-      'PORT': 1883,
-      'BROKER': 'X230T.local'
+        'MQTT_ON': 1,  # 0
+        'TOPIC': 'ai_value',  # sensor_value
+        'CLIENT_NAME': 'AI',  # SENSOR
+        'TIMEOUT': 10,
+        'PORT': 1883,
+        'BROKER': 'X230T.local'
     }
 
     with open(SETTING_NAME, 'w') as f:
@@ -67,10 +70,12 @@ def init_setting(pv):
     co.read(SETTING_NAME)
     config_to_pv(co, pv)
 
+
 def save_motors(tm):
-  motors = ['MOTOR1','MOTOR2', 'MOTOR3']
+  motors = ['MOTOR1', 'MOTOR2', 'MOTOR3']
   for i, n in enumerate(tm):
     update_config('MOTOR', motors[i], n)
+
 
 def update_config(section, key, value, config_name=SETTING_NAME):
   co = configparser.ConfigParser()
@@ -79,6 +84,7 @@ def update_config(section, key, value, config_name=SETTING_NAME):
 
   with open(SETTING_NAME, 'w') as f:
     co.write(f)
+
 
 def read_config(section, key, config_name=SETTING_NAME):
   co = configparser.ConfigParser()
@@ -89,122 +95,143 @@ def read_config(section, key, config_name=SETTING_NAME):
     logger.info("No setting[%s][%s]", section, key)
     return None
 
-def str_to_list(s:str):
+
+def str_to_list(s: str):
   return s.strip('[]').split(',')
+
 
 def config_to_pv(co: configparser.ConfigParser, pv):
 
-  if ('CONTROLLER' in co) and ('MODBUS_ID' in co['CONTROLLER']) and co['CONTROLLER']['MODBUS_ID'].isdigit():
+  if ('CONTROLLER' in co) and ('MODBUS_ID' in co['CONTROLLER']
+                              ) and co['CONTROLLER']['MODBUS_ID'].isdigit():
     logger.info("modbus id from setting:%s", co['CONTROLLER']['MODBUS_ID'])
     pv.modbus_id = int(co['CONTROLLER']['MODBUS_ID'])
   else:
     logger.info("invalid modbus id from setting. default id=1")
     pv.modbus_id = 1
 
-  if ('CONTROLLER' in co) and ('SOLO_MODE' in co['CONTROLLER']) and co['CONTROLLER']['SOLO_MODE'] == 'MODE_SOLO':
+  if ('CONTROLLER' in co) and (
+      'SOLO_MODE'
+      in co['CONTROLLER']) and co['CONTROLLER']['SOLO_MODE'] == 'MODE_SOLO':
     pv.solo_mode = constant.MODE_SOLO
   else:
     pv.solo_mode = constant.MODE_PLC
 
-  #if ('CONTROLLER' in co) and ('OP_MODE' in co['CONTROLLER']) and co['CONTROLLER']['OP_MODE'] == 'OP_AUTO':
-  #  pv.op_mode = constant.OP_AUTO
-  #else:
-  #  pv.op_mode = constant.OP_MANUAL
-
-  if ('CONTROLLER' in co) and ('AUTO_H' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_H'].isdigit():
+  if ('CONTROLLER'
+      in co) and ('AUTO_H'
+                  in co['CONTROLLER']) and co['CONTROLLER']['AUTO_H'].isdigit():
     pv.setting_high = int(co['CONTROLLER']['AUTO_H'])
   else:
     pv.setting_high = 800
 
-  if ('CONTROLLER' in co) and ('AUTO_HH' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_HH'].isdigit():
+  if ('CONTROLLER' in co) and (
+      'AUTO_HH' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_HH'].isdigit():
     pv.setting_hh = int(co['CONTROLLER']['AUTO_HH'])
   else:
     pv.setting_hh = 900
 
-  if ('CONTROLLER' in co) and ('AUTO_L' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_L'].isdigit():
+  if ('CONTROLLER'
+      in co) and ('AUTO_L'
+                  in co['CONTROLLER']) and co['CONTROLLER']['AUTO_L'].isdigit():
     pv.setting_low = int(co['CONTROLLER']['AUTO_L'])
   else:
     pv.setting_low = 200
 
-  if ('CONTROLLER' in co) and ('AUTO_LL' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_LL'].isdigit():
+  if ('CONTROLLER' in co) and (
+      'AUTO_LL' in co['CONTROLLER']) and co['CONTROLLER']['AUTO_LL'].isdigit():
     pv.setting_ll = int(co['CONTROLLER']['AUTO_LL'])
   else:
     pv.setting_ll = 100
 
-  if ('CONTROLLER' in co) and ('LAST_PUMP' in co['CONTROLLER']) and co['CONTROLLER']['LAST_PUMP'].isdigit():
+  if ('CONTROLLER' in co) and ('LAST_PUMP' in co['CONTROLLER']
+                              ) and co['CONTROLLER']['LAST_PUMP'].isdigit():
     pv.last_pump = int(co['CONTROLLER']['LAST_PUMP'])
 
-  if ('MOTOR' in co) and ('PUMP_COUNT' in co['MOTOR']) and co['MOTOR']['PUMP_COUNT'].isdigit():
-    pv.motor_count = int(co['MOTOR']['PUMP_COUNT'])
+  if ('MOTOR'
+      in co) and ('PUMP1_MODE'
+                  in co['MOTOR']) and co['MOTOR']['PUMP1_MODE'].isdigit():
+    pv.pump1_mode = int(co['MOTOR']['PUMP1_MODE'])
   else:
-    pv.motor_count = 3
+    pv.pump1_mode = 1
 
-  if ('MOTOR' in co) and ('MOTOR1_MODE' in co['MOTOR']) and co['MOTOR']['MOTOR1_MODE'].isdigit():
-    pv.motor1_mode = int(co['MOTOR']['MOTOR1_MODE'])
+  if ('MOTOR'
+      in co) and ('PUMP2_MODE'
+                  in co['MOTOR']) and co['MOTOR']['PUMP2_MODE'].isdigit():
+    pv.pump2_mode = int(co['MOTOR']['PUMP2_MODE'])
   else:
-    pv.motor1_mode = 1
+    pv.pump2_mode = 1
 
-  if ('MOTOR' in co) and ('MOTOR2_MODE' in co['MOTOR']) and co['MOTOR']['MOTOR2_MODE'].isdigit():
-    pv.motor2_mode = int(co['MOTOR']['MOTOR2_MODE'])
+  if ('MOTOR'
+      in co) and ('PUMP3_MODE'
+                  in co['MOTOR']) and co['MOTOR']['PUMP3_MODE'].isdigit():
+    pv.pump3_mode = int(co['MOTOR']['PUMP3_MODE'])
   else:
-    pv.motor2_mode = 1
-
-  if ('MOTOR' in co) and ('MOTOR3_MODE' in co['MOTOR']) and co['MOTOR']['MOTOR3_MODE'].isdigit():
-    pv.motor3_mode = int(co['MOTOR']['MOTOR3_MODE'])
-  else:
-    pv.motor3_mode = 1
+    pv.pump3_mode = 1
 
   if ('MOTOR' in co) and ('INSTALLED_MOTORS' in co['MOTOR']):
     installed_motors = ast.literal_eval(co['MOTOR']['INSTALLED_MOTORS'])
-    j=0
+    j = 0
     for i, _ in enumerate(installed_motors):
       if installed_motors[i]:
-        pv.motors[j]=i
+        pv.motors[j] = i
       j += 1
     logger.info("installed motors: %s", str(installed_motors))
     logger.info("pv.motors: %s", str(pv.motors))
 
-  if ('MOTOR' in co) and ('LEAD_TIME' in co['MOTOR']) and co['MOTOR']['LEAD_TIME'].isdigit():
+  if ('MOTOR'
+      in co) and ('LEAD_TIME'
+                  in co['MOTOR']) and co['MOTOR']['LEAD_TIME'].isdigit():
     pv.motor_lead_time = int(co['MOTOR']['LEAD_TIME'])
   else:
     pv.motor_lead_time = 10
 
-  if ('SENSOR' in co) and ('4MA_REF' in co['SENSOR']) and co['SENSOR']['4MA_REF'].isdigit():
+  if ('SENSOR'
+      in co) and ('4MA_REF'
+                  in co['SENSOR']) and co['SENSOR']['4MA_REF'].isdigit():
     pv.setting_4ma_ref = int(co['SENSOR']['4MA_REF'])
   else:
     pv.setting_4ma_ref = 700
 
-  if ('SENSOR' in co) and ('20MA_REF' in co['SENSOR']) and co['SENSOR']['20MA_REF'].isdigit():
+  if ('SENSOR'
+      in co) and ('20MA_REF'
+                  in co['SENSOR']) and co['SENSOR']['20MA_REF'].isdigit():
     pv.setting_20ma_ref = int(co['SENSOR']['20MA_REF'])
   else:
     pv.setting_20ma_ref = 4000
 
-  if ('SENSOR' in co) and ('ADC_INVALID' in co['SENSOR']) and co['SENSOR']['ADC_INVALID'].isdigit():
+  if ('SENSOR'
+      in co) and ('ADC_INVALID'
+                  in co['SENSOR']) and co['SENSOR']['ADC_INVALID'].isdigit():
     pv.setting_adc_invalid = int(co['SENSOR']['ADC_INVALID'])
   else:
     pv.setting_adc_invalid = 100
 
-  if ('MONITOR' in co) and ('MONITOR_INTERVAL' in co['MONITOR']) and co['MONITOR']['MONITOR_INTERVAL'].isdigit():
+  if ('MONITOR' in co) and ('MONITOR_INTERVAL' in co['MONITOR']
+                           ) and co['MONITOR']['MONITOR_INTERVAL'].isdigit():
     pv.setting_monitor_interval = int(co['MONITOR']['MONITOR_INTERVAL'])
   else:
     pv.setting_monitor_interval = 1
 
-  if ('MONITOR' in co) and ('SAVE_INTERVAL' in co['MONITOR']) and co['MONITOR']['SAVE_INTERVAL'].isdigit():
-    pv.setting_save_interval = int(co['MONITOR']['SAVE_INTERVAL'])*3600
+  if ('MONITOR' in co) and ('SAVE_INTERVAL' in co['MONITOR']
+                           ) and co['MONITOR']['SAVE_INTERVAL'].isdigit():
+    pv.setting_save_interval = int(co['MONITOR']['SAVE_INTERVAL']) * 3600
   else:
-    pv.setting_save_interval = 24*3600
+    pv.setting_save_interval = 24 * 3600
 
-  if ('MONITOR' in co) and ('TOLERANCE_TO_AI' in co['MONITOR']) and co['MONITOR']['TOLERANCE_TO_AI'].isdigit():
+  if ('MONITOR' in co) and ('TOLERANCE_TO_AI' in co['MONITOR']
+                           ) and co['MONITOR']['TOLERANCE_TO_AI'].isdigit():
     pv.setting_tolerance_to_ai = int(co['MONITOR']['TOLERANCE_TO_AI'])
   else:
     pv.setting_tolerance_to_ai = 3
 
-  if ('MONITOR' in co) and ('TOLERANCE_TO_SENSOR' in co['MONITOR']) and co['MONITOR']['TOLERANCE_TO_SENSOR'].isdigit():
+  if ('MONITOR' in co) and ('TOLERANCE_TO_SENSOR' in co['MONITOR']
+                           ) and co['MONITOR']['TOLERANCE_TO_SENSOR'].isdigit():
     pv.setting_tolerance_to_sensor = int(co['MONITOR']['TOLERANCE_TO_SENSOR'])
   else:
     pv.setting_tolerance_to_sensor = 3
 
-  if ('MONITOR' in co) and ('ADC_IGNORE_SPIKE' in co['MONITOR']) and co['MONITOR']['ADC_IGNORE_SPIKE'].isdigit():
+  if ('MONITOR' in co) and ('ADC_IGNORE_SPIKE' in co['MONITOR']
+                           ) and co['MONITOR']['ADC_IGNORE_SPIKE'].isdigit():
     pv.setting_adc_ignore_spike = int(co['MONITOR']['ADC_IGNORE_SPIKE'])
   else:
     pv.setting_adc_ignore_spike = 100
@@ -218,6 +245,14 @@ def config_to_pv(co: configparser.ConfigParser, pv):
 
   # 부팅 직후에는 모터 상태를 읽어와서 idle, busy 리스트 초기화
   # Modbus db에 저장할 필요는 없음. Modbus에서 항상 직접 모터 상태를 읽어감
-  for i in range(pv.motor_count):
-    ms = motor.get_motor_state(pv.chip, i)
-    pv.change_motor_list(i, ms)
+  if pv.pump1_mode == constant.PUMP_MODE_AUTO:
+    ms = motor.get_motor_state(pv.chip, 0)
+    pv.change_motor_list(0, ms)
+
+  if pv.pump2_mode == constant.PUMP_MODE_AUTO:
+    ms = motor.get_motor_state(pv.chip, 1)
+    pv.change_motor_list(1, ms)
+
+  if pv.pump2_mode == constant.PUMP_MODE_AUTO:
+    ms = motor.get_motor_state(pv.chip, 2)
+    pv.change_motor_list(2, ms)

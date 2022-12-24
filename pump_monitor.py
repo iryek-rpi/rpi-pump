@@ -163,24 +163,24 @@ def determine_motor_state_new(pv, chip):
   logger.info(f"idle_motors:{pv.idle_motors}")
   if pv.water_level >= pv.setting_high: # and pv.previous_state != 2:
     for m in pv.busy_motors:
-      if m==0 and pv.motor1_mode==constant.OP_AUTO:
+      if m==0 and pv.pump1_mode==constant.PUMP_MODE_AUTO:
         pv.pump1_on = 0
         break
-      elif m==1 and pv.motor2_mode==constant.OP_AUTO:
+      elif m==1 and pv.pump2_mode==constant.PUMP_MODE_AUTO:
         pv.pump2_on = 0
         break
-      elif m==2 and pv.motor3_mode==constant.OP_AUTO:
+      elif m==2 and pv.pump3_mode==constant.PUMP_MODE_AUTO:
         pv.pump3_on = 0
         break
   elif pv.water_level <= pv.setting_low:# and pv.previous_state != 0:
     for m in pv.idle_motors:
-      if m==0 and pv.motor1_mode==constant.OP_AUTO:
+      if m==0 and pv.pump1_mode==constant.PUMP_MODE_AUTO:
         pv.pump1_on = 1
         break
-      elif m==1 and pv.motor2_mode==constant.OP_AUTO:
+      elif m==1 and pv.pump2_mode==constant.PUMP_MODE_AUTO:
         pv.pump2_on = 1
         break
-      elif m==2 and pv.motor3_mode==constant.OP_AUTO:
+      elif m==2 and pv.pump3_mode==constant.PUMP_MODE_AUTO:
         pv.pump3_on = 1 
         break
 
@@ -192,26 +192,26 @@ def determine_motor_state(pv, chip):
   logger.info("1")
   if pv.water_level >= pv.setting_high and pv.previous_state != 2:
     logger.info("2")
-    if pv.motor1_mode > 0:
+    if pv.pump1_mode > 0:
       motor.set_motor_state(chip, 0, 0)
-    if pv.motor2_mode > 0:
+    if pv.pump2_mode > 0:
       motor.set_motor_state(chip, 1, 0)
-    if pv.motor_count > 2 and pv.motor3_mode > 0:
+    if pv.motor_count > 2 and pv.pump3_mode > 0:
       motor.set_motor_state(chip, 2, 0)
     pv.previous_state = 2
   elif pv.water_level <= pv.setting_low and pv.previous_state != 0:
     logger.info("3")
-    logger.info(f"motor1:{pv.motor1_mode} index:{pv.motor_index}")
+    logger.info(f"motor1:{pv.pump1_mode} index:{pv.motor_index}")
     if pv.motor_index == 0:
-      if pv.motor1_mode > 0:
+      if pv.pump1_mode > 0:
         logger.info("3.1")
         motor.set_motor_state(chip, 0, 1)
         pv.motor_index = 1
-      elif pv.motor2_mode > 0:
+      elif pv.pump2_mode > 0:
         logger.info("3.2")
         motor.set_motor_state(chip, 1, 1)
         pv.motor_index = 2
-      elif pv.motor_count > 2 and pv.motor3_mode > 0:
+      elif pv.motor_count > 2 and pv.pump3_mode > 0:
         logger.info("3.3")
         motor.set_motor_state(chip, 2, 1)
         pv.motor_index = 3
@@ -221,13 +221,13 @@ def determine_motor_state(pv, chip):
         pv.motor_index = 0
     elif pv.motor_index == 1:
       logger.info("4")
-      if pv.motor2_mode > 0:
+      if pv.pump2_mode > 0:
         motor.set_motor_state(chip, 1, 1)
         pv.motor_index = 2
-      elif pv.motor_count > 2 and pv.motor3_mode > 0:
+      elif pv.motor_count > 2 and pv.pump3_mode > 0:
         motor.set_motor_state(chip, 2, 1)
         pv.motor_index = 3
-      elif pv.motor1_mode > 0:
+      elif pv.pump1_mode > 0:
         motor.set_motor_state(chip, 0, 1)
         pv.motor_index = 1
       if pv.motor_count > 0:
@@ -235,13 +235,13 @@ def determine_motor_state(pv, chip):
       else:
         pv.motor_index = 0
     elif pv.motor_count > 2 and pv.motor_index == 2:
-      if pv.motor3_mode > 0:
+      if pv.pump3_mode > 0:
         motor.set_motor_state(chip, 2, 1)
         pv.motor_index = 3
-      elif pv.motor1_mode > 0:
+      elif pv.pump1_mode > 0:
         motor.set_motor_state(chip, 0, 1)
         pv.motor_index = 1
-      elif pv.motor2_mode > 0:
+      elif pv.pump2_mode > 0:
         motor.set_motor_state(chip, 1, 1)
         pv.motor_index = 2
       if pv.motor_count > 0:

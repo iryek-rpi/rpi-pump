@@ -16,6 +16,7 @@ import config
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
+
 def pv(inst=None):
   if inst != None:
     pv.instance = inst
@@ -53,10 +54,7 @@ class PV():
 
     self._mbl = [0 for _ in range(ma.M_END)]
 
-    self.modbus_id = 0
-
     self.solo_mode = constant.MODE_PLC
-    #self.op_mode = constant.OP_AUTO  # MANUAL/AUTO 운전모드
 
     self.motor_index = 0
     self.previous_state = 1  # 0:low, 1:mid  3:high
@@ -64,15 +62,15 @@ class PV():
     self.temperature = 0
     # 현재 모터 상태는 항상 MOTOR_INPUT 단자에서 읽어옴
     #self.motor_count = 1
-    self.motors = [0,0,0] # 연결된 모터는 1, 연결 안된 모터는 0 
+    self.motors = [0, 0, 0]  # 연결된 모터는 1, 연결 안된 모터는 0
     self.motor_valid = [0]  # 사용할 수 있는 모터 번호 리스트(0~2)
     self.motor_lead_time = 10
     self.idle_motors = []
     self.busy_motors = []
 
-    self.req_sent = False # training request flag 
+    self.req_sent = False  # training request flag
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
-    self.previous_adc = None # 이전 ADC reading 값 
+    self.previous_adc = None  # 이전 ADC reading 값
     self.data = []
     self.train = []
     self.future_level = None
@@ -80,18 +78,19 @@ class PV():
     self.lock = threading.Lock()
 
     # setting_monitor_interval 초기화 될 때 함께 초기화 됨)
-    self._setting_max_train = 518400 # 3600*24*30 (1초 샘플링일 경우 30일)
+    self._setting_max_train = 518400  # 3600*24*30 (1초 샘플링일 경우 30일)
 
     self.setting_4ma_ref = 700  # 4mA ADC 출력
     self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
     self.setting_4ma = 0.0  # 4mA 수위(수위계 캘리브레이션)
     self.setting_20ma = 100.0  # 20mA 수위(수위계 캘리브레이션)
     self._setting_adc_invalid = 100  # ADC 값이 이 값 이하이면 입력이 없는 것으로 간주함
-    self.adc_invalid_rate = self.water_level_rate(self._setting_adc_invalid)  # %
+    self.adc_invalid_rate = self.water_level_rate(
+        self._setting_adc_invalid)  # %
 
     # 수위 기록 인터벌 1, 10, 30, 60(1min), 180(3min), 300(5min), 600(10min), 3600(1hr)
     # setting.ini에서 읽어와서 초기화 됨
-    self._setting_monitor_interval = 5  # 수위 모니터링 주기(초) 
+    self._setting_monitor_interval = 5  # 수위 모니터링 주기(초)
 
     self.setting_save_interval = 60 * 60 * 24  # 저장 주기(초)
     self.setting_tolerance_to_ai = 10  #600  # AI 모드로 전환하기 위한 입력 없는 time(sec)
@@ -128,24 +127,24 @@ class PV():
       rate = 0.0
     else:
       rate = ((adc - self.setting_4ma_ref) /
-          (self.setting_20ma_ref - self.setting_4ma_ref)) * 100.0
+              (self.setting_20ma_ref - self.setting_4ma_ref)) * 100.0
     return rate
 
   @property
   def water_level(self):
-    return self._mbl[ma.M2_LEVEL_AI]/10.
+    return self._mbl[ma.M2_LEVEL_AI] / 10.
 
   @water_level.setter
   def water_level(self, level):
-    self._mbl[ma.M2_LEVEL_AI] = int(level*10) 
+    self._mbl[ma.M2_LEVEL_AI] = int(level * 10)
 
   @property
   def sensor_level(self):
-    return self._mbl[ma.M1_LEVEL_SENSOR]/10.
+    return self._mbl[ma.M1_LEVEL_SENSOR] / 10.
 
   @water_level.setter
   def sensor_level(self, level):
-    self._mbl[ma.M1_LEVEL_SENSOR] = int(level*10) 
+    self._mbl[ma.M1_LEVEL_SENSOR] = int(level * 10)
 
   @property
   def setting_monitor_interval(self):
@@ -153,7 +152,7 @@ class PV():
 
   @setting_monitor_interval.setter
   def setting_monitor_interval(self, monitor_interval):
-    self._seting_max_train = (60*60*24*30)//monitor_interval  #1개월 
+    self._seting_max_train = (60 * 60 * 24 * 30) // monitor_interval  #1개월
     self._setting_monitor_interval = monitor_interval
 
   @property
@@ -166,26 +165,24 @@ class PV():
 
   @setting_adc_invalid.setter
   def setting_adc_invalid(self, v):
-    self._setting_adc_invalid =  v
+    self._setting_adc_invalid = v
     self.adc_invalid_rate = self.water_level_rate(v)
 
   @property
   def water_level_ai(self):
-    return self._mbl[ma.M2_LEVEL_AI]/10.
+    return self._mbl[ma.M2_LEVEL_AI] / 10.
 
   @water_level_ai.setter
   def water_level_ai(self, level):
-    self._mbl[ma.M2_LEVEL_AI] = int(level*10) 
+    self._mbl[ma.M2_LEVEL_AI] = int(level * 10)
 
   @property
   def source(self):
-    logger.info(f"reading pv.source from _mbl[{ma.M3_SOURCE}]: {self._mbl[ma.M3_SOURCE]}")
     return self._mbl[ma.M3_SOURCE]
 
   @source.setter
   def source(self, s):
-    logger.info(f"writing pv.source to _mbl[{ma.M3_SOURCE}] with {s}")
-    self._mbl[ma.M3_SOURCE] = s 
+    self._mbl[ma.M3_SOURCE] = s
 
   def change_motor_list(self, m, v):
     if not v:
@@ -199,21 +196,25 @@ class PV():
       if not (m in self.busy_motors):
         self.busy_motors.append(m)
 
-
   @property
   def motor1_state(self):
     return motor.get_motor_state(self.chip, 0)
-    #return self._mbl[ma.M4_PUMP1_STATE]
 
   @property
   def motor2_state(self):
     return motor.get_motor_state(self.chip, 1)
-    #return self._mbl[ma.M5_PUMP2_STATE]
 
   @property
   def motor3_state(self):
     return motor.get_motor_state(self.chip, 2)
-    #return self._mbl[ma.M6_PUMP3_STATE]
+
+  @property
+  def modbus_id(self):
+    return self._mbl[ma.M7_MODBUS_ID]
+
+  @modbus_id.setter
+  def modbus_id(self, v):
+    self._mbl[ma.M7_MODBUS_ID] = v
 
   @property
   def setting_hh(self):
@@ -221,7 +222,7 @@ class PV():
 
   @setting_hh.setter
   def setting_hh(self, level):
-    self._mbl[ma.M9_AUTO_HH] = level 
+    self._mbl[ma.M9_AUTO_HH] = level
 
   @property
   def setting_ll(self):
@@ -229,47 +230,27 @@ class PV():
 
   @setting_ll.setter
   def setting_ll(self, level):
-    self._mbl[ma.M10_AUTO_LL] = level 
+    self._mbl[ma.M10_AUTO_LL] = level
 
   @property
   def setting_high(self):
-    return self._mbl[ma.M11_AUTO_H]/10.
+    return self._mbl[ma.M11_AUTO_H] / 10.
 
   @setting_high.setter
   def setting_high(self, level):
-    self._mbl[ma.M11_AUTO_H] = level 
+    self._mbl[ma.M11_AUTO_H] = level
 
   @property
   def setting_low(self):
-    return self._mbl[ma.M12_AUTO_L]/10.
+    return self._mbl[ma.M12_AUTO_L] / 10.
 
   @setting_low.setter
   def setting_low(self, level):
-    self._mbl[ma.M12_AUTO_L] = level 
-
-  #@property
-  #def solo_mode(self):
-  #  return self._mbl[ma.M13_PUMP_OP_MODE]
-
-  #@solo_mode.setter
-  #def solo_mode(self, m):
-  #  self._mbl[ma.M13_PUMP_OP_MODE] = m 
-
-  #@property
-  #def op_mode(self):
-  #  if self._mbl[ma.M13_PUMP_OP_MODE] > 1:
-  #    self.self._mbl[ma.M13_PUMP_OP_MODE] = 1
-  #  return self._mbl[ma.M13_PUMP_OP_MODE]
-
-  #@op_mode.setter
-  #def op_mode(self, m):
-  #  if m>1:
-  #    m=1
-  #  self._mbl[ma.M13_PUMP_OP_MODE] = m 
+    self._mbl[ma.M12_AUTO_L] = level
 
   @property
   def pump1_on(self):
-    return 0    #write only
+    return 0  #write only
 
   @pump1_on.setter
   def pump1_on(self, s):
@@ -277,8 +258,8 @@ class PV():
     self.change_motor_list(0, s)
 
   @property
-  def pump2_on(self): 
-    return 0    #write only
+  def pump2_on(self):
+    return 0  #write only
 
   @pump2_on.setter
   def pump2_on(self, s):
@@ -287,7 +268,7 @@ class PV():
 
   @property
   def pump3_on(self):
-    return 0    #write only
+    return 0  #write only
 
   @pump3_on.setter
   def pump3_on(self, s):
@@ -295,40 +276,28 @@ class PV():
     self.change_motor_list(2, s)
 
   @property
-  def pump_count(self):
-    return self._mbl[ma.M17_PUMP_COUNT]
+  def pump1_mode(self):
+    return self._mbl[ma.M18_PUMP_MODE_1]
 
-  @pump_count.setter
-  def pump_count(self, n):
-    self._mbl[ma.M17_PUMP_COUNT] = n 
-
-
-  @property
-  def motor1_mode(self):
-    return self._mbl[ma.M18_PUMP_OP_1]
-
-  @motor1_mode.setter
-  def motor1_mode(self, n):
-    self._mbl[ma.M18_PUMP_OP_1] = n 
-
+  @pump1_mode.setter
+  def pump1_mode(self, n):
+    self._mbl[ma.M18_PUMP_MODE_1] = n
 
   @property
-  def motor2_mode(self):
-    return self._mbl[ma.M19_PUMP_OP_2]
+  def pump2_mode(self):
+    return self._mbl[ma.M19_PUMP_MODE_2]
 
-  @motor2_mode.setter
-  def motor2_mode(self, n):
-    self._mbl[ma.M19_PUMP_OP_2] = n 
-
+  @pump2_mode.setter
+  def pump2_mode(self, n):
+    self._mbl[ma.M19_PUMP_MODE_2] = n
 
   @property
-  def motor3_mode(self):
-    return self._mbl[ma.M20_PUMP_OP_3]
+  def pump3_mode(self):
+    return self._mbl[ma.M20_PUMP_MODE_3]
 
-  @motor3_mode.setter
-  def motor3_mode(self, n):
-    self._mbl[ma.M20_PUMP_OP_3] = n 
-
+  @pump3_mode.setter
+  def pump3_mode(self, n):
+    self._mbl[ma.M20_PUMP_MODE_3] = n
 
   @property
   def mqtt_on(self):
@@ -336,8 +305,7 @@ class PV():
 
   @mqtt_on.setter
   def mqtt_on(self, n):
-    self._mbl[ma.M15_PUMP2_ON] = n 
-
+    self._mbl[ma.M15_PUMP2_ON] = n
 
   @property
   def mqtt_topic_ai(self):
@@ -345,8 +313,7 @@ class PV():
 
   @mqtt_topic_ai.setter
   def mqtt_topic_ai(self, n):
-    self._mbl[ma.M26_MQTT_TOPIC_AI] = n 
-
+    self._mbl[ma.M26_MQTT_TOPIC_AI] = n
 
   @property
   def mqtt_timeout(self):
@@ -354,8 +321,7 @@ class PV():
 
   @mqtt_timeout.setter
   def mqtt_timeout(self, n):
-    self._mbl[ma.M27_MQTT_TIMEOUT] = n 
-
+    self._mbl[ma.M27_MQTT_TIMEOUT] = n
 
   @property
   def mqtt_port(self):
@@ -363,8 +329,7 @@ class PV():
 
   @mqtt_port.setter
   def mqtt_port(self, n):
-    self._mbl[ma.M28_MQTT_PORT] = n 
-
+    self._mbl[ma.M28_MQTT_PORT] = n
 
   @property
   def mqtt_broker(self):
@@ -372,7 +337,7 @@ class PV():
 
   @mqtt_broker.setter
   def mqtt_broker(self, broker):
-    self._mqtt_broker = broker 
+    self._mqtt_broker = broker
 
   @property
   def device_role(self):
@@ -380,80 +345,79 @@ class PV():
 
   @device_role.setter
   def device_role(self, role):
-    self._mbl[ma.M33_DEVICE_ROLE] = role 
+    self._mbl[ma.M33_DEVICE_ROLE] = role
     #config.update_config(section='MANAGE', key='DEVICE_ROLE', value=role)
-
 
   def get_modbus_sequence(self, address, count):
     if address < 0:
       address = 0
     if address >= ma.M_END:
-      address = ma.M_END -1
-    
-    if (address+count)>ma.M_END:
+      address = ma.M_END - 1
+
+    if (address + count) > ma.M_END:
       count = 0
-    if (address+count)<=0:
+    if (address + count) <= 0:
       count = 0
 
     for i in range(count):
-      if address+i == ma.M4_PUMP1_STATE:
-        self._mbl[address+i] = self.motor1_state
-      elif address+i == ma.M5_PUMP2_STATE:
-        self._mbl[address+i] = self.motor2_state
-      elif address+i == ma.M6_PUMP3_STATE:
-        self._mbl[address+i] = self.motor3_state
+      if address + i == ma.M4_PUMP1_STATE:
+        self._mbl[address + i] = self.motor1_state
+      elif address + i == ma.M5_PUMP2_STATE:
+        self._mbl[address + i] = self.motor2_state
+      elif address + i == ma.M6_PUMP3_STATE:
+        self._mbl[address + i] = self.motor3_state
 
-    return self._mbl[address:address+count].copy()
-
-  def save_pump_state(self, pump, state):
-    self._mbl[ma.M14_PUMP_ON+pump] = state
+    return self._mbl[address:address + count].copy()
 
   def set_modbus_sequence(self, address, values):
     if address < 0:
       address = 0
     if address >= ma.M_END:
-      address = ma.M_END -1
-    
+      address = ma.M_END - 1
+
     count = len(values)
-    if (address+count)>ma.M_END:
+    if (address + count) > ma.M_END:
       count = 0
-    if (address+count)<=0:
+    if (address + count) <= 0:
       count = 0
 
-    #logger.info(f"@ address:{address} values:{str(values)} motor1_mode:{self.motor1_mode}")
+    #logger.info(f"@ address:{address} values:{str(values)} pump1_mode:{self.pump1_mode}")
     for i in range(count):
-      if address+i == ma.M11_AUTO_H:
-        self._mbl[address+i] = values[i]
-        config.update_config(section='CONTROLLER', key='AUTO_H', value=values[i])
-      elif address+i == ma.M12_AUTO_L:
-        self._mbl[address+i] = values[i]
-        config.update_config(section='CONTROLLER', key='AUTO_H', value=values[i])
-      elif address+i == ma.M14_PUMP1_ON:
-        if self.motor1_mode==constant.OP_MANUAL:
+      if address + i == ma.M11_AUTO_H:
+        self._mbl[address + i] = values[i]
+        config.update_config(section='CONTROLLER',
+                             key='AUTO_H',
+                             value=values[i])
+      elif address + i == ma.M12_AUTO_L:
+        self._mbl[address + i] = values[i]
+        config.update_config(section='CONTROLLER',
+                             key='AUTO_L',
+                             value=values[i])
+      elif address + i == ma.M14_PUMP1_ON:
+        if self.pump1_mode == constant.PUMP_MODE_MANUAL:
           self.pump1_on = values[i]  #write only no need to update self._mbl[]
-      elif address+i == ma.M15_PUMP2_ON:
-        if self.motor2_mode==constant.OP_MANUAL:
+      elif address + i == ma.M15_PUMP2_ON:
+        if self.pump2_mode == constant.PUMP_MODE_MANUAL:
           self.pump2_on = values[i]  #write only no need to update self._mbl[]
-      elif address+i == ma.M16_PUMP3_ON: 
-        if self.motor3_mode==constant.OP_MANUAL:
+      elif address + i == ma.M16_PUMP3_ON:
+        if self.pump3_mode == constant.PUMP_MODE_MANUAL:
           self.pump3_on = values[i]  #write only no need to update self._mbl[]
-      elif address+i == ma.M17_PUMP_COUNT:
-        self.pump_count = values[i]
-        config.update_config(section='MOTOR', key='PUMP_COUNT', value=values[i])
-      elif address+i == ma.M18_PUMP_OP_1:
-        self.motor1_mode = values[i]
-        config.update_config(section='MOTOR', key='MOTOR1_MODE', value=values[i])
-      elif address+i == ma.M19_PUMP_OP_2:
-        self.motor2_mode = values[i]
-        config.update_config(section='MOTOR', key='MOTOR2_MODE', value=values[i])
-      elif address+i == ma.M20_PUMP_OP_3:
-        self.motor3_mode = values[i]
-        config.update_config(section='MOTOR', key='MOTOR3_MODE', value=values[i])
-      elif address+i == ma.M33_DEVICE_ROLE:
+      elif address + i == ma.M18_PUMP_MODE_1:
+        self.pump1_mode = values[i]
+        config.update_config(section='MOTOR', key='PUMP1_MODE', value=values[i])
+      elif address + i == ma.M19_PUMP_MODE_2:
+        self.pump2_mode = values[i]
+        config.update_config(section='MOTOR', key='PUMP2_MODE', value=values[i])
+      elif address + i == ma.M20_PUMP_MODE_3:
+        self.pump3_mode = values[i]
+        config.update_config(section='MOTOR', key='PUMP3_MODE', value=values[i])
+      elif address + i == ma.M33_DEVICE_ROLE:
         self.device_role = values[i]
-        config.update_config(section='MANAGE', key='DEVICE_ROLE', value=values[i])
-      else: 
-        self._mbl[address+i] = values[i]
+        config.update_config(section='MANAGE',
+                             key='DEVICE_ROLE',
+                             value=values[i])
+      else:
+        self._mbl[address + i] = values[i]
 
 
 #  def update(self):
@@ -473,7 +437,9 @@ class PV():
     self.lock.release()
 
   def filter_data(self, level):
-    logger.debug(f"# filtering: level:{level:.1f} q_level:{self.q_level.queue:.1f}".format(level))
+    logger.debug(
+        f"# filtering: level:{level:.1f} q_level:{self.q_level.queue:.1f}".
+        format(level))
 
     self.lock.acquire()
 
@@ -504,14 +470,14 @@ class PV():
       return self.data[-1][1]
     else:
       logger.info(f"No available data. Returning {v}")
-      return v 
+      return v
 
   def append_data(self, ld):
     self.lock.acquire()
     self.data.append(ld)
-    if len(self.train)>=self.setting_max_train:
-      n = self.setting_max_train//3
-      self.train = self.train[n:]   # 오래된 순으로 1/3 버림
+    if len(self.train) >= self.setting_max_train:
+      n = self.setting_max_train // 3
+      self.train = self.train[n:]  # 오래된 순으로 1/3 버림
     self.train.append(ld)
     self.lock.release()
 
@@ -519,7 +485,7 @@ class PV():
     self.lock.acquire()
     if self.future_level:
       for _, l in enumerate(self.future_level):
-        if l[0]==stime:
+        if l[0] == stime:
           self.lock.release()
           if not util.repr_int(l[1]):
             l[1] = self.return_last_or_v()
@@ -530,13 +496,13 @@ class PV():
 
   def find_data(self, stime):
     self.lock.acquire()
-    idx=-1
+    idx = -1
     for i, l in enumerate(self.data):
-      if l[0]==stime:
-        idx=i
+      if l[0] == stime:
+        idx = i
         break
     self.lock.release()
-    return idx 
+    return idx
 
   def dump_data(self):
     self.lock.acquire()
@@ -544,4 +510,3 @@ class PV():
     self.data = []
     self.lock.release()
     return new_list
-
