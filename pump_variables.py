@@ -60,8 +60,6 @@ class PV():
     self.previous_state = 1  # 0:low, 1:mid  3:high
 
     self.temperature = 0
-    # 현재 모터 상태는 항상 MOTOR_INPUT 단자에서 읽어옴
-    #self.motor_count = 1
     self.motors = [0, 0, 0]  # 연결된 모터는 1, 연결 안된 모터는 0
     self.motor_valid = [0]  # 사용할 수 있는 모터 번호 리스트(0~2)
     self.motor_lead_time = 10
