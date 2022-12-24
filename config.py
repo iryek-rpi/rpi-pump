@@ -30,7 +30,7 @@ def init_setting(pv):
         'AUTO_LL': 100,
     }
     co['MOTOR'] = {
-        'PUMP_COUNT' : 2,
+        'PUMP_COUNT' : 3,    # pump 개수는 최대로 설정하고 modbus 펌프123자동 (40018,19,20)으로 제어 
         'MOTOR1_MODE' : 1,   # MOTOR1,2,3 마지막 가동 상태. 교번 운전에 반영
         'MOTOR2_MODE' : 1,
         'MOTOR3_MODE' : 1,
@@ -137,7 +137,7 @@ def config_to_pv(co: configparser.ConfigParser, pv):
   if ('MOTOR' in co) and ('PUMP_COUNT' in co['MOTOR']) and co['MOTOR']['PUMP_COUNT'].isdigit():
     pv.motor_count = int(co['MOTOR']['PUMP_COUNT'])
   else:
-    pv.motor_count = 2
+    pv.motor_count = 3
 
   if ('MOTOR' in co) and ('MOTOR1_MODE' in co['MOTOR']) and co['MOTOR']['MOTOR1_MODE'].isdigit():
     pv.motor1_mode = int(co['MOTOR']['MOTOR1_MODE'])
