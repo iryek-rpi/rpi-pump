@@ -159,7 +159,8 @@ def determine_motor_state_new(pv, chip):
   logger.info(
       f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low} previous:{pv.previous_state} motor_count:{pv.motor_count}"
   )
-  logger.info("1")
+  logger.info(f"busy_motors:{pv.busy_motors}")
+  logger.info(f"idle_motors:{pv.idle_motors}")
   if pv.water_level >= pv.setting_high: # and pv.previous_state != 2:
     for m in pv.busy_motors:
       if m==0 and pv.motor1_mode==constant.OP_AUTO:
