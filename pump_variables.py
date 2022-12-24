@@ -12,6 +12,8 @@ import pump_util as util
 import modbus_address as ma
 import motor
 
+import config
+
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 def pv(inst=None):
@@ -267,40 +269,30 @@ class PV():
 
   @property
   def pump1_on(self):
-    return 0
+    return 0    #write only
 
   @pump1_on.setter
   def pump1_on(self, s):
-    #if self.op_mode() == constant.OP_MANUAL:
-    #if self.motor1_mode() == constant.OP_MANUAL:
     motor.set_motor_state(self.chip, 0, s)
     self.change_motor_list(0, s)
-    #logger.info(f"@@@ pump1_on: s:{s}")
-    #self._mbl[ma.M14_PUMP1_ON] = s 
 
   @property
-  def pump2_on(self):
-    return 0
+  def pump2_on(self): 
+    return 0    #write only
 
   @pump2_on.setter
   def pump2_on(self, s):
-    #if self.op_mode() == constant.OP_MANUAL:
-    #if self.motor2_mode() == constant.OP_MANUAL:
     motor.set_motor_state(self.chip, 1, s)
     self.change_motor_list(1, s)
-    #self._mbl[ma.M15_PUMP2_ON] = s 
 
   @property
   def pump3_on(self):
-    return 0
+    return 0    #write only
 
   @pump3_on.setter
   def pump3_on(self, s):
-    #if self.op_mode() == constant.OP_MANUAL:
-    #if self.motor3_mode() == constant.OP_MANUAL:
     motor.set_motor_state(self.chip, 2, s)
     self.change_motor_list(2, s)
-    #self._mbl[ma.M16_PUMP3_ON] = s 
 
   @property
   def pump_count(self):
@@ -388,9 +380,8 @@ class PV():
 
   @device_role.setter
   def device_role(self, role):
-    import config
     self._mbl[ma.M33_DEVICE_ROLE] = role 
-    config.update_config(section='MANAGE', key='DEVICE_ROLE', value=role)
+    #config.update_config(section='MANAGE', key='DEVICE_ROLE', value=role)
 
 
   def get_modbus_sequence(self, address, count):
@@ -431,30 +422,39 @@ class PV():
 
     #logger.info(f"@ address:{address} values:{str(values)} motor1_mode:{self.motor1_mode}")
     for i in range(count):
-      #logger.info(f"@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode} motor2_mode:{self.motor2_mode} motor3_mode:{self.motor3_mode}")
-      if address+i == ma.M14_PUMP1_ON and self.motor1_mode==constant.OP_MANUAL:
-        #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor1_mode:{self.motor1_mode}")
-        self.pump1_on = values[i]
+      if address+i == ma.M11_AUTO_H:
         self._mbl[address+i] = values[i]
-      elif address+i == ma.M15_PUMP2_ON and self.motor2_mode==constant.OP_MANUAL:
-        #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor2_mode:{self.motor2_mode}")
-        self.pump2_on = values[i]
+        config.update_config(section='CONTROLLER', key='AUTO_H', value=values[i])
+      elif address+i == ma.M12_AUTO_L:
         self._mbl[address+i] = values[i]
-      elif address+i == ma.M16_PUMP3_ON and self.motor3_mode==constant.OP_MANUAL:
-        #logger.info(f"@@@ address:{address}+i:{i}={address+i} motor3_mode:{self.motor3_mode}")
-        self.pump3_on = values[i]
-        self._mbl[address+i] = values[i]
+        config.update_config(section='CONTROLLER', key='AUTO_H', value=values[i])
+      elif address+i == ma.M14_PUMP1_ON:
+        if self.motor1_mode==constant.OP_MANUAL:
+          self.pump1_on = values[i]  #write only no need to update self._mbl[]
+      elif address+i == ma.M15_PUMP2_ON:
+        if self.motor2_mode==constant.OP_MANUAL:
+          self.pump2_on = values[i]  #write only no need to update self._mbl[]
+      elif address+i == ma.M16_PUMP3_ON: 
+        if self.motor3_mode==constant.OP_MANUAL:
+          self.pump3_on = values[i]  #write only no need to update self._mbl[]
+      elif address+i == ma.M17_PUMP_COUNT:
+        self.pump_count = values[i]
+        config.update_config(section='MOTOR', key='PUMP_COUNT', value=values[i])
+      elif address+i == ma.M18_PUMP_OP_1:
+        self.motor1_mode = values[i]
+        config.update_config(section='MOTOR', key='MOTOR1_MODE', value=values[i])
+      elif address+i == ma.M19_PUMP_OP_2:
+        self.motor2_mode = values[i]
+        config.update_config(section='MOTOR', key='MOTOR2_MODE', value=values[i])
+      elif address+i == ma.M20_PUMP_OP_3:
+        self.motor3_mode = values[i]
+        config.update_config(section='MOTOR', key='MOTOR3_MODE', value=values[i])
+      elif address+i == ma.M33_DEVICE_ROLE:
+        self.device_role = values[i]
+        config.update_config(section='MANAGE', key='DEVICE_ROLE', value=values[i])
       else: 
         self._mbl[address+i] = values[i]
 
-    import config
-    config.update_config(section='CONTROLLER', key='AUTO_H', value=self._mbl[ma.M11_AUTO_H])
-    config.update_config(section='CONTROLLER', key='AUTO_L', value=self._mbl[ma.M12_AUTO_L])
-    config.update_config(section='MOTOR', key='PUMP_COUNT', value=self._mbl[ma.M17_PUMP_COUNT])
-    config.update_config(section='MOTOR', key='MOTOR1_MODE', value=self._mbl[ma.M18_PUMP_OP_1])
-    config.update_config(section='MOTOR', key='MOTOR2_MODE', value=self._mbl[ma.M19_PUMP_OP_2])
-    config.update_config(section='MOTOR', key='MOTOR3_MODE', value=self._mbl[ma.M20_PUMP_OP_3])
-    config.update_config(section='MANAGE', key='DEVICE_ROLE', value=self._mbl[ma.M33_DEVICE_ROLE])
 
 #  def update(self):
 #    self.source = SOURCE_SENSOR  # 수위값 출처
