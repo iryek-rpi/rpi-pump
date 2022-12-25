@@ -72,7 +72,7 @@ def tank_monitor(**kwargs):
   logger.info("get_all_motors:(%d, %d, %d)", a, b, c)
 
   # 수위 입력이 없음
-  if (abs(adc_level - pv.previous_adc) < 30) or (not adc_level):
+  if 0:  #(abs(adc_level - pv.previous_adc) < 30) or (not adc_level):
     td = time_now - pv.no_input_starttime
     logger.info(
         f"td.seconds:{td.seconds} time_now:{time_now} no_input_time:{pv.no_input_starttime} Tolerance:{pv.setting_tolerance_to_ai}"
