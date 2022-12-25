@@ -20,11 +20,13 @@ M2_IN = 13  #cur_sw2
 
 
 def init_motors(c):
-    lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
-    lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
-    lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
-    #set_all_motors(c, (0,0,0))  # 단말 부팅 시 모터 초기화하지 않음 
-    #set_run_mode(c, 0)
+  lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
+  lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
+  lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
+  set_motor_state(c, 2, 0)  #임시로 부팅 시 3번 펌프 off함
+  #set_all_motors(c, (0,0,0))  # 단말 부팅 시 모터 초기화하지 않음
+  #set_run_mode(c, 0)
+
 
 def set_run_mode(chip, v):
   '''
@@ -33,6 +35,7 @@ def set_run_mode(chip, v):
   (2) 수위계/AI
   '''
   lgpio.gpio_write(chip, RUN_MODE_OUT, v)
+
 
 def get_all_motors(chip):
   """3대의 모터 상태를 (M2,M1,M0)로 리턴
@@ -53,7 +56,7 @@ def get_motor_state(chip, m):
     return lgpio.gpio_read(chip, M1_IN)
   elif m == 2:
     return lgpio.gpio_read(chip, M2_IN)
-  #else:       
+  #else:
   #  return -1
 
 
@@ -82,10 +85,8 @@ def set_all_motors(chip, m):
   lgpio.gpio_write(chip, M2_OUT, c)
 
 
-
 #CFLOW_PASS = 0
 #CFLOW_CPU = 1
-
 
 #def set_current_flow(chip, cflow):
 #  if cflow == CFLOW_PASS:
@@ -97,6 +98,7 @@ def set_all_motors(chip, m):
 #    lgpio.gpio_write(chip, CSW1, 1)
 #    lgpio.gpio_write(chip, CSW2, 1)
 
+
 def save_motor_state(chip):
-  (m0,m1,m2) = get_all_motors(chip)
-  config.save_motors((m0,m1,m2))
+  (m0, m1, m2) = get_all_motors(chip)
+  config.save_motors((m0, m1, m2))
