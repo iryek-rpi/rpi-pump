@@ -248,30 +248,37 @@ class PV():
 
   @property
   def pump1_on(self):
-    return 0  #write only
+    return self._mbl[ma.M14_PUMP1_ON]
 
   @pump1_on.setter
   def pump1_on(self, s):
-    motor.set_motor_state(self.chip, 0, s)
-    self.change_motor_list(0, s)
+    self._mbl[ma.M14_PUMP1_ON] = s
+    if self.pump1_mode == constant.PUMP_MODE_MANUAL:
+      motor.set_motor_state(self.chip, 0, s)
+      #self.change_motor_list(0, s)  #교번운전은 auto mode에서 적용
 
   @property
   def pump2_on(self):
-    return 0  #write only
+    return self._mbl[ma.M15_PUMP2_ON]
 
   @pump2_on.setter
   def pump2_on(self, s):
-    motor.set_motor_state(self.chip, 1, s)
-    self.change_motor_list(1, s)
+    self._mbl[ma.M15_PUMP2_ON] = s
+    if self.pump2_mode == constant.PUMP_MODE_MANUAL:
+      self._mbl[ma.M15_PUMP2_ON] = s
+      motor.set_motor_state(self.chip, 1, s)
+      #self.change_motor_list(1, s)  #교번운전은 auto mode에서 적용
 
   @property
   def pump3_on(self):
-    return 0  #write only
+    return self._mbl[ma.M16_PUMP3_ON]
 
   @pump3_on.setter
   def pump3_on(self, s):
-    motor.set_motor_state(self.chip, 2, s)
-    self.change_motor_list(2, s)
+    self._mbl[ma.M16_PUMP3_ON] = s
+    if self.pump3_mode == constant.PUMP_MODE_MANUAL:
+      motor.set_motor_state(self.chip, 2, s)
+      #self.change_motor_list(2, s)  #교번운전은 auto mode에서 적용
 
   @property
   def pump1_mode(self):
@@ -280,6 +287,41 @@ class PV():
   @pump1_mode.setter
   def pump1_mode(self, n):
     self._mbl[ma.M18_PUMP_MODE_1] = n
+    _pump1 = motor.get_motor_state(self.chip, 0)
+    if n == constant.PUMP_MODE_MANUAL:
+      if self.pump1_on and not _pump1:
+        motor.set_motor_state(pv.chip, 0, 1)
+      elif not self.pump1_on and _pump1:
+        motor.set_motor_state(pv.chip, 0, 0)
+
+      if 1 in self.busy_motors:
+        del self.busy_motors[self.busy_motors.index(1)]
+      if not (1 in self.idle_motors):
+        self.idle_motors.append(1)
+    else:
+
+      if m in self.busy_motors:
+        del self.busy_motors[self.busy_motors.index(m)]
+      if not (m in self.idle_motors):
+        self.idle_motors.append(m)
+      if motor.get_motor_state(self.chip, 0):
+        if not (1 in self.busy_motors):
+          self.busy_motors.append(1)
+        if 1 in self.idle_motors):
+          del self.idle_motors[self.idle_motors.index(1)]
+      else:
+
+  def change_motor_list(self, m, v):
+    if not v:
+      if m in self.busy_motors:
+        del self.busy_motors[self.busy_motors.index(m)]
+      if not (m in self.idle_motors):
+        self.idle_motors.append(m)
+    else:
+      if m in self.idle_motors:
+        del self.idle_motors[self.idle_motors.index(m)]
+      if not (m in self.busy_motors):
+        self.busy_motors.append(m)
 
   @property
   def pump2_mode(self):
@@ -392,14 +434,20 @@ class PV():
                              key='AUTO_L',
                              value=values[i])
       elif address + i == ma.M14_PUMP1_ON:
-        if self.pump1_mode == constant.PUMP_MODE_MANUAL:
-          self.pump1_on = values[i]  #write only no need to update self._mbl[]
+        self.pump1_on = values[i]
+        config.update_config(section='MOTOR',
+                             key='PUMP1_MANUAL_ON',
+                             value=values[i])
       elif address + i == ma.M15_PUMP2_ON:
-        if self.pump2_mode == constant.PUMP_MODE_MANUAL:
-          self.pump2_on = values[i]  #write only no need to update self._mbl[]
+        self.pump2_on = values[i]
+        config.update_config(section='MOTOR',
+                             key='PUMP2_MANUAL_ON',
+                             value=values[i])
       elif address + i == ma.M16_PUMP3_ON:
-        if self.pump3_mode == constant.PUMP_MODE_MANUAL:
-          self.pump3_on = values[i]  #write only no need to update self._mbl[]
+        self.pump3_on = values[i]
+        config.update_config(section='MOTOR',
+                             key='PUMP3_MANUAL_ON',
+                             value=values[i])
       elif address + i == ma.M18_PUMP_MODE_1:
         self.pump1_mode = values[i]
         config.update_config(section='MOTOR', key='PUMP1_MODE', value=values[i])
