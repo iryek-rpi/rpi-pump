@@ -17,11 +17,13 @@ config.py
       * 모드를 수종으로 변경할 때, 모터 상태는 사용자가 Modbus로 직접 변경하도록 함 
 
 * 모터 상태 변경(14, 15, 16)
-  * pump_variables.pump1_on, pump2_on, pump3_on setter
-    * 모터 모드를 고려하지 않고 그냥 바꿔줌
+  * pump_variables.
+    * pump1_config 
+    * pump2_config 
+    * pump3_config
   * pump_variables.set_modbus_sequence()
     * 모터 운전 모드(18,19,20)이 0(수동)일 때만 모터 상태가 변경되도록 함
-    * 또한, 운전 모드가 수동이 아닐 때는 Modbus data도 변경되지 않도록 함
+    * 또한, 운전 모드가 AUTO일 때도 Modbus data를 변경함
 
 * 모터 상태 초기화
   # 부팅 직후에는 모터 상태를 읽어와서 idle, busy 리스트 초기화

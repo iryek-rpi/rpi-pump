@@ -14,9 +14,9 @@ M7_MODBUS_ID = 7    #Modbus ID
 M11_AUTO_H = 11     #수위 상한
 M12_AUTO_L = 12     #수위 하한
 
-* M14_PUMP1_ON = 14   #pump1 on/off
-* M15_PUMP2_ON = 15   #pump2 on/off
-* M16_PUMP3_ON = 16   #pump3 on/off
+* M14_PUMP1_CONFIG = 14   #pump1 on/off config
+* M15_PUMP2_CONFIG = 15   #pump2 on/off config
+* M16_PUMP3_CONFIG = 16   #pump3 on/off config
 
 * M18_PUMP_MODE_1 = 18  #pump1 제어모드 수동/자동
 * M19_PUMP_MODE_2 = 19  #pump2 제어모드 수동/자동

@@ -250,35 +250,35 @@ class PV():
     self._mbl[ma.M12_AUTO_L] = level
 
   @property
-  def pump1_on(self):
-    return self._mbl[ma.M14_PUMP1_ON]
+  def pump1_config(self):
+    return self._mbl[ma.M14_PUMP1_CONFIG]
 
-  @pump1_on.setter
-  def pump1_on(self, s):
-    self._mbl[ma.M14_PUMP1_ON] = s
+  @pump1_config.setter
+  def pump1_config(self, s):
+    self._mbl[ma.M14_PUMP1_CONFIG] = s
     if self.pump1_mode == constant.PUMP_MODE_MANUAL:
       motor.set_motor_state(self.chip, 0, s)
       #self.change_motor_list(0, s)  #교번운전은 auto mode에서 적용
 
   @property
-  def pump2_on(self):
-    return self._mbl[ma.M15_PUMP2_ON]
+  def pump2_config(self):
+    return self._mbl[ma.M15_PUMP2_CONFIG]
 
-  @pump2_on.setter
-  def pump2_on(self, s):
-    self._mbl[ma.M15_PUMP2_ON] = s
+  @pump2_config.setter
+  def pump2_config(self, s):
+    self._mbl[ma.M15_PUMP2_CONFIG] = s
     if self.pump2_mode == constant.PUMP_MODE_MANUAL:
-      self._mbl[ma.M15_PUMP2_ON] = s
       motor.set_motor_state(self.chip, 1, s)
       #self.change_motor_list(1, s)  #교번운전은 auto mode에서 적용
 
   @property
-  def pump3_on(self):
-    return self._mbl[ma.M16_PUMP3_ON]
+  def pump3_config(self):
+    return self._mbl[ma.M16_PUMP3_CONFIG]
+    
 
-  @pump3_on.setter
-  def pump3_on(self, s):
-    self._mbl[ma.M16_PUMP3_ON] = s
+  @pump3_config.setter
+  def pump3_config(self, s):
+    self._mbl[ma.M16_PUMP3_CONFIG] = s
     if self.pump3_mode == constant.PUMP_MODE_MANUAL:
       motor.set_motor_state(self.chip, 2, s)
       #self.change_motor_list(2, s)  #교번운전은 auto mode에서 적용
@@ -291,11 +291,11 @@ class PV():
     '''
     self._mbl[ma.M18_PUMP_MODE_1+pump] = mode 
     _pump_state = motor.get_motor_state(self.chip, pump)
-    _pump_config = self.pump1_on
+    _pump_config = self.pump1_config
     if pump==1:
-      _pump_config = self.pump2_on
+      _pump_config = self.pump2_config
     elif pump==2:
-      _pump_config = self.pump3_on
+      _pump_config = self.pump3_config
 
     if mode == constant.PUMP_MODE_MANUAL:
       if _pump_config and not _pump_state:
@@ -340,7 +340,7 @@ class PV():
 
   @mqtt_on.setter
   def mqtt_on(self, n):
-    self._mbl[ma.M15_PUMP2_ON] = n
+    self._mbl[ma.M25_MQTT_ON] = n
 
   @property
   def mqtt_topic_ai(self):
@@ -428,20 +428,20 @@ class PV():
         config.update_config(section='CONTROLLER',
                              key='AUTO_L',
                              value=values[i])
-      elif address + i == ma.M14_PUMP1_ON:
-        self.pump1_on = values[i]
+      elif address + i == ma.M14_PUMP1_CONFIG:
+        self.pump1_config = values[i]
         config.update_config(section='MOTOR',
-                             key='PUMP1_MANUAL_ON',
+                             key='PUMP1_CONFIG',
                              value=values[i])
-      elif address + i == ma.M15_PUMP2_ON:
-        self.pump2_on = values[i]
+      elif address + i == ma.M15_PUMP2_CONFIG:
+        self.pump2_config = values[i]
         config.update_config(section='MOTOR',
-                             key='PUMP2_MANUAL_ON',
+                             key='PUMP2_CONFIG',
                              value=values[i])
-      elif address + i == ma.M16_PUMP3_ON:
-        self.pump3_on = values[i]
+      elif address + i == ma.M16_PUMP3_CONFIG:
+        self.pump3_config = values[i]
         config.update_config(section='MOTOR',
-                             key='PUMP3_MANUAL_ON',
+                             key='PUMP3_CONFIG',
                              value=values[i])
       elif address + i == ma.M18_PUMP_MODE_1:
         self.pump1_mode = values[i]

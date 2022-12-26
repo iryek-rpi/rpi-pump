@@ -174,25 +174,25 @@ def determine_motor_state_new(pv, chip):
   if pv.water_level > pv.setting_high and pv.previous_state != 2:
     for m in pv.busy_motors:  # 모든 모터를 off
       if m == 0 and pv.pump1_mode == constant.PUMP_MODE_AUTO:
-        pv.pump1_on = 0
+        pv.pump1_config = 0
       elif m == 1 and pv.pump2_mode == constant.PUMP_MODE_AUTO:
-        pv.pump2_on = 0
+        pv.pump2_config = 0
       elif m == 2 and pv.pump3_mode == constant.PUMP_MODE_AUTO:
-        pv.pump3_on = 0
+        pv.pump3_config = 0
       pv.change_motor_list(m, 0)
       pv.previous_state = 2
   elif pv.water_level < pv.setting_low and pv.previous_state != 0:
     for m in pv.idle_motors:  # idle list에서 첫번째 모터만 on
       if m == 0 and pv.pump1_mode == constant.PUMP_MODE_AUTO:
-        pv.pump1_on = 1
+        pv.pump1_config = 1
         pv.previous_state = 0
         break
       elif m == 1 and pv.pump2_mode == constant.PUMP_MODE_AUTO:
-        pv.pump2_on = 1
+        pv.pump2_config = 1
         pv.previous_state = 0
         break
       elif m == 2 and pv.pump3_mode == constant.PUMP_MODE_AUTO:
-        pv.pump3_on = 1
+        pv.pump3_config = 1
         pv.previous_state = 0
         break
       pv.change_motor_list(m, 1)

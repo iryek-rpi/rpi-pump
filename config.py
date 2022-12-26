@@ -29,9 +29,9 @@ def init_setting(pv):
         'AUTO_LL': 100,
     }
     co['MOTOR'] = {
-        'PUMP1_MANUAL_ON': 0,
-        'PUMP2_MANUAL_ON': 0,
-        'PUMP3_MANUAL_ON': 0,
+        'PUMP1_CONFIG': 0,
+        'PUMP2_CONFIG': 0,
+        'PUMP3_CONFIG': 0,
         'PUMP1_MODE':
             constant.PUMP_MODE_AUTO,  # MOTOR1,2,3 마지막 가동 모드, 교번 운전에 반영
         'PUMP2_MODE': constant.PUMP_MODE_AUTO,
@@ -151,25 +151,25 @@ def config_to_pv(co: configparser.ConfigParser, pv):
     pv.last_pump = int(co['CONTROLLER']['LAST_PUMP'])
 
   if ('MOTOR'
-      in co) and ('PUMP1_MANUAL_ON'
-                  in co['MOTOR']) and co['MOTOR']['PUMP1_MANUAL_ON'].isdigit():
-    pv.pump1_on = int(co['MOTOR']['PUMP1_MANUAL_ON'])
+      in co) and ('PUMP1_CONFIG'
+                  in co['MOTOR']) and co['MOTOR']['PUMP1_CONFIG'].isdigit():
+    pv.pump1_config = int(co['MOTOR']['PUMP1_CONFIG'])
   else:
-    pv.pump1_on = 0 
+    pv.pump1_config = 0 
 
   if ('MOTOR'
-      in co) and ('PUMP2_MANUAL_ON'
-                  in co['MOTOR']) and co['MOTOR']['PUMP2_MANUAL_ON'].isdigit():
-    pv.pump2_on = int(co['MOTOR']['PUMP2_MANUAL_ON'])
+      in co) and ('PUMP2_CONFIG'
+                  in co['MOTOR']) and co['MOTOR']['PUMP2_CONFIG'].isdigit():
+    pv.pump2_config = int(co['MOTOR']['PUMP2_CONFIG'])
   else:
-    pv.pump2_on = 0 
+    pv.pump2_config = 0 
 
   if ('MOTOR'
-      in co) and ('PUMP3_MANUAL_ON'
-                  in co['MOTOR']) and co['MOTOR']['PUMP3_MANUAL_ON'].isdigit():
-    pv.pump3_on = int(co['MOTOR']['PUMP3_MANUAL_ON'])
+      in co) and ('PUMP3_CONFIG'
+                  in co['MOTOR']) and co['MOTOR']['PUMP3_CONFIG'].isdigit():
+    pv.pump3_config = int(co['MOTOR']['PUMP3_CONFIG'])
   else:
-    pv.pump3_on = 0 
+    pv.pump3_config = 0 
 
   if ('MOTOR'
       in co) and ('PUMP1_MODE'
