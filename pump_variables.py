@@ -183,6 +183,9 @@ class PV():
     self._mbl[ma.M3_SOURCE] = s
 
   def change_motor_list(self, m, v):
+    '''m = 0, 1, 2
+       v = 0,1
+    '''
     if not v:
       if m in self.busy_motors:
         del self.busy_motors[self.busy_motors.index(m)]
@@ -280,48 +283,40 @@ class PV():
       motor.set_motor_state(self.chip, 2, s)
       #self.change_motor_list(2, s)  #교번운전은 auto mode에서 적용
 
+  def _pump_change_mode(self, pump, mode):
+    '''
+    pump의 manual/auto mode를 변경 (40018, 40019, 40020)
+    pump=0,1,2
+    mode=0,1
+    '''
+    self._mbl[ma.M18_PUMP_MODE_1+pump] = mode 
+    _pump_state = motor.get_motor_state(self.chip, pump)
+    _pump_config = self.pump1_on
+    if pump==1:
+      _pump_config = self.pump2_on
+    elif pump==2:
+      _pump_config = self.pump3_on
+
+    if mode == constant.PUMP_MODE_MANUAL:
+      if _pump_config and not _pump_state:
+        motor.set_motor_state(self.chip, pump, 1)
+      elif not _pump_config and _pump_state:
+        motor.set_motor_state(self.chip, pump, 0)
+
+      if pump in self.busy_motors:
+        del self.busy_motors[self.busy_motors.index(pump)]
+      if 1 in self.idle_motors:
+        del self.idle_motors[self.idle_motors.index(pump)]
+    else:
+      self.change_motor_list(m=pump, v=_pump_state)
+
   @property
   def pump1_mode(self):
     return self._mbl[ma.M18_PUMP_MODE_1]
 
   @pump1_mode.setter
   def pump1_mode(self, n):
-    self._mbl[ma.M18_PUMP_MODE_1] = n
-    _pump1 = motor.get_motor_state(self.chip, 0)
-    if n == constant.PUMP_MODE_MANUAL:
-      if self.pump1_on and not _pump1:
-        motor.set_motor_state(pv.chip, 0, 1)
-      elif not self.pump1_on and _pump1:
-        motor.set_motor_state(pv.chip, 0, 0)
-
-      if 1 in self.busy_motors:
-        del self.busy_motors[self.busy_motors.index(1)]
-      if not (1 in self.idle_motors):
-        self.idle_motors.append(1)
-    else:
-
-      if m in self.busy_motors:
-        del self.busy_motors[self.busy_motors.index(m)]
-      if not (m in self.idle_motors):
-        self.idle_motors.append(m)
-      if motor.get_motor_state(self.chip, 0):
-        if not (1 in self.busy_motors):
-          self.busy_motors.append(1)
-        if 1 in self.idle_motors):
-          del self.idle_motors[self.idle_motors.index(1)]
-      else:
-
-  def change_motor_list(self, m, v):
-    if not v:
-      if m in self.busy_motors:
-        del self.busy_motors[self.busy_motors.index(m)]
-      if not (m in self.idle_motors):
-        self.idle_motors.append(m)
-    else:
-      if m in self.idle_motors:
-        del self.idle_motors[self.idle_motors.index(m)]
-      if not (m in self.busy_motors):
-        self.busy_motors.append(m)
+    self._pump_change_mode(pump=0, mode=n)
 
   @property
   def pump2_mode(self):
@@ -329,7 +324,7 @@ class PV():
 
   @pump2_mode.setter
   def pump2_mode(self, n):
-    self._mbl[ma.M19_PUMP_MODE_2] = n
+    self._pump_change_mode(pump=2, mode=n)
 
   @property
   def pump3_mode(self):
@@ -337,7 +332,7 @@ class PV():
 
   @pump3_mode.setter
   def pump3_mode(self, n):
-    self._mbl[ma.M20_PUMP_MODE_3] = n
+    self._pump_change_mode(pump=2, mode=n)
 
   @property
   def mqtt_on(self):
