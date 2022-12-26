@@ -258,7 +258,6 @@ class PV():
     self._mbl[ma.M14_PUMP1_CONFIG] = s
     if self.pump1_mode == constant.PUMP_MODE_MANUAL:
       motor.set_motor_state(self.chip, 0, s)
-      #self.change_motor_list(0, s)  #교번운전은 auto mode에서 적용
 
   @property
   def pump2_config(self):
@@ -269,7 +268,6 @@ class PV():
     self._mbl[ma.M15_PUMP2_CONFIG] = s
     if self.pump2_mode == constant.PUMP_MODE_MANUAL:
       motor.set_motor_state(self.chip, 1, s)
-      #self.change_motor_list(1, s)  #교번운전은 auto mode에서 적용
 
   @property
   def pump3_config(self):
@@ -281,7 +279,6 @@ class PV():
     self._mbl[ma.M16_PUMP3_CONFIG] = s
     if self.pump3_mode == constant.PUMP_MODE_MANUAL:
       motor.set_motor_state(self.chip, 2, s)
-      #self.change_motor_list(2, s)  #교번운전은 auto mode에서 적용
 
   def _pump_change_mode(self, pump, mode):
     '''
@@ -289,7 +286,7 @@ class PV():
     pump=0,1,2
     mode=0,1
     '''
-    self._mbl[ma.M18_PUMP_MODE_1+pump] = mode 
+    self._mbl[ma.M18_PUMP_MODE_1+pump] = mode
     _pump_state = motor.get_motor_state(self.chip, pump)
     _pump_config = self.pump1_config
     if pump==1:
