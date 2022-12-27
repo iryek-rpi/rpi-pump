@@ -32,12 +32,14 @@ def init_setting(pv):
         'PUMP1_CONFIG': 0,
         'PUMP2_CONFIG': 0,
         'PUMP3_CONFIG': 0,
-        'PUMP1_MODE':
-            constant.PUMP_MODE_AUTO,  # MOTOR1,2,3 마지막 가동 모드, 교번 운전에 반영
+        # MOTOR1,2,3 마지막 가동 모드, 교번 운전에 반영
+        'PUMP1_MODE': constant.PUMP_MODE_AUTO,
         'PUMP2_MODE': constant.PUMP_MODE_AUTO,
-        'PUMP3_MODE': constant.PUMP_MODE_AUTO,
+        'PUMP3_MODE': constant.PUMP_MODE_MANUAL,
         'LEAD_TIME': 10,  # 모터 가동에 걸리는 시간 (교번운전을 위해 가동된 모터를 확인하여 기록하기 위함)
-        'INSTALLED_MOTORS': '[1,0,0]',  # 모터가 연결된 단자에 1, 연결 안된 단자는 0 
+        # 모터 수는  PUMP MODE로 관리함.
+        # INSTALLED_MOTORS는 항상 [1,1,1]로 사용
+        'INSTALLED_MOTORS': '[1,1,1]',  # 모터가 연결된 단자에 1, 연결 안된 단자는 0 
     }
     co['SENSOR'] = {
         '4MA_REF': 700,
@@ -156,30 +158,19 @@ def config_to_pv(co: configparser.ConfigParser, pv):
     for i, m in enumerate(installed_motors):
       if m:
         pv.valid_motors.append(i)
-    logger.info("--installed motors: %s", str(installed_motors))
-    logger.info("--pv.valid_motors: %s", str(pv.valid_motors))
+    logger.info("0 installed motors: %s", str(installed_motors))
+    logger.info("0 pv.valid_motors: %s", str(pv.valid_motors))
 
-  logger.info(f'0-idle_motors:{pv.idle_motors}')
-  logger.info(f'0-busy_motors:{pv.busy_motors}')
-
-  # pump123.config 초기화를 위해 임시로 설정
-  pv.pump1_mode = constant.PUMP_MODE_AUTO
-  pv.pump2_mode = constant.PUMP_MODE_AUTO
-  pv.pump3_mode = constant.PUMP_MODE_AUTO
-
-  logger.info(f'0-idle_motors:{pv.idle_motors}')
-  logger.info(f'0-busy_motors:{pv.busy_motors}')
+  logger.info(f'0 idle_motors:{pv.idle_motors}')
+  logger.info(f'0 busy_motors:{pv.busy_motors}')
 
   if 0 in pv.valid_motors:
     if ('MOTOR' in co) \
       and ('PUMP1_CONFIG' in co['MOTOR']) \
       and co['MOTOR']['PUMP1_CONFIG'].isdigit():
-      pv.pump1_config = int(co['MOTOR']['PUMP1_CONFIG'])
+      pv.set_pump_config(0, int(co['MOTOR']['PUMP1_CONFIG']))
     else:
-      pv.pump1_config = 0 
-
-    logger.info(f'0.5-idle_motors:{pv.idle_motors}')
-    logger.info(f'0.5-busy_motors:{pv.busy_motors}')
+      pv.set_pump_config(0, 0)
 
     if ('MOTOR' in co) \
       and ('PUMP1_MODE' in co['MOTOR']) \
@@ -188,16 +179,13 @@ def config_to_pv(co: configparser.ConfigParser, pv):
     else:
       pv.pump1_mode = 1
 
-  logger.info(f'1-idle_motors:{pv.idle_motors}')
-  logger.info(f'1-busy_motors:{pv.busy_motors}')
-
   if 1 in pv.valid_motors:
     if ('MOTOR' in co) \
       and ('PUMP2_CONFIG' in co['MOTOR']) \
       and co['MOTOR']['PUMP2_CONFIG'].isdigit():
-      pv.pump2_config = int(co['MOTOR']['PUMP2_CONFIG'])
+      pv.set_pump_config(1, int(co['MOTOR']['PUMP2_CONFIG']))
     else:
-      pv.pump2_config = 0 
+      pv.set_pump_config(1, 0)
 
     if ('MOTOR' in co) \
       and ('PUMP2_MODE' in co['MOTOR']) \
@@ -206,16 +194,13 @@ def config_to_pv(co: configparser.ConfigParser, pv):
     else:
       pv.pump2_mode = 1
 
-  logger.info(f'2-idle_motors:{pv.idle_motors}')
-  logger.info(f'2-busy_motors:{pv.busy_motors}')
-
   if 2 in pv.valid_motors:
     if ('MOTOR' in co) \
       and ('PUMP3_CONFIG' in co['MOTOR']) \
       and co['MOTOR']['PUMP3_CONFIG'].isdigit():
-      pv.pump3_config = int(co['MOTOR']['PUMP3_CONFIG'])
+      pv.set_pump_config(2, int(co['MOTOR']['PUMP3_CONFIG']))
     else:
-      pv.pump3_config = 0 
+      pv.set_pump_config(2, 0)
 
     if ('MOTOR' in co) \
       and ('PUMP3_MODE' in co['MOTOR']) \
@@ -224,8 +209,8 @@ def config_to_pv(co: configparser.ConfigParser, pv):
     else:
       pv.pump3_mode = 1
 
-  logger.info(f'3-idle_motors:{pv.idle_motors}')
-  logger.info(f'3-busy_motors:{pv.busy_motors}')
+  logger.info(f'1 idle_motors:{pv.idle_motors}')
+  logger.info(f'1 busy_motors:{pv.busy_motors}')
 
   if ('MOTOR'
       in co) and ('LEAD_TIME'
@@ -292,16 +277,10 @@ def config_to_pv(co: configparser.ConfigParser, pv):
   if ('MANAGE' in co) and ('DEVICE_ROLE' in co['MANAGE']):
     pv.device_role = co['MANAGE']['DEVICE_ROLE']
 
-  # 부팅 직후에는 모터 상태를 읽어와서 idle, busy 리스트 초기화
-  # Modbus db에 저장할 필요는 없음. Modbus에서 항상 직접 모터 상태를 읽어감
-  logger.info(f'valid_motors:{pv.valid_motors}')
-  logger.info(f'idle_motors:{pv.idle_motors}')
-  logger.info(f'busy_motors:{pv.busy_motors}')
+  logger.info(f'2 valid_motors:{pv.valid_motors}')
+  logger.info(f'2 idle_motors:{pv.idle_motors}')
+  logger.info(f'2 busy_motors:{pv.busy_motors}')
 
-  for i, m in enumerate(pv.valid_motors):
-    ms = motor.get_motor_state(pv.chip, m)
-    pv.change_motor_list(m, ms)
-
-  logger.info(f'valid_motors:{pv.valid_motors}')
-  logger.info(f'initialized idle_motors:{pv.idle_motors}')
-  logger.info(f'initialized busy_motors:{pv.busy_motors}')
+  #for i, m in enumerate(pv.valid_motors):
+  #  ms = motor.get_motor_state(pv.chip, m)
+  #  pv.change_motor_list(m, ms)

@@ -280,7 +280,14 @@ class PV():
   @property
   def pump3_config(self):
     return self._mbl[ma.M16_PUMP3_CONFIG]
-    
+
+  def set_pump_config(self, pump, value):
+    '''
+    direct access to pv._mbl
+    pump : 0,1,2
+    value: 0,1
+    '''
+    self._mbl[ma.M14_PUMP1_CONFIG+pump] = value
 
   @pump3_config.setter
   def pump3_config(self, s):
