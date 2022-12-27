@@ -126,6 +126,7 @@ def main():
     pv().chip = chip
 
     config.init_setting(pv())
+
     if not pv().device_role:
       pv().device_role = 'controller'
 
@@ -141,6 +142,9 @@ def main():
     spi = ADC.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
     motor.init_motors(chip)
+    (a, b, c) = motor.get_all_motors(chip)
+    logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
+
     pump_screen.scr_init_msg(pv())
 
     #lgpio.gpio_claim_output(chip, FAN, 1)
