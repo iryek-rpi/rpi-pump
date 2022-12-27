@@ -198,8 +198,14 @@ def determine_motor_state_new(pv, chip):
         pv.previous_state = 0
         pv.change_motor_list(m, 1)
         break
-  else:
-    pv.previous_state = 1
+  elif pv.water_level > pv.setting_low and pv.water_level < pv.setting_high:
+    if pv.previous_state == 0:
+      # fluctation을 보정할 조건 추가
+      pv.previous_state = 1
+    elif pv.previous_state==2:
+      # fluctation을 보정할 조건 추가
+      pv.previous_state = 1
+
   logger.info(f'<< previous_state:{pv.previous_state}')
   logger.info(f"<< busy_motors:{pv.busy_motors}")
   logger.info(f"<< idle_motors:{pv.idle_motors}")
