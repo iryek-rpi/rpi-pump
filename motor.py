@@ -23,7 +23,6 @@ def init_motors(c):
   lgpio.gpio_claim_input(c, M0_IN, lFlags=lgpio.SET_PULL_UP)
   lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
   lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
-  set_motor_state(c, 2, 0)  #임시로 부팅 시 3번 펌프 off함
   #set_all_motors(c, (0,0,0))  # 단말 부팅 시 모터 초기화하지 않음
   #set_run_mode(c, 0)
 
@@ -74,7 +73,7 @@ def set_motor_state(chip, m, on_off):
   elif m == 2:
     lgpio.gpio_write(chip, M2_OUT, on_off)
 
-  logger.info("SET MOTOR#{%d}/(1,2,3) = {%d}", m + 1, on_off)
+  logger.info("SET MOTOR#{%d}/(0,1,2) = {%d}", m, on_off)
 
 
 def set_all_motors(chip, m):
