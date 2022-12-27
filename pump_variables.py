@@ -60,7 +60,7 @@ class PV():
     self.previous_state = 1  # 0:low, 1:mid  3:high
 
     self.temperature = 0
-    self.motors = [0, 0, 0]  # 연결된 모터는 1, 연결 안된 모터는 0
+    self.valid_motors = [] #cofig
     self.motor_valid = [0]  # 사용할 수 있는 모터 번호 리스트(0~2)
     self.motor_lead_time = 10
     self.idle_motors = []
@@ -302,7 +302,7 @@ class PV():
 
       if pump in self.busy_motors:
         del self.busy_motors[self.busy_motors.index(pump)]
-      if 1 in self.idle_motors:
+      if pump in self.idle_motors:
         del self.idle_motors[self.idle_motors.index(pump)]
     else:
       self.change_motor_list(m=pump, v=_pump_state)
@@ -321,7 +321,7 @@ class PV():
 
   @pump2_mode.setter
   def pump2_mode(self, n):
-    self._pump_change_mode(pump=2, mode=n)
+    self._pump_change_mode(pump=1, mode=n)
 
   @property
   def pump3_mode(self):
