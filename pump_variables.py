@@ -183,18 +183,26 @@ class PV():
     self._mbl[ma.M3_SOURCE] = s
 
   def change_motor_list(self, m, v):
-    '''m = 0, 1, 2
-       v = 0,1
+    '''m = 0, 1, 2 (motor)
+       v = 0,1 (current motor state)
     '''
     if not v:
-      if m in self.busy_motors:
-        del self.busy_motors[self.busy_motors.index(m)]
-      if not (m in self.idle_motors):
+      while True:
+        if m in self.busy_motors:
+          del self.busy_motors[self.busy_motors.index(m)]
+        else:
+          break
+
+      if not m in self.idle_motors:
         self.idle_motors.append(m)
     else:
-      if m in self.idle_motors:
-        del self.idle_motors[self.idle_motors.index(m)]
-      if not (m in self.busy_motors):
+      while True:
+        if m in self.idle_motors:
+          del self.idle_motors[self.idle_motors.index(m)]
+        else:
+          break
+
+      if not m in self.busy_motors:
         self.busy_motors.append(m)
 
   @property
@@ -288,13 +296,14 @@ class PV():
     '''
     self._mbl[ma.M18_PUMP_MODE_1+pump] = mode
     _pump_state = motor.get_motor_state(self.chip, pump)
-    _pump_config = self.pump1_config
-    if pump==1:
-      _pump_config = self.pump2_config
-    elif pump==2:
-      _pump_config = self.pump3_config
 
     if mode == constant.PUMP_MODE_MANUAL:
+      _pump_config = self.pump1_config
+      if pump==1:
+        _pump_config = self.pump2_config
+      elif pump==2:
+        _pump_config = self.pump3_config
+
       if _pump_config and not _pump_state:
         motor.set_motor_state(self.chip, pump, 1)
       elif not _pump_config and _pump_state:
