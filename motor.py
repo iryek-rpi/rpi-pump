@@ -1,3 +1,6 @@
+'''
+motor control module
+'''
 import lgpio
 import picologging as logging
 import pump_util as util
@@ -55,8 +58,8 @@ def get_motor_state(chip, m):
     return lgpio.gpio_read(chip, M1_IN)
   elif m == 2:
     return lgpio.gpio_read(chip, M2_IN)
-  #else:
-  #  return -1
+
+  return None
 
 
 def is_motor_running(chip):
@@ -98,6 +101,3 @@ def set_all_motors(chip, m):
 #    lgpio.gpio_write(chip, CSW2, 1)
 
 
-def save_motor_state(chip):
-  (m0, m1, m2) = get_all_motors(chip)
-  config.save_motors((m0, m1, m2))
