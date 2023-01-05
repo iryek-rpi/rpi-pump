@@ -11,8 +11,8 @@ from gpiozero import OutputDevice
 import picologging as logging
 
 
-ON_THRESHOLD = 60
-OFF_THRESHOLD = 50 
+ON_THRESHOLD = 78
+OFF_THRESHOLD = 68 
 
 SLEEP_INTERVAL = 20  # (seconds) How often we check the core temperature.
 
