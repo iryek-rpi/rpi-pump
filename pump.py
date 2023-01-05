@@ -125,7 +125,13 @@ def main():
     pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
     pv().chip = chip
 
-    config.init_setting(pv())
+    spi = ADC.init_spi_rw(chip, pv(),
+                                   speed=9600)  # get SPI device handle
+    motor.init_motors(chip)
+    (a, b, c) = motor.get_all_motors(chip)
+    logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
+
+    config.init_setting(pv()) # motor port 초기화한 후에 콜해야함
 
     if not pv().device_role:
       pv().device_role = 'controller'
@@ -138,12 +144,6 @@ def main():
 
     #client = mqtt_pub.mqtt_init(client_name=pv().mqtt_client_name, broker=pv().mqtt_broker, port=pv().mqtt_port)
     #pv().mqtt_client = client
-
-    spi = ADC.init_spi_rw(chip, pv(),
-                                   speed=9600)  # get SPI device handle
-    motor.init_motors(chip)
-    (a, b, c) = motor.get_all_motors(chip)
-    logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
 
     pump_screen.scr_init_msg(pv())
 
