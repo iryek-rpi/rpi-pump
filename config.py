@@ -14,6 +14,7 @@ SETTING_NAME = SETTING_DIR + "setting.ini"
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 
+# motor port 초기화한 후에 콜해야함
 def init_setting(pv):
   co = configparser.ConfigParser()
 
