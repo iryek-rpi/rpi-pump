@@ -18,6 +18,6 @@ M12_AUTO_L = 12     #수위 하한
 * M15_PUMP2_CONFIG = 15   #pump2 on/off config
 * M16_PUMP3_CONFIG = 16   #pump3 on/off config
 
-* M18_PUMP_MODE_1 = 18  #pump1 제어모드 수동/자동
+* M18_PUMP_MODE_1 = 18  #pump1 제어모드 수동(0)/자동(1)
 * M19_PUMP_MODE_2 = 19  #pump2 제어모드 수동/자동
 * M20_PUMP_MODE_3 = 20  #pump3 제어모드 수동/자동
