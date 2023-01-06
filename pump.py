@@ -125,10 +125,9 @@ def main():
     pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
     pv().chip = chip
 
-    spi = ADC.init_spi_rw(chip, pv(),
-                                   speed=9600)  # get SPI device handle
     motor.init_motors(chip)
     (a, b, c) = motor.get_all_motors(chip)
+    print(f"After init: get_all_motors:({a}, {b}, {c})")
     logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
 
     config.init_setting(pv()) # motor port 초기화한 후에 콜해야함
@@ -181,6 +180,9 @@ def main():
     # modbus_server_serial.rtu_server_proc
     #   * Modbus 서버 프로세스
     #   * args={p_req}
+
+    spi = ADC.init_spi_rw(chip, pv(),
+                                   speed=9600)  # get SPI device handle
 
     # 수위 모니터링을 위한 스레드
     monitor_func = pump_monitor.tank_monitor
