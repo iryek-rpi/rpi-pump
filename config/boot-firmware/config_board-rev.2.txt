@@ -1,0 +1,19 @@
+#==============================================================================
+# use hardware uart for serial
+# Device names are assigned in the order of creation
+#       TXD RXD CTS RTS   Board Pins       Device Name
+# uart0  14  15            8  10            ttyAMAn
+# uart1  14  15            8  10            ttyS0   mini UART
+# uart2  0   1   2   3     27 28 (I2C)      ttyAMAn
+# uart3  4   5   6   7     7  29            ttyAMAn
+# uart4  8   9   10  11    24 21 (SPI0)     ttyAMAn
+# uart5  12  13  14  15    32 33 (gpio-fan) ttyAMAn
+#==============================================================================
+
+# 2차 보드에 serial port 할당 
+#   serial0=ttyAMA0
+#   serial1=ttyAMA1을 할당
+enable_uart=0
+dtoverlay=uart0
+dtoverlay=disable_bt
+dtoverlay=uart2
