@@ -1,0 +1,51 @@
+[all]
+kernel=vmlinuz
+cmdline=cmdline.txt
+initramfs initrd.img followkernel
+
+[pi4]
+max_framebuffers=2
+arm_boost=1
+
+[all]
+# Enable the audio output, I2C and SPI interfaces on the GPIO header
+dtparam=audio=on
+dtparam=spi=on
+
+# Comment out the following line if the edges of the desktop appear outside
+# the edges of your display
+disable_overscan=1
+
+# Config settings specific to arm64
+arm_64bit=1
+
+#========================================================================
+# use hardware uart for serial
+# Device names are assigned in the order of creation
+#       TXD RXD CTS RTS   Board Pins       Device Name
+# uart0  14  15            8  10            ttyAMAn
+# uart1  14  15            8  10            ttyS0
+# uart2  0   1   2   3     27 28 (I2C)      ttyAMAn
+# uart3  4   5   6   7     7  29            ttyAMAn
+# uart4  8   9   10  11    24 21 (SPI0)     ttyAMAn
+# uart5  12  13  14  15    32 33 (gpio-fan) ttyAMAn
+#========================================================================
+# 2차 보드에 serial port 할당 
+#   serial1=ttyAMA0
+#   serial2=ttyAMA1을 할당
+enable_uart=0
+dtoverlay=uart0
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+#========================================================================
+# I2C for RTC
+#========================================================================
+dtparam=i2c_vc=on   # i2c 0 for LCD & RTC on Pump
+dtoverlay=i2c-rtc,pcf85063a,i2c_csi_dsi
+
+#========================================================================
+# SPI for T-R-Click boards
+#========================================================================
+dtoverlay=spi0-2cs,cs0_pin=24,cs1_pin=25 
+

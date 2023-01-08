@@ -17,3 +17,16 @@ enable_uart=0
 dtoverlay=uart0
 dtoverlay=disable_bt
 dtoverlay=uart2
+
+
+
+# 2차 보드에 serial port 할당 
+# serial0=ttyS0
+# serial1=ttyAMA0
+
+enable_uart=1
+dtoverlay=uart0
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
