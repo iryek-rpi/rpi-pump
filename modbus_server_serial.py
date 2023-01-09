@@ -28,7 +28,8 @@ import pump_util as util
 # --------------------------------------------------------------------------- #
 # configure the service logging
 # --------------------------------------------------------------------------- #
-PORT = "/dev/serial2"
+#PORT = "/dev/serial2"
+PORT = "/dev/ttyAMA1"
 
 class PumpDataBlock(ds.ModbusSequentialDataBlock):
   """Creates a sequential modbus datastore."""
