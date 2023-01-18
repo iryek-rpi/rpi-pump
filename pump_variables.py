@@ -520,10 +520,11 @@ class PV():
 
   def return_last_or_v(self, v=0):
     if self.data:
-      logger.info(f"Returning previous level:{self.water_level}")
-      return self.data[-1][1]
+      _last_value = self.data[-1][1]
+      logger.info(f"Returning previous level self.data[-1][1]:{_last_value}")
+      return _last_value
     else:
-      logger.info(f"No available data. Returning {v}")
+      logger.info(f"No available data. Returning v:{v}")
       return v
 
   def append_data(self, ld):
