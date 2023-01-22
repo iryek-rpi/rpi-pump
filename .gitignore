@@ -130,3 +130,4 @@ dmypy.json
 rpi/systemd/data/2022-01-14-07-03-07.csv
 setting/setting.ini
 data/*.csv
+pump.sh
