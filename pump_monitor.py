@@ -70,7 +70,7 @@ def tank_monitor(**kwargs):
       f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate:.1f}"
   )  # invalid rate:{invalid_rate}")
 
-  (a, b, c) = motor.get_all_motors(chip)
+  (a, b, c) = motor.get_all_motors(chip, pv)
   logger.info("get_all_motors:(%d, %d, %d)", a, b, c)
 
   # 수위 입력이 없음
@@ -160,7 +160,7 @@ def tank_monitor(**kwargs):
 
   determine_motor_state_new(pv, chip)
 
-  (m0, m1, m2) = motor.get_all_motors(chip)
+  (m0, m1, m2) = motor.get_all_motors(chip, pv)
 
   pv.append_data([time_str, pv.water_level, m0, m1, m2, pv.source])
 

@@ -4,6 +4,7 @@ motor control module
 import lgpio
 import picologging as logging
 import pump_util as util
+import constant
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
@@ -39,33 +40,43 @@ def set_run_mode(chip, v):
   lgpio.gpio_write(chip, RUN_MODE_OUT, v)
 
 
-def get_all_motors(chip):
+def get_all_motors(chip, pv):
   """3대의 모터 상태를 (M2,M1,M0)로 리턴
   """
   #ms = [0, 0, 0]
-  ms0 = lgpio.gpio_read(chip, M0_IN)
-  ms1 = lgpio.gpio_read(chip, M1_IN)
-  ms2 = lgpio.gpio_read(chip, M2_IN)
+  if pv.source==constant.SOURCE_AI:
+    ms0 = lgpio.gpio_read(chip, M0_IN)
+    ms1 = lgpio.gpio_read(chip, M1_IN)
+    ms2 = lgpio.gpio_read(chip, M2_IN)
+  else:
+    s = pv.pump_state_plc
+    ms0 = s & 1
+    ms1 = s & 2
+    ms2 = s & 4
 
   return (ms0, ms1, ms2)
 
 
-def get_motor_state(chip, m):
+def get_motor_state(chip, m, pv):
   '''m=0,1,2'''
-  if m == 0:
-    return lgpio.gpio_read(chip, M0_IN)
-  elif m == 1:
-    return lgpio.gpio_read(chip, M1_IN)
-  elif m == 2:
-    return lgpio.gpio_read(chip, M2_IN)
+  if pv.source==constant.SOURCE_AI:
+    if m == 0:
+      return lgpio.gpio_read(chip, M0_IN)
+    elif m == 1:
+      return lgpio.gpio_read(chip, M1_IN)
+    elif m == 2:
+      return lgpio.gpio_read(chip, M2_IN)
+  else:
+    s = pv.pump_state_plc
+    return s & (2**m)
 
   return None
 
 
-def is_motor_running(chip):
+def is_motor_running(chip, pv):
   '''안쓰는 모터는 접점을 열어둬서 모터가 구동 안되는 것으로 인식하도록 해야 함'''
-  return get_motor_state(chip, 0) or get_motor_state(
-      chip, 1) or get_motor_state(chip, 2)
+  return get_motor_state(chip, 0, pv) or get_motor_state(
+      chip, 1, pv) or get_motor_state(chip, 2, pv)
 
 
 def set_motor_state(chip, m, on_off):

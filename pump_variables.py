@@ -207,15 +207,15 @@ class PV():
 
   @property
   def motor1_state(self):
-    return motor.get_motor_state(self.chip, 0)
+    return motor.get_motor_state(self.chip, 0, self)
 
   @property
   def motor2_state(self):
-    return motor.get_motor_state(self.chip, 1)
+    return motor.get_motor_state(self.chip, 1, self)
 
   @property
   def motor3_state(self):
-    return motor.get_motor_state(self.chip, 2)
+    return motor.get_motor_state(self.chip, 2, self)
 
   @property
   def modbus_id(self):
@@ -256,6 +256,10 @@ class PV():
   @setting_low.setter
   def setting_low(self, level):
     self._mbl[ma.M12_AUTO_L] = level
+
+  @property
+  def pump_state_plc(self):
+    return self._mbl[ma.M13_PUMP_STATE_PLC]
 
   @property
   def pump1_config(self):
@@ -302,7 +306,7 @@ class PV():
     mode=0,1
     '''
     self._mbl[ma.M18_PUMP_MODE_1+pump] = mode
-    _pump_state = motor.get_motor_state(self.chip, pump)
+    _pump_state = motor.get_motor_state(self.chip, pump, self)
 
     if mode == constant.PUMP_MODE_MANUAL:
       _pump_config = self.pump1_config
@@ -441,6 +445,8 @@ class PV():
         config.update_config(section='CONTROLLER',
                              key='AUTO_L',
                              value=values[i])
+      elif address + i == ma.M13_PUMP_STATE:
+        self._mbl[address + i] = values[i]
       elif address + i == ma.M14_PUMP1_CONFIG:
         self.pump1_config = values[i]
         config.update_config(section='MOTOR',

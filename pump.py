@@ -126,7 +126,7 @@ def main():
     pv().chip = chip
 
     motor.init_motors(chip)
-    (a, b, c) = motor.get_all_motors(chip)
+    (a, b, c) = motor.get_all_motors(chip, pv())
     print(f"After init: get_all_motors:({a}, {b}, {c})")
     logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
 
