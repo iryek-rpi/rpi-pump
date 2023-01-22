@@ -445,7 +445,7 @@ class PV():
         config.update_config(section='CONTROLLER',
                              key='AUTO_L',
                              value=values[i])
-      elif address + i == ma.M13_PUMP_STATE:
+      elif address + i == ma.M13_PUMP_STATE_PLC:
         self._mbl[address + i] = values[i]
       elif address + i == ma.M14_PUMP1_CONFIG:
         self.pump1_config = values[i]
