@@ -14,7 +14,8 @@ import time
 import multiprocessing as mp
 import signal
 
-import picologging as logging
+#import picologging as logging
+import logging
 import lgpio
 
 
@@ -44,6 +45,7 @@ import fan_control
 
 import config
 import mqtt_pub
+import constant
 
 #==============================================================================
 # 디버그용 로그 설정
@@ -94,15 +96,47 @@ def ignore(sig, frame):
 #signal.signal(signal.SIGINT, ctrl_c_handler)
 #signal.signal(signal.SIGHUP, ignore)
 
+def mqtt_thread_func(**kwargs):
+  '''logger 사용을 위해 pump.py에 정의'''
+  _pipe = kwargs['pipe']
+  pv = kwargs['pv']
+
+  logger.info(f'mqtt_thread:{pv.water_level}')
+  if pv.source == constant.SOURCE_SENSOR:
+    _pipe.send((pv.water_level, -1, pv.setting_low, pv.setting_high))
+  else:
+    _pipe.send((-1, pv.water_level, pv.setting_low, pv.setting_high))
+
 logger.info(f"=================================================")
 logger.info(f"START at {datetime.datetime.now()}")
 logger.info(f"=================================================")
 
+def delete_logs():
+  '''Delete log files from ./logs directory older than 2 days'''
+  now = datetime.datetime.now()
+  for f in Path('./logs').glob("*.log"):
+    if (now - datetime.datetime.fromtimestamp(f.stat().st_mtime)).days > 2:
+      f.unlink()
 
 #==============================================================================
 # main
 #==============================================================================
 def main():
+  delete_logs()
+
+  chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
+  logger.info("GPIO chip handle: %d", chip)
+  logger.info(f"GPIO chip info: {lgpio.gpio_get_chip_info(chip)}")
+
+  from pump_variables import PV
+  pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
+  pv().chip = chip
+
+  motor.init_motors(chip)
+  (a, b, c) = motor.get_all_motors(chip, pv())
+  print(f"After init: get_all_motors:({a}, {b}, {c})")
+  logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
+
   try:
     i2c_bus = 1  # 라즈베리파이 개발용 IO 보드에서는 1
     lcd_instance = Lcd(addr=0x27, bus=i2c_bus)
@@ -117,24 +151,22 @@ def main():
   #i2c_rtc = lgpio.i2c_open(10, I2C_RTC) # 10 for RTC bus both on pump & CM4IO board
 
   try:
-    chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
+#    for c in range(5):
+#      try:
+#        lgpio.gpiochip_close(c)
+#      except:
+#        pass
+
 
     lcd.instance = lcd_instance
 
-    from pump_variables import PV
-    pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
-    pv().chip = chip
-
-    motor.init_motors(chip)
-    (a, b, c) = motor.get_all_motors(chip, pv())
-    print(f"After init: get_all_motors:({a}, {b}, {c})")
-    logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
 
     config.init_setting(pv()) # motor port 초기화한 후에 콜해야함
 
     if not pv().device_role:
       pv().device_role = 'controller'
 
+    pv().mqtt_on = config.read_config('MQTT', 'MQTT_ON')
     pv().mqtt_timeout = config.read_config('MQTT', 'TIMEOUT')
     pv().mqtt_port = config.read_config('MQTT', 'PORT')
     pv().mqtt_broker = config.read_config('MQTT', 'BROKER')
@@ -184,11 +216,6 @@ def main():
     spi = ADC.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
 
-    # 수위 모니터링을 위한 스레드
-    monitor_func = pump_monitor.tank_monitor
-    if pv().device_role == "water-sensor":
-      monitor_func = pump_monitor.water_sensor_monitor
-
     mgr = mp.Manager()
     ns = mgr.Namespace()
     ev_req = mp.Event()
@@ -204,6 +231,11 @@ def main():
     train_proc.start()
 
     print(f"@@@@@@@ train_proc: {train_proc.pid}")
+
+    # 수위 모니터링을 위한 스레드
+    monitor_func = pump_monitor.tank_monitor
+    if pv().device_role == "water-sensor":
+      monitor_func = pump_monitor.water_sensor_monitor
 
     monitor = pump_thread.RepeatThread(interval=pv().setting_monitor_interval,
                                        execute=monitor_func,
@@ -249,7 +281,7 @@ def main():
     pipe_mqtt_sensor, pipe_mqtt_pub = mp.Pipe()
     mqtt_thread = pump_thread.RepeatThread(
                           interval=5,
-                          execute=mqtt_pub.mqtt_thread_func,
+                          execute=mqtt_thread_func,
                           kwargs={
                               'pipe': pipe_mqtt_sensor,
                               'pv': pv()
@@ -260,10 +292,10 @@ def main():
                                target=mqtt_pub.mqtt_pub_proc,
                                kwargs={
                                    'pipe_pub': pipe_mqtt_pub,
-                                   'mqtt_broker': "ubuntu1t.local",
-                                   'mqtt_port': 3881,
-                                   'mqtt_client_name': "client1",
-                                   'mqtt_topic': "topic1"
+                                   'mqtt_broker': pv().mqtt_broker,
+                                   'mqtt_port': int(pv().mqtt_port),
+                                   'mqtt_client_name': pv().mqtt_client_name, 
+                                   'mqtt_topic': pv().mqtt_topic,
                                })
     mqtt_pub_proc.start()
     logger.info(f"@@@@@@ mqtt_proc: {mqtt_pub_proc.pid}")
@@ -307,6 +339,7 @@ def main():
     #fan_proc.kill()
 
     util.save_data(pv=pv())
+    lgpio.gpiochip_close(chip)
 
 
   except KeyboardInterrupt:
@@ -316,37 +349,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-
-'''
-if __name__ == '__main__':
-  role = "controller"
-  for i, arg in enumerate(sys.argv):
-    if not i:
-      continue
-    arg = sys.argv[i]
-    l = arg.split('=')
-    if len(l)>1 and l[1]=="water-sensor":
-      role = l[1]
-  
-  main(role=role)
-'''
-
-
-'''
-#==============================================================================
-# Communication
-#==============================================================================
-PORT = 5999
-def comm():
-  address = ('localhost', port)     # family is deduced to be 'AF_INET'
-  listener = Listener(address)
-  conn = listener.accept()
-  print('connection accepted from', listener.last_accepted)
-  while True:
-    msg = conn.recv()
-    print("msg:",msg)
-    if msg == 'close':
-      conn.close()
-      break
-  listener.close()
-'''
