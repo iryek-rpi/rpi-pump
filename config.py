@@ -1,6 +1,7 @@
 import configparser
 import pathlib
-import picologging as logging
+#import picologging as logging
+import logging
 import ast
 
 import constant
@@ -61,8 +62,8 @@ def init_setting(pv):
     }
     co['MQTT'] = {
         'MQTT_ON': 1,  # 0
-        'TOPIC': 'ai_value',  # sensor_value
-        'CLIENT_NAME': 'AI',  # SENSOR
+        'TOPIC': 'TOPIC_PUMP',  # sensor_value
+        'CLIENT_NAME': 'PUMP',  # SENSOR
         'TIMEOUT': 10,
         'PORT': 1883,
         'BROKER': 'X230T.local'

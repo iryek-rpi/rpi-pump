@@ -14,7 +14,8 @@ import threading
 import datetime
 from datetime import timedelta
 
-import picologging as logging
+#import picologging as logging
+import logging
 import csv
 
 def get_time_str():
@@ -30,6 +31,7 @@ def get_time_str():
 LOG_FORMAT = '%(asctime)s [%(filename)s:%(lineno)d] %(message)s'
 
 MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
+MQTT_LOGFILE_NAME = f"./logs/{get_time_str()}_mqtt.log"
 MODBUS_CLIENT_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_client.log"
 MODBUS_SERVER_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_server.log"
 FAN_LOGFILE_NAME = f"./logs/{get_time_str()}_fan.log"
@@ -40,6 +42,7 @@ pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
 #logfile.touch(exist_ok=True)
 
 MAIN_LOGGER_NAME = "LOGGER_MAIN"
+MQTT_LOGGER_NAME = "LOGGER_MQTT"
 MODBUS_SERVER_LOGGER_NAME = "LOGGER_MODBUS_SERVER"
 MODBUS_CLIENT_LOGGER_NAME = "LOGGER_MODBUS_CLIENT"
 TRASITION_LOGGER_NAME = "transitions"

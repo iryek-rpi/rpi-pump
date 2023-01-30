@@ -5,7 +5,8 @@ Pymodbus Asyncio Server - asyncio_server_serial.py을 기반으로 작성
 # --------------------------------------------------------------------------- #
 # import the various server implementations
 # --------------------------------------------------------------------------- #
-import picologging as logging
+#import picologging as logging
+import logging
 import pathlib
 import asyncio
 
@@ -30,6 +31,51 @@ import pump_util as util
 # --------------------------------------------------------------------------- #
 #PORT = "/dev/serial2"
 PORT = "/dev/ttyAMA1"
+
+def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
+  """Modbus 서버 프로세스
+    """
+  pipe_req = kwargs['pipe_request']
+  modbus_id = kwargs['modbus_id']
+
+  logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME)
+  logger.setLevel(logging.DEBUG)
+
+  logger.debug(
+      f"Starting rtu_server_proc(modbus_id:{modbus_id})")
+  asyncio.run(run_server(pipe_req, modbus_id, logger))
+
+
+async def run_server(pipe_req, modbus_id, logger):
+  """Run server."""
+  holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req, logger)
+  store = ModbusSlaveContext(hr=holding_reg)
+  context = ModbusServerContext(slaves={modbus_id: store}, single=False)
+
+  # ----------------------------------------------------------------------- #
+  # initialize the server information
+  # If you don"t set this or any fields, they are defaulted to empty strings.
+  # ----------------------------------------------------------------------- #
+  identity = ModbusDeviceIdentification(
+      info_name={
+          "VendorName": "SMTech",
+          "ProductCode": "PU",
+          "VendorUrl": "http://forsmt.co.kr",
+          "ProductName": "AI Water Level Controller",
+          "ModelName": "SM-001",
+          "MajorMinorRevision": version.short(),
+      })
+
+  server = await StartSerialServer(context,
+                          framer=ModbusRtuFramer,
+                          identity=identity,
+                          port=PORT,
+                          timeout=1.0,
+                          baudrate=9600,
+                          autoreconnect=False)
+  return server
+
+
 
 class PumpDataBlock(ds.ModbusSequentialDataBlock):
   """Creates a sequential modbus datastore."""
@@ -89,51 +135,6 @@ class PumpDataBlock(ds.ModbusSequentialDataBlock):
     #start = address - self.address
     #self.values[start : start + len(values)] = values
 
-
-def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
-  """Modbus 서버 프로세스
-    """
-  pipe_req = kwargs['pipe_request']
-  modbus_id = kwargs['modbus_id']
-
-  logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME)
-  logger.setLevel(logging.DEBUG)
-
-  logger.debug(
-      f"Starting rtu_server_proc(modbus_id:{modbus_id})")
-  asyncio.run(run_server(pipe_req, modbus_id, logger))
-
-
-async def run_server(pipe_req, modbus_id, logger):
-  """Run server."""
-  holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req, logger)
-  store = ModbusSlaveContext(hr=holding_reg)
-  context = ModbusServerContext(slaves={modbus_id: store}, single=False)
-
-  # ----------------------------------------------------------------------- #
-  # initialize the server information
-  # If you don"t set this or any fields, they are defaulted to empty strings.
-  # ----------------------------------------------------------------------- #
-  identity = ModbusDeviceIdentification(
-      info_name={
-          "VendorName": "SMTech",
-          "ProductCode": "PU",
-          "VendorUrl": "http://forsmt.co.kr",
-          "ProductName": "AI Water Level Controller",
-          "ModelName": "SM-001",
-          "MajorMinorRevision": version.short(),
-      })
-
-  server = await StartSerialServer(context,
-                          framer=ModbusRtuFramer,
-                          identity=identity,
-                          port=PORT,
-                          #timeout=.005,
-                          timeout=1.0,
-                          baudrate=9600,
-                          #baudrate=115200,
-                          autoreconnect=False)
-  return server
 
 
 if __name__ == "__main__":

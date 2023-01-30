@@ -1,7 +1,8 @@
 import time
 import datetime
 
-import picologging as logging
+#import picologging as logging
+import logging
 
 import lgpio
 from pump_lcd import lcd

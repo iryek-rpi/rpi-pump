@@ -6,7 +6,8 @@ from re import findall, match
 from subprocess import check_output
 from os.path import exists
 
-import picologging as logging
+#import picologging as logging
+import logging
 
 import pump_util as util
 

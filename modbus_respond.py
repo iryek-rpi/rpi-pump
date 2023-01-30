@@ -1,4 +1,5 @@
-import picologging as logging
+#import picologging as logging
+import logging
 
 import modbus_address as ma
 import pump_variables

@@ -1,5 +1,6 @@
 import time
-import picologging as logging
+#import picologging as logging
+import logging
 
 import lgpio
 import spidev

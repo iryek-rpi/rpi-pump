@@ -8,7 +8,8 @@ import signal
 import pump_util as util
 
 from gpiozero import OutputDevice
-import picologging as logging
+#import picologging as logging
+import logging
 
 
 ON_THRESHOLD = 78

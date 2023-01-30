@@ -3,7 +3,8 @@ from gpiozero.pins.lgpio import LGPIOFactory
 from gpiozero import Button
 from time import sleep
 
-import picologging as logging
+#import picologging as logging
+import logging
 
 #from pump_lcd import lcd_string
 

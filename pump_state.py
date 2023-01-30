@@ -3,8 +3,8 @@ from transitions import *
 from transitions.extensions import MachineFactory
 
 # transitions 라이브러리의 log를 출력하기 위해 logging 사용 
-import picologging as logging
-#import logging
+#import picologging as logging
+import logging
 
 import pump_util as util
 
