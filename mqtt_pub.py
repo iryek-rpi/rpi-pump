@@ -1,36 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import picologging as logging
+#import picologging as logging
+import logging
 import paho.mqtt.publish as publish
 from paho import mqtt
 
 from pump_variables import PV, pv
 import pump_util as util
 import config
+import constant
 
-logger = logging.getLogger(util.MAIN_LOGGER_NAME)
-
-
-def mqtt_publish(topic, level, client):
-  #client.publish.single(topic=topic, payload=level, hostname=broker)
-  client.publish(topic=topic, payload=level)
-  logger.info(f"mqtt topic:{topic} payload:{level}")
-  #publish.multiple(msgs, hostname=host)
-
+logger = util.make_logger(name=util.MQTT_LOGGER_NAME, filename=util.MQTT_LOGFILE_NAME)
 
 def mqtt_init(client_name, broker, port):
   client = mqtt.client.Client(client_name)
   client.connect(broker, int(port))
   return client
-
-
-def mqtt_thread_func(**kwargs):
-  _pipe = kwargs['pipe']
-  pv = kwargs['pv']
-
-  _pipe.send(pv.water_level)
-
 
 def mqtt_pub_proc(**kwargs):
   """mqtt publisher 프로세스
@@ -47,6 +33,7 @@ def mqtt_pub_proc(**kwargs):
   _topic = kwargs['mqtt_topic']
 
   client = mqtt.client.Client(_client_name)
+  logger.info(f"MQTT client:{_client_name}:{client}")
   r = None
   try:
     r = client.connect(_broker, int(_port))
@@ -56,6 +43,7 @@ def mqtt_pub_proc(**kwargs):
     return
 
   while 1:
-    level = _pipe.recv()
-    client.publish(topic=_topic, payload=level)
-    logger.info(f"mqtt topic:{_topic} payload:{level}")
+    (level_sensor, level_ai, setting_low, setting_high) = _pipe.recv()
+    msg = f"{level_sensor} {level_ai} {setting_low} {setting_high}"
+    client.publish(topic=_topic, payload=msg)
+    logger.info(f"mqtt topic:{_topic} payload:{msg}")
