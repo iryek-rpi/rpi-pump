@@ -5,7 +5,8 @@ import os
 import pandas as pd
 import csv
 
-import picologging as logging
+#import picologging as logging
+import logging
 
 import constant
 import pump_util as util
@@ -76,7 +77,8 @@ class PV():
     self.lock = threading.Lock()
 
     # setting_monitor_interval 초기화 될 때 함께 초기화 됨)
-    self._setting_max_train = 518400  # 3600*24*30 (1초 샘플링일 경우 30일)
+    self._setting_max_train = constant.MAX_TRAIN_SAMPLES
+    #3600 * 24 * 7 # 7일 # 3600*24*30 (1초 샘플링일 경우 30일)
 
     self.setting_4ma_ref = 700  # 4mA ADC 출력
     self.setting_20ma_ref = 4000  # 4000  # 20mA ADC 출력
@@ -95,8 +97,7 @@ class PV():
     self.setting_tolerance_to_sensor = 10  #600  # 수위계 입력 모드로 전환하기 위한 입력 유지 time(sec)
     self.setting_input_rate = 0.8  # tolerance 내 입력 비율
     self.setting_adc_ignore_spike = 100  # 이 값 이상의 급격한 입력 변동은 일시적인 것으로 간주하고 무시함
-
-    #
+    
     self.setting_adc_avg_interval = 10  # 평균을 계산할 adc 입력 기간(sec)
     self.adc_avg_count = self.setting_adc_avg_interval // self._setting_monitor_interval
     if self.adc_avg_count < 1:
@@ -360,12 +361,12 @@ class PV():
     self._mbl[ma.M25_MQTT_ON] = n
 
   @property
-  def mqtt_topic_ai(self):
-    return self._mbl[ma.M26_MQTT_TOPIC_AI]
+  def mqtt_topic(self):
+    return self._mbl[ma.M26_MQTT_TOPIC]
 
-  @mqtt_topic_ai.setter
-  def mqtt_topic_ai(self, n):
-    self._mbl[ma.M26_MQTT_TOPIC_AI] = n
+  @mqtt_topic.setter
+  def mqtt_topic(self, n):
+    self._mbl[ma.M26_MQTT_TOPIC] = n
 
   @property
   def mqtt_timeout(self):
