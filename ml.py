@@ -7,11 +7,13 @@ import threading
 from pprint import pp
 
 import pandas as pd
-import picologging as logging
+#import picologging as logging
+import logging
 import darts
 from darts import TimeSeries
 from darts.models import NaiveSeasonal
 
+import constant
 import pump_util as util
 
 #from prophet import Prophet
@@ -42,21 +44,30 @@ def train_proc(**kwargs):
     logger.info("\n### Event set in train process")
     data = ns.value
     df = pd.DataFrame(data, columns=['time','level','m0','m1','m2','source'])
+    df = df.drop(df.columns[[2, 3, 4, 5]], axis=1)
     df['time'] = pd.to_datetime(df['time'])
+    df = df.resample('1S', on='time').mean()
+    # limit_direction을 forward로 지정해야만 interpolate()가 제대로 동작한다.
+    df = df.interpolate(method='linear', limit_direction='forward')
+    logger.info(df)
 
-    logger.info(f"### Training data received: df[time].dtype:{df['time'].dtype}")
-    #logger.info(df)
-
-    st = TimeSeries.from_dataframe(df=df, time_col='time', value_cols=['level'], fill_missing_dates=True, freq='1S')
+    st = TimeSeries.from_dataframe(df=df, 
+      #time_col='time', 
+      value_cols=['level'], 
+      fill_missing_dates=True, 
+      freq='1S')
     logger.info("TimeSeries of Training data ================")
     logger.info(st)
+
     logger.info("model.fit()")
     model.fit(st)
     len_data = len(data)
-    if len_data > 3600 * 3:
-      len_data = 3600 * 3
-    logger.info(f"Start training for future {len_data*2} samples")
-    forecast = model.predict(len_data*2)
+    if len_data > constant.MAX_PREDICT_SAMPLES // 2: 
+      len_data = constant.MAX_PREDICT_SAMPLES 
+    else:
+      len_data = len_data * 2
+    logger.info(f"Start training for future {len_data} samples")
+    forecast = model.predict(len_data)
     #logger.info("\nBefore shift forecast ==========================")
     #logger.info(forecast)
     #logger.info("\nAfter shift forecast ==========================")
@@ -70,8 +81,8 @@ def train_proc(**kwargs):
     #logger.info(forecast)
     logger.info(f"Predicted:{len(forecast)} samples")
     df = forecast.pd_dataframe()
+    logger.info(df)
     ll=[[i,v[0]] for i, v in zip(df.index.strftime("%Y-%m-%d %H:%M:%S"), df.values)]
-
 
     ns.value = ll
 

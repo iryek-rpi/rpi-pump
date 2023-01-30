@@ -8,7 +8,8 @@ import datetime
 import signal
 import threading
 
-import picologging as logging
+#import picologging as logging
+import logging
 
 import lgpio
 import spidev
@@ -28,7 +29,7 @@ import ADC
 
 logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
-PUMP_INCREASE = 2  # pump 1개가 on 되어 있을 때 1초에 증가되는 수위 %
+PUMP_INCREASE = 0.1  # pump 1개가 on 되어 있을 때 1초에 증가되는 수위 %
 
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
@@ -53,7 +54,7 @@ def tank_monitor(**kwargs):
 
   level_rate = pv.water_level_rate(adc_level)
   pv.sensor_level = level_rate
-  _last_stored_level = pv.return_last_or_v(v=0)
+  _last_stored_level = pv.return_last_or_v(v=level_rate)
 
   #if pv.previous_adc == 0 or (abs(pv.previous_adc-adc_level)>30) or (not pv.no_input_starttime):
   #if pv.previous_adc == 0  or (not pv.no_input_starttime):
@@ -74,7 +75,7 @@ def tank_monitor(**kwargs):
   logger.info("get_all_motors:(%d, %d, %d)", a, b, c)
 
   # 수위 입력이 없음
-  if (abs(adc_level - pv.previous_adc) < 30) or (not adc_level):
+  if (abs(pv.water_level_rate(adc_level) - pv.water_level_rate(pv.previous_adc)) < 0.2) or (not adc_level):
     td = time_now - pv.no_input_starttime
     logger.info(
         f"td.seconds:{td.seconds} time_now:{time_now} no_input_time:{pv.no_input_starttime} Tolerance:{pv.setting_tolerance_to_ai}"
@@ -105,6 +106,7 @@ def tank_monitor(**kwargs):
             pv.req_sent = True
             logger.info("Case#1 : Request Training. Returning previous level...")
           pv.water_level = _last_stored_level
+          logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
         elif ev_ret.is_set():
           ev_ret.clear()
           pv.req_sent = False
@@ -119,6 +121,7 @@ def tank_monitor(**kwargs):
           logger.info("Forecast received")
           #logger.info(pv.future_level)
           pv.water_level = pv.get_future_level(time_str)
+          logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
           logger.info(f"Got training result! - fl: {pv.water_level}"
                      )  #\nFuture Level: {pv.future_level}")
         else:
@@ -126,24 +129,37 @@ def tank_monitor(**kwargs):
               f'No case: req_sent:{pv.req_sent} ev_ret.is_set()={ev_ret.is_set()}'
           )
           pv.water_level = _last_stored_level
+          logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
       else:  # get prediction from ML model
         logger.info(f"Got stored future level: {fl}")
         pv.water_level = fl
+        logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
         #pv.water_level = level_rate  #pv.filter_data(level_rate)
     else:
-      pv.water_level = level_rate  #pv.filter_data(level_rate)
-      logger.info("less than tolerance")
+      if level_rate>0:
+        pv.water_level = level_rate  #pv.filter_data(level_rate)
+      logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
+      logger.info(f"less than tolerance: {pv.setting_tolerance_to_ai}")
+      
     _num_busy_motors = len(pv.busy_motors)
-    if pv.water_level <= _last_stored_level:
-          _diff = _last_stored_level-pv.water_level
-          if _diff>10: #너무 큰 값은 배제
+    _diff = pv.water_level - _last_stored_level
+    if pv.source == constant.SOURCE_AI:
+      if _num_busy_motors:
+        if _diff <= 0:
+          logger.info(f'water_level:{pv.water_level:.1f} _last_stored_level:{_last_stored_level:.1f} _diff:{_diff:.1f}  _num_busy_motors:{_num_busy_motors}')
+          if _diff>1: #너무 큰 값은 배제
             _diff=0
           if _num_busy_motors==1:
-            pv.water_level = PUMP_INCREASE + _diff
+            pv.water_level += PUMP_INCREASE + _diff
           elif _num_busy_motors==2:
             pv.water_level += PUMP_INCREASE * 2 + _diff
           elif _num_busy_motors==3:
             pv.water_level += PUMP_INCREASE * 3 + _diff
+          logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f} _diff:{_diff:.1f}  _num_busy_motors:{_num_busy_motors}")
+      else: # 모터가 동작중이 아님
+        if _diff > 0.1 and _diff < 0.5: # 수위가 높아짐
+          logger.info(f'water_level:{pv.water_level:.1f} _last_stored_level:{_last_stored_level:.1f} _diff:{_diff:.1f}  _num_busy_motors:{_num_busy_motors}')
+          pv.water_level = _last_stored_level # 수위를 이전 수위로 변경
   else:  # 수위 입력이 있음
     # 예측모드에서 수위계모드로 변경
     logger.info(
@@ -157,7 +173,9 @@ def tank_monitor(**kwargs):
     pv.previous_adc = adc_level
     pv.no_input_starttime = time_now
     pv.water_level = level_rate  #pv.filter_data(level_rate)
+    logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
 
+  logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
   determine_motor_state_new(pv, chip)
 
   (m0, m1, m2) = motor.get_all_motors(chip, pv)
