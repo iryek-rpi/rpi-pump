@@ -12,3 +12,6 @@ PUMP_MODE_AUTO = 1
 # PLC와 연동해서 동작할 지, 단독으로 동작할 지
 MODE_PLC = 0  # PLC에서 pump control
 MODE_SOLO = 1  # 수위조절기에서 pump control
+
+MAX_TRAIN_SAMPLES = 3600 * 6
+MAX_PREDICT_SAMPLES = 3600 * 24 
