@@ -185,6 +185,8 @@ def main():
     #  pv().model = ml.read_model("pump_model.json")
 
     # state machine 초기화
+    logging.getLogger('transitions').setLevel(logging.CRITICAL)
+
     sm_lcd = LCDStateMachine(name='LCDStateMachine', pv=pv())
     sm_level = SetLevelStateMachine(name='SetLevelStateMachine', pv=pv())
     sm_time = SetTimeStateMachine(name='SetTimeStateMachine', pv=pv())
