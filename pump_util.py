@@ -53,6 +53,7 @@ def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
   """Make a custom logger"""
   logger = logging.getLogger(name)
   logger.setLevel(level)
+  #logger.setLevel(logging.CRITICAL)
 
   formatter = logging.Formatter(format, datefmt="%Y-%m-%d:%H:%M:%S")
 

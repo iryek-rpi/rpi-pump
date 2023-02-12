@@ -32,6 +32,10 @@ import pump_util as util
 #PORT = "/dev/serial2"
 PORT = "/dev/ttyAMA1"
 
+#logging.basicConfig()
+#logger = logging.getLogger()
+#logger.setLevel(logging.DEBUG)
+
 def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
   """Modbus 서버 프로세스
     """
@@ -43,6 +47,9 @@ def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
 
   logger.debug(
       f"Starting rtu_server_proc(modbus_id:{modbus_id})")
+
+#  global logger
+
   asyncio.run(run_server(pipe_req, modbus_id, logger))
 
 
