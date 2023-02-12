@@ -43,8 +43,7 @@ def tank_monitor(**kwargs):
   ev_req = kwargs['ev_req']
   ev_ret = kwargs['ev_ret']
 
-  logger.info("\n")
-  logger.info("<<< Entering pump_monitor() ===========================")
+  logger.info("\n<<< Entering pump_monitor() ===========================")
 
   time_now = datetime.datetime.now()
   time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")

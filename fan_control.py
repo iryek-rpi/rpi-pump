@@ -53,10 +53,9 @@ def get_temp():
         raise RuntimeError('Could not parse temperature output.') from e
 
 def fan_proc(**kwargs):
-    logger = util.make_logger(name=util.FAN_LOGGER_NAME, filename=util.FAN_LOGFILE_NAME)
+    logger = util.make_logger(name=util.FAN_LOGGER_NAME, filename=util.FAN_LOGFILE_NAME, level=logging.INFO)
 
     logger.info(f"############## fan_proc: {os.getpid()}")
-    logger.setLevel(logging.CRITICAL)
 
     global is_shutdown 
     
@@ -69,10 +68,10 @@ def fan_proc(**kwargs):
         temp = get_temp()
 
         if temp > ON_THRESHOLD and not fan.value:
-            logger.info(f"{temp} Fan On")
+            logger.debug(f"{temp} Fan On")
             fan.on()
         elif fan.value and temp<OFF_THRESHOLD:
-            logger.info(f"{temp} Fan Off")
+            logger.debug(f"{temp} Fan Off")
             fan.off()
         #else:
         #    logger.info(f"Temperature: {temp} Continue Fan State")

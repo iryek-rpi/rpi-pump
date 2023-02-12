@@ -31,7 +31,7 @@ model = None
 def train_proc(**kwargs):
   global model 
 
-  logger = util.make_logger(name=util.TRAIN_LOGGER_NAME, filename=util.TRAIN_LOGFILE_NAME)
+  logger = util.make_logger(name=util.TRAIN_LOGGER_NAME, filename=util.TRAIN_LOGFILE_NAME, level=logging.INFO)
   if not model:
     model = NaiveSeasonal(K=12)
 

@@ -101,7 +101,7 @@ def mqtt_thread_func(**kwargs):
   _pipe = kwargs['pipe']
   pv = kwargs['pv']
 
-  logger.info(f'mqtt_thread:{pv.water_level}')
+  logger.debug(f'mqtt_thread:{pv.water_level}')
   if pv.source == constant.SOURCE_SENSOR:
     _pipe.send((pv.water_level, -1, pv.setting_low, pv.setting_high))
   else:

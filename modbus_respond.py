@@ -17,7 +17,7 @@ def respond(**kwargs):
   p_respond = kwargs['pipe']
   pv: pump_variables.PV = kwargs['pv']
 
-  logger = util.make_logger(name=util.MODBUS_CLIENT_LOGGER_NAME, filename=util.MODBUS_CLIENT_LOGFILE_NAME)
+  logger = util.make_logger(name=util.MODBUS_CLIENT_LOGGER_NAME, filename=util.MODBUS_CLIENT_LOGFILE_NAME, level=logging.DEBUG)
   logger.info(f"Starting respond thread")
   while 1:
     logger.info(f"Waiting for msg from...")

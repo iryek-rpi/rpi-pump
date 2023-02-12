@@ -49,30 +49,29 @@ TRASITION_LOGGER_NAME = "transitions"
 FAN_LOGGER_NAME = "LOGGER_FAN"
 TRAIN_LOGGER_NAME = "LOGGER_TRAIN"
 
-def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
+def make_logger(name, filename=None, _format=LOG_FORMAT, level=logging.CRITICAL):
   """Make a custom logger"""
-  logger = logging.getLogger(name)
-  logger.setLevel(level)
-  #logger.setLevel(logging.CRITICAL)
+  _logger = logging.getLogger(name)
+  _logger.setLevel(level)
+  #_logger.setLevel(logging.CRITICAL)
 
-  formatter = logging.Formatter(format, datefmt="%Y-%m-%d:%H:%M:%S")
+  formatter = logging.Formatter(_format, datefmt="%Y-%m-%d:%H:%M:%S")
 
   console_handler = logging.StreamHandler()
   console_handler.setLevel(level)
   console_handler.setFormatter(formatter)
 
-  logger.addHandler(console_handler)
+  _logger.addHandler(console_handler)
 
   if filename:
     file_handler = logging.FileHandler(filename)
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    _logger.addHandler(file_handler)
 
-  return logger
+  return _logger
 
-print("make_logger")
-logger = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME)
+logger = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME, level=logging.INFO)
 
 def save_data(**kwargs):
   pv = kwargs['pv']

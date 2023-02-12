@@ -42,10 +42,9 @@ def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
   pipe_req = kwargs['pipe_request']
   modbus_id = kwargs['modbus_id']
 
-  logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME)
-  logger.setLevel(logging.DEBUG)
+  logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME, level=logging.DEBUG)
 
-  logger.debug(
+  logger.info(
       f"Starting rtu_server_proc(modbus_id:{modbus_id})")
 
 #  global logger

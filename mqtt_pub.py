@@ -11,7 +11,7 @@ import pump_util as util
 import config
 import constant
 
-logger = util.make_logger(name=util.MQTT_LOGGER_NAME, filename=util.MQTT_LOGFILE_NAME)
+logger = util.make_logger(name=util.MQTT_LOGGER_NAME, filename=util.MQTT_LOGFILE_NAME, level=logging.INFO)
 
 def mqtt_init(client_name, broker, port):
   client = mqtt.client.Client(client_name)
