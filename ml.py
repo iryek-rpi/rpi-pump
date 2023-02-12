@@ -1,12 +1,9 @@
-import sys
-import time
-import datetime
-import multiprocessing as mp
+import os
 from multiprocessing.synchronize import Event
-import threading
 from pprint import pp
 
 import pandas as pd
+import csv
 #import picologging as logging
 import logging
 import darts
@@ -49,15 +46,32 @@ def train_proc(**kwargs):
     df = df.resample('1S', on='time').mean()
     # limit_direction을 forward로 지정해야만 interpolate()가 제대로 동작한다.
     df = df.interpolate(method='linear', limit_direction='forward')
-    logger.info(df)
+    #logger.info(df)
+
+    ts = util.get_time_str()
+    fname = os.path.join('./logs/', ts + '_data.csv')
+    try:
+      with open(fname, 'w') as f:
+        w = csv.writer(f)
+        w.writerows(df)
+    except:
+      logger.info("Error save water level data")
 
     st = TimeSeries.from_dataframe(df=df, 
       #time_col='time', 
       value_cols=['level'], 
       fill_missing_dates=True, 
       freq='1S')
-    logger.info("TimeSeries of Training data ================")
-    logger.info(st)
+    #logger.info("TimeSeries of Training data ================")
+    #logger.info(st)
+
+    fname = os.path.join('./logs/', ts + '_timeseries.csv')
+    try:
+      with open(fname, 'w') as f:
+        w = csv.writer(f)
+        w.writerows(st)
+    except:
+      logger.info("Error save Time Series data")
 
     logger.info("model.fit()")
     model.fit(st)
@@ -81,7 +95,16 @@ def train_proc(**kwargs):
     #logger.info(forecast)
     logger.info(f"Predicted:{len(forecast)} samples")
     df = forecast.pd_dataframe()
-    logger.info(df)
+    #logger.info(df)
+
+    fname = os.path.join('./logs/', ts + '_predict.csv')
+    try:
+      with open(fname, 'w') as f:
+        w = csv.writer(f)
+        w.writerows(df)
+    except:
+      logger.info("Error save predict data")
+
     ll=[[i,v[0]] for i, v in zip(df.index.strftime("%Y-%m-%d %H:%M:%S"), df.values)]
 
     ns.value = ll
