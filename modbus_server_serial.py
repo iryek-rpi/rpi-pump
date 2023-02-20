@@ -11,7 +11,7 @@ import pathlib
 import asyncio
 
 from pymodbus.version import version
-from pymodbus.server.async_io import StartSerialServer
+from pymodbus.server.async_io import StartAsyncSerialServer
 from pymodbus.device import ModbusDeviceIdentification
 
 from pymodbus.datastore import ModbusSlaveContext
@@ -72,11 +72,11 @@ async def run_server(pipe_req, modbus_id, logger):
           "MajorMinorRevision": version.short(),
       })
 
-  server = await StartSerialServer(context,
-                          framer=ModbusRtuFramer,
+  server = await StartAsyncSerialServer(context=context,
                           identity=identity,
+                          framer=ModbusRtuFramer,
                           port=PORT,
-                          timeout=1.0,
+                          timeout=3.0,
                           baudrate=9600,
                           autoreconnect=False)
   return server
