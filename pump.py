@@ -38,7 +38,8 @@ import pump_thread
 import motor
 import ADC
 
-import modbus_server_serial_sync
+#import modbus_server_serial_sync
+import modbus_server_serial
 import modbus_respond
 
 import fan_control
@@ -272,7 +273,8 @@ def main():
     logger.info("modbus_id:%d", pv().modbus_id)
     # Modbus 통신을 위한 프로세스
     comm_proc = mp.Process(name="Modbus Server",
-                           target=modbus_server_serial_sync.rtu_server_proc,
+                           #target=modbus_server_serial_sync.rtu_server_proc,
+                           target=modbus_server_serial.rtu_server_proc,
                            kwargs={
                                'pipe_request': p_req,
                                'modbus_id': pv().modbus_id
