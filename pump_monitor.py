@@ -7,6 +7,7 @@ from time import sleep
 import datetime
 import signal
 import threading
+import random
 
 #import picologging as logging
 import logging
@@ -31,10 +32,14 @@ logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 PUMP_INCREASE = 0.1  # pump 1개가 on 되어 있을 때 1초에 증가되는 수위 %
 
+adc0_start = None  # for simulation
+
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
   RepeatThread에서 주기적으로 호출되어 수위 입력을 처리함
   """
+  global adc0_start
+
   chip = kwargs['chip']
   spi = kwargs['spi']
   sm = kwargs['sm']
@@ -50,6 +55,21 @@ def tank_monitor(**kwargs):
   adc_level = ADC.check_water_level(chip, spi)
   if adc_level < 300:  #pv.adc_invalid_rate:
     adc_level = 0
+
+  elapsed_time = int(time.time() - pv.start_time)//60
+  logger.info(f"elapsed_time:{elapsed_time} adc0_start:{adc0_start}")
+  if (not adc0_start) and (elapsed_time>random.randint(12,30)):
+    adc_level=0
+    adc0_start = time.time()
+    logger.info(f"adc0_start:{adc0_start}")
+  elif adc0_start:
+    if int((time.time()-adc0_start))>random.randint(3,7):
+      adc0_start = None
+      pv.start_time = time.time()
+      logger.info(f"adc0_start:{adc0_start} start_time:{pv.start_time}")
+    else:
+      adc_level=0
+      logger.info(f"adc0_start:{adc0_start}")
 
   level_rate = pv.water_level_rate(adc_level)
   pv.sensor_level = level_rate

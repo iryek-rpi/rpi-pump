@@ -68,6 +68,7 @@ class PV():
     self.busy_motors = []
 
     self.req_sent = False  # training request flag
+    self.start_time = None  # program 시작 시간
     self.no_input_starttime = None  # 입력이 안들어오기 시각한 시간
     self.previous_adc = None  # 이전 ADC reading 값
     self.data = []

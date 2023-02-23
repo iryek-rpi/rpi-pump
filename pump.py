@@ -131,6 +131,7 @@ def main():
 
   from pump_variables import PV
   pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
+  pv().start_time = time.time()
   pv().chip = chip
 
   motor.init_motors(chip)
