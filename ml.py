@@ -51,9 +51,7 @@ def train_proc(**kwargs):
     ts = util.get_time_str()
     fname = os.path.join('./logs/', ts + '_data.csv')
     try:
-      with open(fname, 'w') as f:
-        w = csv.writer(f)
-        w.writerows(df)
+      df.to_csv(fname)
     except:
       logger.info("Error save water level data")
 
@@ -67,9 +65,7 @@ def train_proc(**kwargs):
 
     fname = os.path.join('./logs/', ts + '_timeseries.csv')
     try:
-      with open(fname, 'w') as f:
-        w = csv.writer(f)
-        w.writerows(st)
+      st.pd_dataframe().to_csv(fname)
     except:
       logger.info("Error save Time Series data")
 
@@ -99,9 +95,7 @@ def train_proc(**kwargs):
 
     fname = os.path.join('./logs/', ts + '_predict.csv')
     try:
-      with open(fname, 'w') as f:
-        w = csv.writer(f)
-        w.writerows(df)
+      df.to_csv(fname)
     except:
       logger.info("Error save predict data")
 
