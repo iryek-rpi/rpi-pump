@@ -46,9 +46,9 @@ M16_PUMP3_CONFIG = 16   #pump3 on/off
 
 M17_SPARE = 17
 
-M18_PUMP_MODE_1 = 18  #pump1 제어모드 수동/자동
-M19_PUMP_MODE_2 = 19  #pump2 제어모드 수동/자동
-M20_PUMP_MODE_3 = 20  #pump3 제어모드 수동/자동
+M18_PUMP_MODE_1 = 18  #pump1 제어모드 수동(0)/자동
+M19_PUMP_MODE_2 = 19  #pump2 제어모드 수동(0)/자동
+M20_PUMP_MODE_3 = 20  #pump3 제어모드 수동(0)/자동
 
 M21_SPARE = 21
 M22_SPARE = 22
