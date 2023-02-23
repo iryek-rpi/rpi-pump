@@ -67,8 +67,13 @@ def tank_monitor(**kwargs):
     pv.no_input_starttime = time_now
 
   logger.info(
-      f"ADC:{adc_level} previous_adc:{pv.previous_adc} level_rate:{level_rate:.1f}"
+      f"ADC:{adc_level} level_rate:{level_rate:.1f}" 
   )  # invalid rate:{invalid_rate}")
+
+  logger.info(
+      f"previous_adc:{pv.previous_adc} previous_rate:{pv.water_level_rate(pv.previous_adc):.1f}" 
+  )  # invalid rate:{invalid_rate}")
+  logger.info(f"no_input_starttime:{pv.no_input_starttime}")
 
   (a, b, c) = motor.get_all_motors(chip, pv)
   logger.info("get_all_motors:(%d, %d, %d)", a, b, c)
@@ -138,7 +143,7 @@ def tank_monitor(**kwargs):
       if level_rate>0:
         pv.water_level = level_rate  #pv.filter_data(level_rate)
       logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
-      logger.info(f"less than tolerance: {pv.setting_tolerance_to_ai}")
+      logger.info(f"less than tolerance: {td.seconds}<{pv.setting_tolerance_to_ai}")
       
     _num_busy_motors = len(pv.busy_motors)
     _diff = pv.water_level - _last_stored_level
