@@ -63,7 +63,7 @@ def tank_monitor(**kwargs):
     adc0_start = time.time()
     logger.info(f"adc0_start:{adc0_start}")
   elif adc0_start:
-    if int((time.time()-adc0_start))//60 > random.randint(3,12):
+    if int((time.time()-adc0_start))//60 > random.randint(6,18):
       adc0_start = None
       pv.start_time = time.time()
       logger.info(f"adc0_start:{adc0_start} start_time:{pv.start_time}")
