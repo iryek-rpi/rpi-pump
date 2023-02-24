@@ -40,6 +40,7 @@ def tank_monitor(**kwargs):
   RepeatThread에서 주기적으로 호출되어 수위 입력을 처리함
   """
   global adc0_start
+  global adc0_duration
 
   chip = kwargs['chip']
   spi = kwargs['spi']
