@@ -116,7 +116,21 @@ def set_motor_state(chip, m, on_off):
   print(f"SET MOTOR{m} = {on_off}")
 
 
-def set_all_motors(chip, m):
+def set_all_motors(chip, on_off):
+  """모든 모터 상태를 설정
+  """
+  m = get_all_motors(chip)
+  print(f"{m} = get_all_motors(chip={chip})")
+
+  lgpio.gpio_write(chip, M0_OUT, on_off)
+  lgpio.gpio_write(chip, M1_OUT, on_off)
+  lgpio.gpio_write(chip, M2_OUT, on_off)
+
+  m = get_all_motors(chip)
+  print(f"{m} = get_all_motors(chip={chip})")
+
+
+def set_each_motors(chip, m):
   a, b, c = m
   lgpio.gpio_write(chip, M0_OUT, a)
   lgpio.gpio_write(chip, M1_OUT, b)
