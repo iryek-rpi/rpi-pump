@@ -33,6 +33,7 @@ logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 PUMP_INCREASE = 0.1  # pump 1개가 on 되어 있을 때 1초에 증가되는 수위 %
 
 adc0_start = None  # for simulation
+adc0_duration = 0  # for simulation
 
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
@@ -57,14 +58,16 @@ def tank_monitor(**kwargs):
     adc_level = 0
 
   elapsed_time = int(time.time() - pv.start_time)//60
-  logger.info(f"elapsed_time:{elapsed_time} adc0_start:{adc0_start}")
+  logger.info(f"elapsed_time:{elapsed_time} adc0_start:{adc0_start} adc0_duration:{adc0_duration}")
   if (not adc0_start) and (elapsed_time>random.randint(12,30)):
     adc_level=0
     adc0_start = time.time()
-    logger.info(f"adc0_start:{adc0_start}")
+    adc0_duration = random.randint(6,18)
+    logger.info(f"adc0_start:{adc0_start} adc0_duration:{adc0_duration}")
   elif adc0_start:
-    if int((time.time()-adc0_start))//60 > random.randint(6,18):
+    if int((time.time()-adc0_start))//60 > adc0_duration:
       adc0_start = None
+      adc0_duration = 0
       pv.start_time = time.time()
       logger.info(f"adc0_start:{adc0_start} start_time:{pv.start_time}")
     else:
