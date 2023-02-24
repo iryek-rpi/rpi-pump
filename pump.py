@@ -329,6 +329,10 @@ def main():
 
     # 스레드와 프로세스 정리
     monitor.stop()
+    # 모터 동작 중 종료 후 다시 시작하면 모터가 off 되어 있는 것으로 인식하는 
+    # 문제로 인해 종료 시 모터를 off 시킴
+    motor.set_all_motors(chip, 0)  
+
     responder.stop()
     saver.stop()
     
