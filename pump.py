@@ -138,6 +138,8 @@ def main():
   (a, b, c) = motor.get_all_motors(chip, pv())
   print(f"After init: get_all_motors:({a}, {b}, {c})")
   logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
+  time.sleep(0.5)
+  motor.set_all_motors(chip, (0, 0, 0)) # 모터 구동 중 시작하면 모터 off로 인식하는 문제로 인해 초기화
 
   try:
     i2c_bus = 1  # 라즈베리파이 개발용 IO 보드에서는 1
