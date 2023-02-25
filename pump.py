@@ -104,7 +104,7 @@ def mqtt_thread_func(**kwargs):
 
   logger.debug(f'mqtt_thread:{pv.water_level}')
   if pv.source == constant.SOURCE_SENSOR:
-    _pipe.send((pv.water_level, -1, pv.setting_low, pv.setting_high))
+    _pipe.send((pv.sensor_level, -1, pv.setting_low, pv.setting_high))
   else:
     _pipe.send((-1, pv.water_level, pv.setting_low, pv.setting_high))
 
@@ -131,7 +131,9 @@ def main():
 
   from pump_variables import PV
   pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
-  pv().start_time = time.time()
+  pv().simulation = True
+  if pv().simulation:
+    pv().start_time = time.perf_counter()
   pv().chip = chip
 
   motor.init_motors(chip)

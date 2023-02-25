@@ -56,6 +56,7 @@ class PV():
     self._mbl = [0 for _ in range(ma.M_END)]
 
     self.solo_mode = constant.MODE_PLC
+    self.simulation = False  # 수위계 입력 중단 시뮬레이션
 
     self.motor_index = 0
     self.previous_state = 1  # 0:low, 1:mid  3:high
