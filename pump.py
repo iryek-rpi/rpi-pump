@@ -5,28 +5,21 @@
 # https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load?answertab=votes#tab-top
 # https://github.com/adafruit/Adafruit_Python_SSD1306
 
-import sys
-import pathlib
 from pathlib import Path
-from datetime import timedelta
 import datetime
 import time
 import multiprocessing as mp
-import signal
+#import signal
 
 #import picologging as logging
 import logging
 import lgpio
-
-
-import ml
 
 # logger 생성하기 위해 가장 먼저 import 해야 함
 import pump_util as util
 from pump_util import *
 
 from pump_variables import pv
-import pump_variables
 from pump_lcd import Lcd, lcd
 import pump_screen
 from pump_btn import PumpButtons, buttons
@@ -131,9 +124,6 @@ def main():
 
   from pump_variables import PV
   pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
-  pv().simulation = True
-  if pv().simulation:
-    pv().start_time = time.perf_counter()
   pv().chip = chip
 
   motor.init_motors(chip)
@@ -186,10 +176,6 @@ def main():
 
     #lgpio.gpio_claim_output(chip, FAN, 1)
 
-    #import ml
-    #if Path("./model/pump_model.json").exists():
-    #  pv().model = ml.read_model("pump_model.json")
-
     # state machine 초기화
     logging.getLogger('transitions').setLevel(logging.CRITICAL)
 
@@ -224,21 +210,9 @@ def main():
     spi = ADC.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
 
-    mgr = mp.Manager()
-    ns = mgr.Namespace()
-    ev_req = mp.Event()
-    ev_ret = mp.Event()
-
-    train_proc = mp.Process(name="Train Proc",
-                          target=ml.train_proc,
-                          kwargs={
-                              "ns": ns,
-                              "ev_req": ev_req,
-                              "ev_ret": ev_ret
-                          })
-    train_proc.start()
-
-    print(f"@@@@@@@ train_proc: {train_proc.pid}")
+    pv().simulation = True
+    if pv().simulation:
+      pv().adc_start_time = time.perf_counter()
 
     # 수위 모니터링을 위한 스레드
     monitor_func = pump_monitor.tank_monitor
@@ -251,10 +225,7 @@ def main():
                                            'chip': chip,
                                            'spi': spi,
                                            'sm': sm_lcd,
-                                           'pv': pv(),
-                                           'ns': ns,
-                                           'ev_req': ev_req,
-                                           'ev_ret': ev_ret
+                                           'pv': pv()
                                        })
     monitor.start()
 
