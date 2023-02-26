@@ -85,7 +85,7 @@ def tank_monitor(**kwargs):
 
   logger.info("\n<<< Entering pump_monitor() ===========================")
 
-  if PREDICT_ADC_DIFF_P==None:
+  if PREDICT_ADC_DIFF_P is None:
     # 450초에 5% 증감
     PREDICT_ADC_DIFF_P = ((pv.setting_20ma_ref - pv.setting_4ma_ref) * 0.05) / 420  
     PREDICT_ADC_DIFF_N = ((pv.setting_4ma_ref - pv.setting_20ma_ref) * 0.05) / 450  
