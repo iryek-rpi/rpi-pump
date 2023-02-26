@@ -89,14 +89,14 @@ def tank_monitor(**kwargs):
     logger.info(f"elapsed_run:{elapsed_run} adc0_start:{adc0_start} adc0_duration:{adc0_duration}")
     if (not adc0_start) and (elapsed_run>random.randint(12,30)):
       adc_level=0
-      adc0_start = time.time()
+      adc0_start = time.perf_counter()
       adc0_duration = random.randint(6,18)
       logger.info(f"adc0_start:{adc0_start} adc0_duration:{adc0_duration}")
     elif adc0_start:
-      if int((time.time()-adc0_start))//60 > adc0_duration:
+      if int((time.perf_counter()-adc0_start))//60 > adc0_duration:
         adc0_start = None
         adc0_duration = 0
-        pv.start_time = time.time()
+        pv.start_time = time.perf_counter()
         logger.info(f"adc0_start:{adc0_start} start_time:{pv.start_time}")
       else:
         adc_level=0
@@ -127,80 +127,81 @@ def tank_monitor(**kwargs):
   (a, b, c) = motor.get_all_motors(chip, pv)
   logger.info("get_all_motors:(%d, %d, %d)", a, b, c)
 
-  # 수위 입력이 없거나 이전 수위와의 차이가 0.2% 이하인 경우
-  if (abs(level_rate - percent(pv, pv.previous_adc)) < 0.2) or (not adc_level):
+  if not adc_level: # 수위 입력이 없는 경우
+    logger.info(f"no input: {adc_level} pv.water_level:{pv.water_level:.3f}")
+    logger.info(f"PREDICT_RATE:{PREDICT_RATE:.3f} time_diff:{time_diff:.1f}")
+    pv.source = constant.SOURCE_AI
+    _water_level_diff = time_diff*PREDICT_RATE
+    if not pv.busy_motors:
+      _water_level_diff = -_water_level_diff
+    pv.water_level += _water_level_diff  
+    logger.info(f"calculated: _water_level_diff:{_water_level_diff:.3f} water_level:{pv.water_level:.3f}")
+  # 이전 수위와의 차이가 0.2% 이하인 경우
+  elif (abs(level_rate - percent(pv, pv.previous_adc)) < 0.2) or (not adc_level):
     td = time_now - pv.no_input_starttime
     logger.info(
         f"td.seconds:{td.seconds} time_now:{time_now} no_input_time:{pv.no_input_starttime} Tolerance:{pv.setting_tolerance_to_ai}"
     )
-    if not adc_level: # 수위 입력이 없는 경우
-      logger.info(f"no input: {adc_level}")
-      pv.source = constant.SOURCE_AI
-      _water_level_diff = pv.water_level + PREDICT_RATE * time_diff
-      if not pv.busy_motors:
-        _water_level_diff = -_water_level_diff
-      pv.water_level += _water_level_diff  
-    else:
-      if (td.seconds < pv.setting_tolerance_to_ai):  # 무입력 시간이 기준 시간에 미달 
-        if level_rate>0:
-          pv.water_level = level_rate  
-        logger.info(f"less than tolerance: {td.seconds}<{pv.setting_tolerance_to_ai}")
-        logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
-      else:  #(td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
-        logger.info(f"RUN_MODE:{pv.source} Info: AI=={constant.SOURCE_AI}")
-        if pv.source == constant.SOURCE_SENSOR:
-          logger.info(f"MONITOR: writing to pv.source:{constant.SOURCE_AI}")
-          pv.source = constant.SOURCE_AI
-          motor.set_run_mode(chip, constant.SOURCE_AI)
+    if (td.seconds < pv.setting_tolerance_to_ai):  # 무입력 시간이 기준 시간에 미달 
+      if level_rate>0:
+        pv.water_level = level_rate  
+      logger.info(f"less than tolerance: {td.seconds}<{pv.setting_tolerance_to_ai}")
+      logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
+    else:  #(td.seconds >= pv.setting_tolerance_to_ai):  # 일정 시간 입력이 없으면
+      logger.info(f"RUN_MODE:{pv.source} Info: AI=={constant.SOURCE_AI}")
+      if pv.source == constant.SOURCE_SENSOR:
+        logger.info(f"MONITOR: writing to pv.source:{constant.SOURCE_AI}")
+        pv.source = constant.SOURCE_AI
+        motor.set_run_mode(chip, constant.SOURCE_AI)
 
-        fl = pv.get_future_level(time_str)
-        if fl < 0:
-          logger.info("No future level")
+      fl = pv.get_future_level(time_str)
+      if fl < 0:
+        logger.info("No future level")
 
-          if not pv.req_sent:
-            # i = 입력이 중단되기 전의 data index
-            i = pv.find_data(pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S"))
-            logger.info(
-                f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i} time_str:{time_str}"
-            )
-            ltr = pv.data[:i + 1]  # 학습 데이터
-            if len(ltr) < 20:
-              logger.info(f"Case#0 : Not enough data: len(ltr):{len(ltr)}, Returning previous level...")
-            else:
-              ns.value = ltr
-              ev_req.set()
-              pv.req_sent = True
-              logger.info("Case#1 : Request Training. Returning previous level...")
-            pv.water_level = _last_stored_level
-            logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
-          elif ev_ret.is_set():
-            ev_ret.clear()
-            pv.req_sent = False
-            pv.future_level = ns.value
-            for i, l in enumerate(pv.future_level):
-              if not util.repr_int(l[1]):
-                for _, ll in enumerate(pv.future_level[i + 1:]):
-                  if util.repr_int(ll[1]):
-                    l[1] = ll[1]
-                    break
-
-            logger.info("Forecast received")
-            #logger.info(pv.future_level)
-            pv.water_level = pv.get_future_level(time_str)
-            logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
-            logger.info(f"Got training result! - fl: {pv.water_level}"
-                      )  #\nFuture Level: {pv.future_level}")
+        if not pv.req_sent:
+          # i = 입력이 중단되기 전의 data index
+          i = pv.find_data(pv.no_input_starttime.strftime("%Y-%m-%d %H:%M:%S"))
+          logger.info(
+              f"find_data(no_input_starttime:{pv.no_input_starttime.strftime('%Y-%m-%d %H:%M:%S')})=>{i} time_str:{time_str}"
+          )
+          ltr = pv.data[:i + 1]  # 학습 데이터
+          if len(ltr) < 20:
+            logger.info(f"Case#0 : Not enough data: len(ltr):{len(ltr)}, Returning previous level...")
           else:
-            logger.info(
-                f'No case: req_sent:{pv.req_sent} ev_ret.is_set()={ev_ret.is_set()}'
-            )
-            pv.water_level = _last_stored_level
-            logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
-        else:  # get prediction from ML model
-          logger.info(f"Got stored future level: {fl}")
-          pv.water_level = fl
+            ns.value = ltr
+            ev_req.set()
+            pv.req_sent = True
+            logger.info("Case#1 : Request Training. Returning previous level...")
+          pv.water_level = _last_stored_level
           logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
-          #pv.water_level = level_rate  #pv.filter_data(level_rate)
+        elif ev_ret.is_set():
+          ev_ret.clear()
+          pv.req_sent = False
+          pv.future_level = ns.value
+          for i, l in enumerate(pv.future_level):
+            if not util.repr_int(l[1]):
+              for _, ll in enumerate(pv.future_level[i + 1:]):
+                if util.repr_int(ll[1]):
+                  l[1] = ll[1]
+                  break
+
+          logger.info("Forecast received")
+          #logger.info(pv.future_level)
+          pv.water_level = pv.get_future_level(time_str)
+          logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
+          logger.info(f"Got training result! - fl: {pv.water_level}"
+                    )  #\nFuture Level: {pv.future_level}")
+        else:
+          logger.info(
+              f'No case: req_sent:{pv.req_sent} ev_ret.is_set()={ev_ret.is_set()}'
+          )
+          pv.water_level = _last_stored_level
+          logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
+      else:  # get prediction from ML model
+        logger.info(f"Got stored future level: {fl}")
+        pv.water_level = fl
+        logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
+        #pv.water_level = level_rate  #pv.filter_data(level_rate)
         
       _num_busy_motors = len(pv.busy_motors)
       _diff = pv.water_level - _last_stored_level
