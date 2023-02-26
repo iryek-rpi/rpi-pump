@@ -64,8 +64,8 @@ def simulate_no_input(_adc_level, _pc_start, _adc0_start, _adc0_duration):
 MONITOR_TIME_PREV = 0
 MONITOR_TIME_NOW = 0
 
-PREDICT_RATE = 5/420 # 420초(7분)에 5% 증감
-PREDICT_ADC_DIFF = None
+PREDICT_ADC_DIFF_P = None
+PREDICT_ADC_DIFF_N = None
 
 def tank_monitor(**kwargs):
   """수위 모니터링 스레드
@@ -73,7 +73,8 @@ def tank_monitor(**kwargs):
   """
   global MONITOR_TIME_PREV
   global MONITOR_TIME_NOW
-  global PREDICT_ADC_DIFF
+  global PREDICT_ADC_DIFF_P
+  global PREDICT_ADC_DIFF_N
   global adc0_start
   global adc0_duration
 
@@ -84,9 +85,10 @@ def tank_monitor(**kwargs):
 
   logger.info("\n<<< Entering pump_monitor() ===========================")
 
-  if PREDICT_ADC_DIFF==None:
+  if PREDICT_ADC_DIFF_P==None:
     # 450초에 5% 증감
-    PREDICT_ADC_DIFF = ((pv.setting_20ma_ref - pv.setting_4ma_ref) * 0.05) / 450  
+    PREDICT_ADC_DIFF_P = ((pv.setting_20ma_ref - pv.setting_4ma_ref) * 0.05) / 420  
+    PREDICT_ADC_DIFF_N = ((pv.setting_4ma_ref - pv.setting_20ma_ref) * 0.05) / 450  
 
   MONITOR_TIME_NOW = time.perf_counter()
   if not MONITOR_TIME_PREV:
@@ -107,23 +109,9 @@ def tank_monitor(**kwargs):
     adc_level, pv.adc_start_time, adc0_start, adc0_duration = simulate_no_input(adc_level, pv.adc_start_time, adc0_start, adc0_duration)
     logger.info(f'simulate: adc_level:{adc_level} adc_start_time:{pv.adc_start_time} adc0_start:{adc0_start} adc0_duration:{adc0_duration}')
 
-  level_rate = percent(pv, adc_level)
-  pv.sensor_level = level_rate  # modbus에서 읽어가는 값
-  _last_stored_level = pv.return_last_or_v(v=level_rate)
-
-  # previous_adc : 수위 입력이 있을 때, 없을 때 모두 갱신됨
-  # no_input_starttime : 수위입력이 있을 때만 갱신됨
-  if not pv.no_input_starttime:  # 초기화가 필요한 경우
-    logger.info(
-        f"INIT: previous_adc:{pv.previous_adc} no_input:{pv.no_input_starttime}"
-    )
-    pv.previous_adc = adc_level
-    pv.no_input_starttime = time_now
-
-  logger.info(
-      f"previous_adc:{pv.previous_adc} previous_rate:{percent(pv, pv.previous_adc):.1f}" 
-  )
-  logger.info(f"no_input_starttime:{pv.no_input_starttime}")
+  #level_rate = percent(pv, adc_level)
+  #pv.sensor_level = level_rate  # modbus에서 읽어가는 값
+  pv.sensor_level = percent(pv, adc_level) # modbus에서 읽어가는 값
 
   (a, b, c) = motor.get_all_motors(chip, pv)
   logger.info("get_all_motors:(%d, %d, %d)", a, b, c)
@@ -131,49 +119,35 @@ def tank_monitor(**kwargs):
   if not adc_level: # 수위 입력이 없는 경우
     logger.info(f"no input: adc: {adc_level} previous_adc:{pv.previous_adc}")
     logger.info(f"pv.water_level:{pv.water_level:.3f}")
-    logger.info(f"PREDICT_ADC_DIFF:{PREDICT_ADC_DIFF:.3f} time_diff:{time_diff:.1f}")
+    logger.info(f"PREDICT_ADC_DIFF_P:{PREDICT_ADC_DIFF_P:.3f} PREDICT_ADC_DIFF_N:{PREDICT_ADC_DIFF_N:.3f} time_diff:{time_diff:.1f}")    
     pv.source = constant.SOURCE_AI
-    _adc_level_diff = time_diff*PREDICT_ADC_DIFF
     if not pv.busy_motors:
-      _adc_level_diff *= -1
-    pv.previous_adc += int(_adc_level_diff)
-    pv.water_level = percent(pv, pv.previous_adc)
-    logger.info(f"calculated: _water_level_diff:{_adc_level_diff:.3f}")
+      pv.previous_adc += time_diff*PREDICT_ADC_DIFF_N
+    else:
+      pv.previous_adc += time_diff*PREDICT_ADC_DIFF_P
+
+    pv.water_level = percent(pv, pv.previous_adc)   
     logger.info(f"previous_adc:{pv.previous_adc} water_level:{pv.water_level:.3f}")
   else:  # 수위 입력이 있음
-    # 예측모드에서 수위계모드로 변경
-    logger.info(
-        f"Valid Input: RUN_MODE:{pv.source} info: SOURCE_AI=={constant.SOURCE_AI}"
-    )
-    if pv.source == constant.SOURCE_AI:
-      logger.info(f"MONITOR: writing to pv.source:{constant.SOURCE_SENSOR}")
+    if pv.source == constant.SOURCE_AI: # 예측모드 -> 수위계모드 전환
       pv.source = constant.SOURCE_SENSOR
-      motor.set_run_mode(chip, constant.SOURCE_SENSOR)
 
     pv.previous_adc = adc_level
-    pv.no_input_starttime = time_now
-    pv.water_level = level_rate  #pv.filter_data(level_rate)
-    logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
+    pv.water_level = percent(pv, pv.previous_adc)   
+    logger.info(f"water_level:{pv.water_level:.1f}")
 
-  logger.info(f"water_level:{pv.water_level:.1f} level_rate:{level_rate:.1f}")
-  determine_motor_state_new(pv, chip)
+  logger.info(f"MONITOR: writing to pv.source:{pv.source}")
+  motor.set_run_mode(chip, pv.source)
 
+  determine_motor_state_new(pv)
   (m0, m1, m2) = motor.get_all_motors(chip, pv)
-
   pv.append_data([time_str, pv.water_level, m0, m1, m2, pv.source])
-
-  logger.debug(
-      f"writeDAC(level_rate:{level_rate:.1f}, pv.water_level:{pv.water_level:.1f})"
-  )
-
   ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, pv.water_level)), spi)
-
   MONITOR_TIME_PREV = MONITOR_TIME_NOW
-
   sm.update_idle()
 
 
-def determine_motor_state_new(pv, chip):
+def determine_motor_state_new(pv):
   logger.info(
       f"pv.water_level:{pv.water_level:.1f}, H:{pv.setting_high} L:{pv.setting_low}"
   )
