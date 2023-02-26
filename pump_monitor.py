@@ -122,9 +122,9 @@ def tank_monitor(**kwargs):
     logger.info(f"PREDICT_ADC_DIFF_P:{PREDICT_ADC_DIFF_P:.3f} PREDICT_ADC_DIFF_N:{PREDICT_ADC_DIFF_N:.3f} time_diff:{time_diff:.1f}")    
     pv.source = constant.SOURCE_AI
     if not pv.busy_motors:
-      pv.previous_adc += (time_diff*PREDICT_ADC_DIFF_N + random.randint(-5,5))
+      pv.previous_adc += (time_diff*PREDICT_ADC_DIFF_N + random.randint(-3,3))
     else:
-      pv.previous_adc += (time_diff*PREDICT_ADC_DIFF_P + random.randint(-5,5))
+      pv.previous_adc += (time_diff*PREDICT_ADC_DIFF_P + random.randint(-3,3))
 
     pv.water_level = percent(pv, pv.previous_adc) # + random.randint(-2,2) * 0.1  
     logger.info(f"previous_adc:{pv.previous_adc} water_level:{pv.water_level:.3f}")
