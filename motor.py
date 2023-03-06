@@ -30,7 +30,7 @@ def init_motors(c):
   logger.info(f'gpio_claim_input(M0_IN) return:{r}')
   r = lgpio.gpio_claim_input(c, M1_IN, lFlags=lgpio.SET_PULL_UP)
   logger.info(f'gpio_claim_input(M1_IN) return:{r}')
-  lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
+  r = lgpio.gpio_claim_input(c, M2_IN, lFlags=lgpio.SET_PULL_UP)
   logger.info(f'gpio_claim_input(M2_IN) return:{r}')
 
   #set_all_motors(c, (0,0,0))  # 단말 부팅 시 모터 초기화하지 않음
@@ -46,6 +46,32 @@ def set_run_mode(chip, v):
   lgpio.gpio_write(chip, RUN_MODE_OUT, v)
 
 
+                # 2: PLC 모드, pump1 on
+                # 3: PLC 모드, pump2 on
+                # 4: PLC 모드, pump1 + pump2 on
+                # 5: PLC 모드, pump3 on
+                # 6: PLC 모드, pump1 + pump2 + pump3 on
+
+def get_plc_motor_state(chip, pv):
+  '''모터 상태를 (M2,M1,M0)로 리턴'''
+  ms0 = 0
+  ms1 = 0
+  ms2 = 0
+  if pv.plc_pump_info==2:
+    ms0 = 1
+  elif pv.plc_pump_info==3:
+    ms1 = 1
+  elif pv.plc_pump_info==4:
+    ms0 = 1
+    ms1 = 1
+  elif pv.plc_pump_info==5:
+    ms2 = 1
+  elif pv.plc_pump_info==6:
+    ms0 = 1
+    ms1 = 1
+    ms2 = 1
+  return (ms0, ms1, ms2)
+
 def get_all_motors(chip, pv):
   """3대의 모터 상태를 (M2,M1,M0)로 리턴
   """
@@ -60,10 +86,12 @@ def get_all_motors(chip, pv):
   #  ms1 = s & 2
   #  ms2 = s & 4
 
-  ms0 = lgpio.gpio_read(chip, M0_IN)
-  ms1 = lgpio.gpio_read(chip, M1_IN)
-  ms2 = lgpio.gpio_read(chip, M2_IN)
-
+  ms0 = lgpio.gpio_read(chip, M0_OUT)#M0_IN)
+  ms1 = lgpio.gpio_read(chip, M1_OUT)#M1_IN)
+  ms2 = lgpio.gpio_read(chip, M2_OUT)#M1_IN)
+  if pv.pump1_mode == constant.PUMP_MODE_MANUAL and pv.pump2_mode == constant.PUMP_MODE_MANUAL and pv.pump3_mode == constant.PUMP_MODE_MANUAL:
+    ms0, ms1, ms2 = get_plc_motor_state(chip, pv)
+  
   return (ms0, ms1, ms2)
 
 
@@ -80,12 +108,21 @@ def get_motor_state(chip, m, pv):
   #  s = pv.pump_state_plc
   #  return s & (2**m)
 
+  if pv.pump1_mode == constant.PUMP_MODE_MANUAL and pv.pump2_mode == constant.PUMP_MODE_MANUAL and pv.pump3_mode == constant.PUMP_MODE_MANUAL:
+    ms0, ms1, ms2 = get_plc_motor_state(chip, pv)
+    if m == 0:
+      return ms0
+    elif m == 1:
+      return ms1
+    elif m == 2:
+      return ms2
+
   if m == 0:
-    return lgpio.gpio_read(chip, M0_IN)
+    return lgpio.gpio_read(chip, M0_OUT)#IN)
   elif m == 1:
-    return lgpio.gpio_read(chip, M1_IN)
+    return lgpio.gpio_read(chip, M1_OUT)#IN)
   elif m == 2:
-    return lgpio.gpio_read(chip, M2_IN)
+    return lgpio.gpio_read(chip, M2_OUT)#IN)
 
   return None
 

@@ -1,6 +1,7 @@
 import threading
 import queue
 import datetime
+import time
 import os
 import pandas as pd
 import csv
@@ -185,6 +186,11 @@ class PV():
   def source(self, s):
     self._mbl[ma.M3_SOURCE] = s
 
+  def change_motor_list_all(self, m0, m1, m2):
+    self.change_motor_list(0, m0)
+    self.change_motor_list(1, m1)
+    self.change_motor_list(2, m2)
+
   def change_motor_list(self, m, v):
     '''m = 0, 1, 2 (motor)
        v = 0,1 (current motor state)
@@ -302,6 +308,19 @@ class PV():
     if self.pump3_mode == constant.PUMP_MODE_MANUAL:
       motor.set_motor_state(self.chip, 2, s)
 
+#M17_PLC_PUMP_INFO = 17  # pump state from PLC
+                # 0: 수위조절기 모드
+                # 1: PLC 모드
+                # 2: PLC 모드, pump1 on
+                # 3: PLC 모드, pump2 on
+                # 4: PLC 모드, pump1 + pump2 on
+                # 5: PLC 모드, pump3 on
+                # 6: PLC 모드, pump1 + pump2 + pump3 on
+
+  @property
+  def plc_pump_info(self):
+    return self._mbl[ma.M17_PLC_PUMP_INFO]
+
   def _pump_change_mode(self, pump, mode):
     '''
     pump의 manual/auto mode를 변경 (40018, 40019, 40020)
@@ -322,13 +341,17 @@ class PV():
         motor.set_motor_state(self.chip, pump, 1)
       elif not _pump_config and _pump_state:
         motor.set_motor_state(self.chip, pump, 0)
+      time.sleep(0.1)
 
-      if pump in self.busy_motors:
-        del self.busy_motors[self.busy_motors.index(pump)]
-      if pump in self.idle_motors:
-        del self.idle_motors[self.idle_motors.index(pump)]
-    else:
-      self.change_motor_list(m=pump, v=_pump_state)
+      _pump_state = motor.get_motor_state(self.chip, pump, self)
+
+      #if pump in self.busy_motors:
+      #  del self.busy_motors[self.busy_motors.index(pump)]
+      #if pump in self.idle_motors:
+      #  del self.idle_motors[self.idle_motors.index(pump)]
+    #else:
+    #  self.change_motor_list(m=pump, v=_pump_state)
+    self.change_motor_list(m=pump, v=_pump_state)
 
   @property
   def pump1_mode(self):

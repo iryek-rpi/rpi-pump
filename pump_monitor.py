@@ -98,6 +98,7 @@ def tank_monitor(**kwargs):
   time_now = datetime.datetime.now()
   time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
   adc_level = ADC.check_water_level(chip, spi)
+  adc_original = adc_level
   logger.info(
       f"ADC:{adc_level} level_rate:{percent(pv, adc_level):.1f} time_diff:{time_diff:.1f}" 
   )  
@@ -142,8 +143,17 @@ def tank_monitor(**kwargs):
   determine_motor_state_new(pv)
   (m0, m1, m2) = motor.get_all_motors(chip, pv)
   pv.append_data([time_str, pv.water_level, m0, m1, m2, pv.source])
-  ADC.writeDAC(chip, int(ADC.waterlevel_rate2ADC(pv, pv.water_level)), spi)
+
+  if pv.source == constant.SOURCE_AI:
+    adc_adj = int(ADC.waterlevel_rate2ADC(pv, pv.water_level))
+    adc_adj += (66+7)
+    ADC.writeDAC(chip, int(adc_adj), spi)
+  else:
+    adc_adj = adc_original + 66 + 7
+    ADC.writeDAC(chip, adc_adj, spi)
+
   MONITOR_TIME_PREV = MONITOR_TIME_NOW
+  pv.water_level = percent(pv, adc_adj)
   sm.update_idle()
 
 
@@ -154,15 +164,19 @@ def determine_motor_state_new(pv):
   logger.info(f">> busy_motors:{pv.busy_motors}")
   logger.info(f">> idle_motors:{pv.idle_motors}")
   logger.info(f'>> previous_state:{pv.previous_state}')
+  m0, m1, m2 = motor.get_all_motors(pv.chip, pv)
+  pv.change_motor_list_all(m0, m1, m2)
   if pv.water_level > pv.setting_high:# and pv.previous_state != 2:
     for m in pv.busy_motors:  # 모든 모터를 off
       if m == 0 and pv.pump1_mode == constant.PUMP_MODE_AUTO:
         motor.set_motor_state(pv.chip, 0, 0)
+        pv.change_motor_list(m, 0)
       elif m == 1 and pv.pump2_mode == constant.PUMP_MODE_AUTO:
         motor.set_motor_state(pv.chip, 1, 0)
+        pv.change_motor_list(m, 0)
       elif m == 2 and pv.pump3_mode == constant.PUMP_MODE_AUTO:
         motor.set_motor_state(pv.chip, 2, 0)
-      pv.change_motor_list(m, 0)
+        pv.change_motor_list(m, 0)
       pv.previous_state = 2
   elif pv.water_level < pv.setting_low and (len(pv.busy_motors)==0):# and pv.previous_state != 0:
     logger.info(f"len(pv.busy_motors:{len(pv.busy_motors)}")
