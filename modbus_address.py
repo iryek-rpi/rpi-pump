@@ -44,7 +44,12 @@ M14_PUMP1_CONFIG = 14   #pump1 on/off
 M15_PUMP2_CONFIG = 15   #pump2 on/off
 M16_PUMP3_CONFIG = 16   #pump3 on/off
 
-M17_SPARE = 17
+M17_PLC_PUMP_INFO = 17  # pump state from PLC
+                # 0: 수위조절기 모드
+                # 1: PLC 모드
+                # 2: PLC 모드, pump1 on
+                # 3: PLC 모드, pump2 on
+                # 4: PLC 모드, pump3 on
 
 M18_PUMP_MODE_1 = 18  #pump1 제어모드 수동(0)/자동
 M19_PUMP_MODE_2 = 19  #pump2 제어모드 수동(0)/자동
@@ -70,7 +75,7 @@ modbus_address_list = [
     M1_LEVEL_SENSOR, M2_LEVEL_AI, M3_SOURCE, M4_PUMP1_STATE,
     M5_PUMP2_STATE, M6_PUMP3_STATE, M7_MODBUS_ID, M8_SPARE, M9_AUTO_HH, M10_AUTO_LL,
     M11_AUTO_H, M12_AUTO_L, M13_PUMP_STATE_PLC, M14_PUMP1_CONFIG,
-    M15_PUMP2_CONFIG, M16_PUMP3_CONFIG, M17_SPARE, M18_PUMP_MODE_1, 
+    M15_PUMP2_CONFIG, M16_PUMP3_CONFIG, M17_PLC_PUMP_INFO, M18_PUMP_MODE_1, 
     M19_PUMP_MODE_2, M20_PUMP_MODE_3, M21_SPARE, M22_SPARE, M23_SPARE, M24_SPARE, 
     M25_MQTT_ON, M26_MQTT_TOPIC, M27_MQTT_TIMEOUT, M28_MQTT_PORT, 
     M29_MQTT_BROKER_IP_A, M30_MQTT_BROKER_IP_B, 
