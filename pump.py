@@ -210,7 +210,7 @@ def main():
     spi = ADC.init_spi_rw(chip, pv(),
                                    speed=9600)  # get SPI device handle
 
-    pv().simulation = True
+    pv().simulation = False
     if pv().simulation:
       pv().adc_start_time = time.perf_counter()
 
