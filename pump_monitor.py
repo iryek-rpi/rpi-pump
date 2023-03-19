@@ -127,7 +127,7 @@ def tank_monitor(**kwargs):
     else:
       pv.previous_adc += (time_diff*PREDICT_ADC_DIFF_P + random.randint(-3,3))
 
-    ADC.writeDAC(chip, pv.previous_adc + 66 + 7)
+    ADC.writeDAC(chip, pv.previous_adc + 66 + 7, spi)
     pv.water_level = percent(pv, pv.previous_adc + 66 + 7) # + random.randint(-2,2) * 0.1  
     logger.info(f"AI: previous_adc:{pv.previous_adc} adjusted:{pv.previous_adc + 66 + 7} water_level:{pv.water_level:.3f}")
   else:  # 수위 입력이 있음
@@ -135,7 +135,7 @@ def tank_monitor(**kwargs):
       pv.source = constant.SOURCE_SENSOR
 
     pv.previous_adc = adc_level
-    ADC.writeDAC(chip, pv.previous_adc + 66 + 7)
+    ADC.writeDAC(chip, pv.previous_adc + 66 + 7, spi)
     pv.water_level = percent(pv, pv.previous_adc + 66 + 7)   
     logger.info(f"PLC: previous_adc:{pv.previous_adc} adjusted:{pv.previous_adc + 66 + 7}  water_level:{pv.water_level:.1f}")
 
