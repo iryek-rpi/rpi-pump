@@ -127,15 +127,17 @@ def tank_monitor(**kwargs):
     else:
       pv.previous_adc += (time_diff*PREDICT_ADC_DIFF_P + random.randint(-3,3))
 
-    pv.water_level = percent(pv, pv.previous_adc) # + random.randint(-2,2) * 0.1  
-    logger.info(f"previous_adc:{pv.previous_adc} water_level:{pv.water_level:.3f}")
+    ADC.writeDAC(chip, pv.previous_adc + 66 + 7)
+    pv.water_level = percent(pv, pv.previous_adc + 66 + 7) # + random.randint(-2,2) * 0.1  
+    logger.info(f"AI: previous_adc:{pv.previous_adc} adjusted:{pv.previous_adc + 66 + 7} water_level:{pv.water_level:.3f}")
   else:  # 수위 입력이 있음
     if pv.source == constant.SOURCE_AI: # 예측모드 -> 수위계모드 전환
       pv.source = constant.SOURCE_SENSOR
 
     pv.previous_adc = adc_level
-    pv.water_level = percent(pv, pv.previous_adc)   
-    logger.info(f"water_level:{pv.water_level:.1f}")
+    ADC.writeDAC(chip, pv.previous_adc + 66 + 7)
+    pv.water_level = percent(pv, pv.previous_adc + 66 + 7)   
+    logger.info(f"PLC: previous_adc:{pv.previous_adc} adjusted:{pv.previous_adc + 66 + 7}  water_level:{pv.water_level:.1f}")
 
   logger.info(f"MONITOR: writing to pv.source:{pv.source}")
   motor.set_run_mode(chip, pv.source)
@@ -144,16 +146,16 @@ def tank_monitor(**kwargs):
   (m0, m1, m2) = motor.get_all_motors(chip, pv)
   pv.append_data([time_str, pv.water_level, m0, m1, m2, pv.source])
 
-  if pv.source == constant.SOURCE_AI:
-    adc_adj = int(ADC.waterlevel_rate2ADC(pv, pv.water_level))
-    adc_adj += (66+7)
-    ADC.writeDAC(chip, int(adc_adj), spi)
-  else:
-    adc_adj = adc_original + 66 + 7
-    ADC.writeDAC(chip, adc_adj, spi)
+  #if pv.source == constant.SOURCE_AI:
+  #  adc_adj = int(ADC.waterlevel_rate2ADC(pv, pv.water_level))
+  #  adc_adj += (66+7)
+  #  ADC.writeDAC(chip, int(adc_adj), spi)
+  #else:
+  #  adc_adj = adc_original + 66 + 7
+  #  ADC.writeDAC(chip, adc_adj, spi)
 
   MONITOR_TIME_PREV = MONITOR_TIME_NOW
-  pv.water_level = percent(pv, adc_adj)
+  #pv.water_level = percent(pv, adc_adj)
   sm.update_idle()
 
 
