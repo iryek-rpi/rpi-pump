@@ -64,7 +64,7 @@ def scr_init_msg(pv):
   lcd().string(s1, L1)
 
 def scr_idle_1(pv):
-  logger.debug("scr_idle_1:level:{} pv.source:{}".format(pv.water_level, pv.source))
+  logger.info("scr_idle_1:level:{} pv.source:{}".format(pv.water_level, pv.source))
   if pv.source == constant.SOURCE_AI:
     if pv.device_role!='control':
       s1 = f"SEN PWL:{int(pv.water_level)} "
@@ -109,6 +109,7 @@ def scr_idle_1(pv):
 
 
 def scr_idle_2(pv):
+  logger.info("scr_idle_2:level:{} pv.source:{}".format(pv.water_level, pv.source))
   if pv.source == constant.SOURCE_AI:
     s1 = f"AI PWL:{pv.water_level:.1f}"
   else:
@@ -147,6 +148,7 @@ def scr_idle_2(pv):
 
 
 def scr_idle_3(pv):
+  logger.info("scr_idle_3:level:{} pv.source:{}".format(pv.water_level, pv.source))
   if pv.source == constant.SOURCE_AI:
     s1 = f"AI PWL:{pv.water_level:.1f} "
   else:
