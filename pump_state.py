@@ -3,12 +3,11 @@ from transitions import *
 from transitions.extensions import MachineFactory
 
 # transitions 라이브러리의 log를 출력하기 위해 logging 사용 
-import picologging as logging
-#import logging
+#import picologging as logging
+import logging
 
 import pump_util as util
 
-import pump_monitor
 from pump_screen import *
 from pump_variables import PV
 #from pump_util import ThreadSafeSingleton
@@ -16,9 +15,10 @@ from pump_state_set_time import SetTimeStateMachine
 from pump_state_set_level import SetLevelStateMachine
 from pump_btn import buttons
 
-TRANSITION_LOGFILE_NAME = f"./logs/{util.get_time_str()}_transition.log"
+#TRANSITION_LOGFILE_NAME = f"./logs/{util.get_time_str()}_transition.log"
 
-_ = util.make_logger(name='transitions', filename=TRANSITION_LOGFILE_NAME)
+#_ = util.make_logger(name='transitions', filename=TRANSITION_LOGFILE_NAME)
+#logger = logging.getLogger(util.MAIN_LOGGER_NAME)
 
 #logging.getLogger('transitions').setLevel(logging.WARNING)
 #trasition_logger = logging.getLogger('transitions')
@@ -99,15 +99,12 @@ class LCDStateMachine():
     self.init()
 
   def idle_1(self):
-    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_1(self.pv)
 
   def idle_2(self):
-    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_2(self.pv)
 
   def idle_3(self):
-    #self.pv.motor3, self.pv.motor2, self.pv.motor1 = pump_monitor.get_all_motors(self.pv.chip)
     scr_idle_3(self.pv)
 
   def idle_4(self):

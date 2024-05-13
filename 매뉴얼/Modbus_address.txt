@@ -1,0 +1,23 @@
+40001 ~ 40020
+
+M1_LEVEL_SENSOR = 1 #현재 수위 
+M2_LEVEL_AI = 2     #예측 수위
+
+M3_SOURCE = 3       #수위조절 모드(현재/예측)
+
+M4_PUMP1_STATE = 4  #pump1 상태(on/off)
+M5_PUMP2_STATE = 5  #pump2 상태(on/off)
+M6_PUMP3_STATE = 6  #pump3 상태(on/off)
+
+M7_MODBUS_ID = 7    #Modbus ID
+
+M11_AUTO_H = 11     #수위 상한
+M12_AUTO_L = 12     #수위 하한
+
+* M14_PUMP1_CONFIG = 14   #pump1 on/off config
+* M15_PUMP2_CONFIG = 15   #pump2 on/off config
+* M16_PUMP3_CONFIG = 16   #pump3 on/off config
+
+* M18_PUMP_MODE_1 = 18  #pump1 제어모드 수동(0)/자동(1)
+* M19_PUMP_MODE_2 = 19  #pump2 제어모드 수동/자동
+* M20_PUMP_MODE_3 = 20  #pump3 제어모드 수동/자동

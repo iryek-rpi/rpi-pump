@@ -5,8 +5,8 @@
 
 import serial
 
-test_string = "Testing 1 2 3 4".encode('utf-8')
-#test_string = b"Testing 1 2 3 4" ### Will also work
+#test_string = "Testing 1 2 3 4".encode('utf-8')
+test_string = b"Testing 1 2 3 4" ### Will also work
 
 port_list = ["/dev/serial0", "/dev/ttyAMA0", "/dev/serial1", "/dev/ttyS0", "/dev/serial2", "/dev/ttyAMA1"]
 

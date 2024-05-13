@@ -10,11 +10,13 @@ from subprocess import check_output
 from re import findall            
 import os
 import pathlib
-import picologging as logging
 import threading
-
 import datetime
 from datetime import timedelta
+
+#import picologging as logging
+import logging
+import csv
 
 def get_time_str():
   return datetime.datetime.now().strftime("%Y-%2m-%2d_%H-%M-%S")
@@ -24,46 +26,68 @@ def get_time_str():
 #          " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
 
 # picologging의 제약사항으로 thread name 출력이 안됨
-LOG_FORMAT = '%(asctime)s p:%(process)d t:%(thread)d [%(filename)s:%(lineno)d] %(message)s'
+# log 파일 크기를 줄이기 위해 process id와 thread id는 제외
+#LOG_FORMAT = '%(asctime)s p:%(process)d t:%(thread)d [%(filename)s:%(lineno)d] %(message)s'
+LOG_FORMAT = '%(asctime)s [%(filename)s:%(lineno)d] %(message)s'
 
 MAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_main.log"
+MQTT_LOGFILE_NAME = f"./logs/{get_time_str()}_mqtt.log"
 MODBUS_CLIENT_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_client.log"
 MODBUS_SERVER_LOGFILE_NAME = f"./logs/{get_time_str()}_modbus_server.log"
 FAN_LOGFILE_NAME = f"./logs/{get_time_str()}_fan.log"
-TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
+TRAIN_LOGFILE_NAME = f"./logs/{get_time_str()}_train.log"
+#TRANSITION_LOGFILE_NAME = f"./logs/{get_time_str()}_transition.log"
 pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
 #logfile = pathlib.Path(MAIN_LOGFILE_NAME)
 #logfile.touch(exist_ok=True)
 
 MAIN_LOGGER_NAME = "LOGGER_MAIN"
+MQTT_LOGGER_NAME = "LOGGER_MQTT"
 MODBUS_SERVER_LOGGER_NAME = "LOGGER_MODBUS_SERVER"
 MODBUS_CLIENT_LOGGER_NAME = "LOGGER_MODBUS_CLIENT"
 TRASITION_LOGGER_NAME = "transitions"
 FAN_LOGGER_NAME = "LOGGER_FAN"
+TRAIN_LOGGER_NAME = "LOGGER_TRAIN"
 
-def make_logger(name, filename=None, format=LOG_FORMAT, level=logging.DEBUG):
+def make_logger(name, filename=None, _format=LOG_FORMAT, level=logging.CRITICAL):
   """Make a custom logger"""
-  logger = logging.getLogger(name)
-  logger.setLevel(level)
+  _logger = logging.getLogger(name)
+  _logger.setLevel(level)
+  #_logger.setLevel(logging.CRITICAL)
 
-  formatter = logging.Formatter(format, datefmt="%Y-%m-%d:%H:%M:%S")
+  formatter = logging.Formatter(_format, datefmt="%Y-%m-%d:%H:%M:%S")
 
   console_handler = logging.StreamHandler()
   console_handler.setLevel(level)
   console_handler.setFormatter(formatter)
 
-  logger.addHandler(console_handler)
+  _logger.addHandler(console_handler)
 
   if filename:
     file_handler = logging.FileHandler(filename)
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    _logger.addHandler(file_handler)
 
-  return logger
+  return _logger
 
-print("make_logger")
-_ = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME)
+logger = make_logger(name=MAIN_LOGGER_NAME, filename=MAIN_LOGFILE_NAME, level=logging.INFO)
+
+def save_data(**kwargs):
+  pv = kwargs['pv']
+
+  n = datetime.datetime.now()
+
+  data = pv.dump_data()
+  if len(data) > 0:
+    fname = os.path.join(pv.data_path, n.strftime("%Y-%m-%d-%H-%M-%S.csv"))
+    logger.debug(f"save file name:{fname}")
+    try:
+      with open(fname, 'w') as f:
+        w = csv.writer(f)
+        w.writerows(data)
+    except:
+      logger.debug("Error save data")
 
 def change_list_digit(lst, idx, amount=1):
   lst[idx] = change_digit(lst[idx], idx, amount)
@@ -79,6 +103,13 @@ def change_digit(v, amount=1):
     v = 0
 
   return v
+
+def repr_int(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 def get_time():
   now = datetime.datetime.now()

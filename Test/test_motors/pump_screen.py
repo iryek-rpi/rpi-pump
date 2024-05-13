@@ -124,19 +124,19 @@ def scr_idle_2(pv):
   mt1 = ""
   mt2 = ""
   mt3 = ""
-  if pv.motor1 == 0:
+  if pv.motor1_state == 0:
     mt1 = "M1:-  "
-  elif pv.motor1 > 0:
+  elif pv.motor1_state > 0:
     mt1 = "M1:O  "
 
-  if pv.motor2 == 0:
+  if pv.motor2_state == 0:
     mt2 = "M2:-  "
-  elif pv.motor2 > 0:
+  elif pv.motor2_state > 0:
     mt2 = "M2:O  "
 
-  if pv.motor3 == 0:
+  if pv.motor3_state == 0:
     mt3 = "M3:-"
-  elif pv.motor3 > 0:
+  elif pv.motor3_state > 0:
     mt3 = "M3:O"
 
   s2 = f"{mt1}{mt2}{mt3}"
@@ -152,19 +152,19 @@ def scr_idle_3(pv):
   else:
     s1 = f"PLC WL:{pv.water_level:.1f} "
 
-  if pv.motor1 == 0:
+  if pv.motor1_state == 0:
     s1 += "X"
-  elif pv.motor1 > 0:
+  elif pv.motor1_state > 0:
     s1 += "O"
 
-  if pv.motor2 == 0:
+  if pv.motor2_state == 0:
     s1 += "X"
-  elif pv.motor2 > 0:
+  elif pv.motor2_state > 0:
     s1 += "O"
 
-  if pv.motor3 == 0:
+  if pv.motor3_state == 0:
     s1 += "X"
-  elif pv.motor3 > 0:
+  elif pv.motor3_state > 0:
     s1 += "O"
 
   s2 = get_time()

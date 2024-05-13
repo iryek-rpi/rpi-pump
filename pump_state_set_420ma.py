@@ -4,7 +4,8 @@ from transitions.extensions import MachineFactory
 import calendar
 import pexpect
 
-import picologging as logging
+#import picologging as logging
+import logging
 
 from pump_screen import *
 from pump_variables import PV

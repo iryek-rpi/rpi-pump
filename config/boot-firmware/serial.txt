@@ -1,0 +1,138 @@
+#========================================================================
+#       TXD RXD CTS RTS   Board Pins       Device Name
+# uart0  14  15            8  10            ttyAMAn
+# uart1  14  15            8  10            ttyS0
+# uart2  0   1   2   3     27 28 (I2C)      ttyAMAn
+# uart3  4   5   6   7     7  29            ttyAMAn
+# uart4  8   9   10  11    24 21 (SPI0)     ttyAMAn
+# uart5  12  13  14  15    32 33 (gpio-fan) ttyAMAn
+#========================================================================
+enable_uart=0
+dtoverlay=uart0
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+console=serial1,115200 
+console=serial2,115200 
+
+smtech@pump-w8b:~$ ll /dev/serial*
+lrwxrwxrwx 1 root root 7 Jan  8 14:31 /dev/serial1 -> ttyAMA0
+===================================================================
+================================================================
+enable_uart=1
+dtoverlay=uart0
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+console=serial2,115200 
+console=serial1,115200 
+
+lrwxrwxrwx 1 root root 5 Jan  8 14:37 /dev/serial0 -> ttyS0
+lrwxrwxrwx 1 root root 7 Jan  8 14:37 /dev/serial1 -> ttyAMA0
+============================================
+enable_uart=1
+dtoverlay=uart0
+#dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+console=serial1,115200 dwc_otg.lpm_enable=0 console=tty1 root=LABEL=writable rootfstype=ext4 rootwait fixrtc quiet splash
+
+lrwxrwxrwx 1 root root 5 Jan  8 14:43 /dev/serial0 -> ttyS0
+lrwxrwxrwx 1 root root 7 Jan  8 14:43 /dev/serial1 -> ttyAMA0
+============================================
+enable_uart=1
+dtoverlay=uart1
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+console=serial1,115200 dwc_otg.lpm_enable=0 console=tty1 root=LABEL=writable rootfstype=ext4 rootwait fixrtc quiet splash
+
+lrwxrwxrwx 1 root root 5 Jan  8 14:46 /dev/serial0 -> ttyS0
+lrwxrwxrwx 1 root root 7 Jan  8 14:46 /dev/serial1 -> ttyAMA0
+============================================
+enable_uart=1
+dtoverlay=uart1
+#dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+console=serial1,115200 dwc_otg.lpm_enable=0 console=tty1 root=LABEL=writable rootfstype=ext4 rootwait fixrtc quiet splash
+
+lrwxrwxrwx 1 root root 5 Jan  8 14:49 /dev/serial0 -> ttyS0
+lrwxrwxrwx 1 root root 7 Jan  8 14:49 /dev/serial1 -> ttyAMA0
+============================================
+enable_uart=0
+dtoverlay=uart0
+#dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+console=serial2,115200 dwc_otg.lpm_enable=0 console=tty1 root=LABEL=writable rootfstype=ext4 rootwait fixrtc quiet splash
+
+lrwxrwxrwx 1 root root 7 Jan  8 14:56 /dev/serial1 -> ttyAMA0
+============================================
+enable_uart=1
+#dtoverlay=uart0
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+console=serial1,115200 dwc_otg.lpm_enable=0 console=tty1 root=LABEL=writable rootfstype=ext4 rootwait fixrtc quiet splash
+
+lrwxrwxrwx 1 root root 5 Jan  8 15:04 /dev/serial0 -> ttyS0
+lrwxrwxrwx 1 root root 7 Jan  8 15:04 /dev/serial1 -> ttyAMA0
+============================================
+console=serial2,115200 
+console=serial1,115200 
+console=serial0,115200 
+
+enable_uart=0
+dtoverlay=uart0
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+smtech@pump-w8b:~$ ll /dev/serial*
+lrwxrwxrwx 1 root root 5 Jan  8 13:55 /dev/serial0 -> ttyS0
+lrwxrwxrwx 1 root root 7 Jan  8 13:55 /dev/serial1 -> ttyAMA0
+
+
+enable_uart=1
+dtoverlay=uart0
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+smtech@pump-w8b:~$ ll /dev/serial*
+lrwxrwxrwx 1 root root 5 Jan  8 14:00 /dev/serial0 -> ttyS0
+lrwxrwxrwx 1 root root 7 Jan  8 14:00 /dev/serial1 -> ttyAMA0
+
+
+enable_uart=2
+dtoverlay=uart0
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+smtech@pump-w8b:~$ ll /dev/serial*
+lrwxrwxrwx 1 root root 5 Jan  8 14:00 /dev/serial0 -> ttyS0
+lrwxrwxrwx 1 root root 7 Jan  8 14:00 /dev/serial1 -> ttyAMA0
+
+================================
+console=serial0,115200 
+console=serial1,115200 
+console=serial2,115200 
+
+enable_uart=0
+dtoverlay=uart0
+dtoverlay=miniuart_bt
+dtoverlay=disable_bt
+dtoverlay=uart2
+
+smtech@pump-w8b:~$ ll /dev/seri*
+lrwxrwxrwx 1 root root 7 Jan  8 14:12 /dev/serial1 -> ttyAMA0
+

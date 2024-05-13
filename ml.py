@@ -1,19 +1,113 @@
+import os
+from multiprocessing.synchronize import Event
+from pprint import pp
+
 import pandas as pd
-from prophet import Prophet
+import csv
+#import picologging as logging
+import logging
+import darts
+from darts import TimeSeries
+from darts.models import NaiveSeasonal
 
-from prophet.serialize import model_to_json, model_from_json
+import constant
+import pump_util as util
 
-def save_model(model_name:str, model):
-    with open(f'./model/{model_name}', 'w') as fout:
-        fout.write(model_to_json(model))  # Save model
+#from prophet import Prophet
+#from prophet.serialize import model_to_json, model_from_json
 
-def read_model(model_name:str):
-    m = None
-    with open(f'./model/{model_name}', 'r') as fin:
-        m = model_from_json(fin.read())  # Load model
+#from pump_variables import PV
 
-    return m
+#def get_future_level(t):
+#    return 70
+    #if pv.forecast:
+    #    return pv.forecast.loc[forecast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
+    
+model = None
 
+def train_proc(**kwargs):
+  global model 
+
+  logger = util.make_logger(name=util.TRAIN_LOGGER_NAME, filename=util.TRAIN_LOGFILE_NAME, level=logging.INFO)
+  if not model:
+    model = NaiveSeasonal(K=12)
+
+  ns = kwargs['ns']
+  ev_req: Event = kwargs['ev_req']
+  ev_ret: Event = kwargs['ev_ret']
+
+  while ev_req.wait():
+    ev_req.clear()
+    logger.info("\n### Event set in train process")
+    data = ns.value
+    df = pd.DataFrame(data, columns=['time','level','m0','m1','m2','source'])
+    df = df.drop(df.columns[[2, 3, 4, 5]], axis=1)
+    df['time'] = pd.to_datetime(df['time'])
+    df = df.resample('1S', on='time').mean()
+    # limit_direction을 forward로 지정해야만 interpolate()가 제대로 동작한다.
+    df = df.interpolate(method='linear', limit_direction='forward')
+    #logger.info(df)
+
+    ts = util.get_time_str()
+    fname = os.path.join('./logs/', ts + '_data.csv')
+    try:
+      df.to_csv(fname)
+    except:
+      logger.info("Error save water level data")
+
+    st = TimeSeries.from_dataframe(df=df, 
+      #time_col='time', 
+      value_cols=['level'], 
+      fill_missing_dates=True, 
+      freq='1S')
+    #logger.info("TimeSeries of Training data ================")
+    #logger.info(st)
+
+    fname = os.path.join('./logs/', ts + '_timeseries.csv')
+    try:
+      st.pd_dataframe().to_csv(fname)
+    except:
+      logger.info("Error save Time Series data")
+
+    logger.info("model.fit()")
+    model.fit(st)
+    len_data = len(data)
+    if len_data > constant.MAX_PREDICT_SAMPLES // 2: 
+      len_data = constant.MAX_PREDICT_SAMPLES 
+    else:
+      len_data = len_data * 2
+    logger.info(f"Start training for future {len_data} samples")
+    forecast = model.predict(len_data)
+    #logger.info("\nBefore shift forecast ==========================")
+    #logger.info(forecast)
+    #logger.info("\nAfter shift forecast ==========================")
+    #logger.info(forecast)
+
+    #logger.info("\nBefore filling forecast ==========================")
+    #logger.info(forecast)
+    forecast = darts.utils.missing_values.fill_missing_values(forecast, fill='auto')#, **interpolate_kwargs)
+    forecast = forecast.shift(30)
+    #logger.info("\nAfter filling forecast ==========================")
+    #logger.info(forecast)
+    logger.info(f"Predicted:{len(forecast)} samples")
+    df = forecast.pd_dataframe()
+    #logger.info(df)
+
+    fname = os.path.join('./logs/', ts + '_predict.csv')
+    try:
+      df.to_csv(fname)
+    except:
+      logger.info("Error save predict data")
+
+    ll=[[i,v[0]] for i, v in zip(df.index.strftime("%Y-%m-%d %H:%M:%S"), df.values)]
+
+    ns.value = ll
+
+    print("Train finished: set event")
+    ev_ret.set()
+
+
+trash = '''
 def train(pv):
     tdf = pd.DataFrame(pv.train, columns=['ds','y','a','b','c','d'])
     tdf['ds'] = pd.DatetimeIndex(tdf['ds'])
@@ -32,16 +126,23 @@ def train(pv):
 
     future = future_dates.loc[future_dates['ds']>tdf[-1]]
     
-    forcast = model.predict(future)
+    forecast = model.predict(future)
     #forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
     forecast['yhat-s']=forecast['yhat']
     forecast['yhat-s']=((forecast['yhat-s']-forecast['yhat'].mean())*5)+forecast['yhat'].mean()
 
-    forcast = forcast[['ds','yhat-s']].copy()
-    forcast = forcast.resample(rule='1sec', on='ds').mean()
-    pv.forcast = forcast
+    forecast = forecast[['ds','yhat-s']].copy()
+    forecast = forecast.resample(rule='1sec', on='ds').mean()
+    pv.forecast = forecast
 
-def get_future_level(t):
-    if pv.forcast:
-        return forcast.loc[forcast['ds']==t.strftime("%Y-%m-%d %H:%M:%S")]['yhat-s']
-    
+def save_model(model_name:str, model):
+    with open(f'./model/{model_name}', 'w') as fout:
+        fout.write(model_to_json(model))  # Save model
+
+def read_model(model_name:str):
+    m = None
+    with open(f'./model/{model_name}', 'r') as fin:
+        m = model_from_json(fin.read())  # Load model
+
+    return m
+'''

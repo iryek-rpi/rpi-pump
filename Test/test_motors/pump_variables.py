@@ -21,9 +21,6 @@ logger = logging.getLogger()
 SOURCE_SENSOR = 0
 SOURCE_AI = 1
 
-# 펌프 가동을 자동으로 할 지 여부
-OP_MANUAL = 0
-OP_AUTO = 1
 
 # PLC와 연동해서 동작할 지, 단독으로 동작할 지
 MODE_PLC = 0  # PLC에서 pump control
@@ -68,7 +65,6 @@ class PV():
     self.modbus_id = 1
     self.source = SOURCE_SENSOR  # PLC/AI 운전모드
     self.solo_mode = MODE_PLC
-    self.op_mode = OP_AUTO  # MANUAL/AUTO 운전모드
     self.water_level = 0  # 현재 수위
 
     self.run_mode_out = 1

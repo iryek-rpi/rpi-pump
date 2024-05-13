@@ -1,0 +1,49 @@
+[CONTROLLER]
+modbus_id = 1
+solo_mode = MODE_PLC
+op_mode = OP_AUTO
+auto_h = 250
+auto_hh = 900
+auto_l = 200
+auto_ll = 100
+
+[MOTOR]
+installed_motors = [1,1,0]
+motor1 = 0
+motor2 = 0
+motor3 = 0
+lead_time = 10
+pump_count = 3
+motor1_mode = 1
+motor2_mode = 1
+motor3_mode = 0
+pump3_mode = 0
+pump1_mode = 0
+pump2_mode = 0
+
+[SENSOR]
+4ma_ref = 700
+20ma_ref = 4000
+adc_invalid = 100
+
+[MONITOR]
+monitor_interval = 1
+save_interval = 24
+tolerance_to_ai = 30
+tolerance_to_sensor = 3
+adc_ignore_spike = 100
+
+[MANAGE]
+user_id = hwan
+password = rudakwkd
+device_role = controller
+
+[MQTT]
+mqtt_on = 0
+topic = ai_value ;sensor_value
+client_name = AI ;SENSOR
+timeout = 10
+port = 1883
+broker = X230T.local
+device_role = control ;water-sensor
+

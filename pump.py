@@ -5,25 +5,21 @@
 # https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load?answertab=votes#tab-top
 # https://github.com/adafruit/Adafruit_Python_SSD1306
 
-import pathlib
-import picologging as logging
 from pathlib import Path
-from datetime import timedelta
-import multiprocessing as mp
-
-import lgpio
-import signal
-import time
 import datetime
+import time
+import multiprocessing as mp
+#import signal
 
-import picologging as logging
+#import picologging as logging
+import logging
+import lgpio
 
 # logger 생성하기 위해 가장 먼저 import 해야 함
 import pump_util as util
 from pump_util import *
 
-from pump_variables import PV, pv
-import pump_variables
+from pump_variables import pv
 from pump_lcd import Lcd, lcd
 import pump_screen
 from pump_btn import PumpButtons, buttons
@@ -32,7 +28,10 @@ from pump_state_set_level import SetLevelStateMachine
 from pump_state_set_time import SetTimeStateMachine
 import pump_monitor
 import pump_thread
+import motor
+import ADC
 
+#import modbus_server_serial_sync
 import modbus_server_serial
 import modbus_respond
 
@@ -40,6 +39,7 @@ import fan_control
 
 import config
 import mqtt_pub
+import constant
 
 #==============================================================================
 # 디버그용 로그 설정
@@ -69,29 +69,70 @@ FAN = 12
 #==============================================================================
 is_shutdown = False
 
+def ctrl_c_handler(sig, frame):
+  logger.info(f"SIGINT at {datetime.datetime.now()}")
+  logger.info('You pressed Ctrl+C!')
+  print(f"frame:{frame}")
+  global is_shutdown
+  is_shutdown=True
 
 def stop(sig, frame):
   logger.info(f"SIGTERM at {datetime.datetime.now()}")
+  print(f"frame:{frame}")
   global is_shutdown
   is_shutdown = True
 
-
 def ignore(sig, frame):
   logger.info(f"SIGHUP at {datetime.datetime.now()}")
+  print(f"frame:{frame}")
 
+#signal.signal(signal.SIGTERM, stop)
+#signal.signal(signal.SIGINT, ctrl_c_handler)
+#signal.signal(signal.SIGHUP, ignore)
 
-signal.signal(signal.SIGTERM, stop)
-#signal.signal(signal.SIGHUP, stop)
+def mqtt_thread_func(**kwargs):
+  '''logger 사용을 위해 pump.py에 정의'''
+  _pipe = kwargs['pipe']
+  pv = kwargs['pv']
+
+  logger.debug(f'mqtt_thread:{pv.water_level}')
+  if pv.source == constant.SOURCE_SENSOR:
+    _pipe.send((pv.sensor_level, -1, pv.setting_low, pv.setting_high))
+  else:
+    _pipe.send((-1, pv.water_level, pv.setting_low, pv.setting_high))
 
 logger.info(f"=================================================")
 logger.info(f"START at {datetime.datetime.now()}")
 logger.info(f"=================================================")
 
+def delete_logs():
+  '''Delete log files from ./logs directory older than 2 days'''
+  now = datetime.datetime.now()
+  for f in Path('./logs').glob("*.log"):
+    if (now - datetime.datetime.fromtimestamp(f.stat().st_mtime)).days > 2:
+      f.unlink()
 
 #==============================================================================
 # main
 #==============================================================================
 def main():
+  delete_logs()
+
+  chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
+  logger.info("GPIO chip handle: %d", chip)
+  logger.info(f"GPIO chip info: {lgpio.gpio_get_chip_info(chip)}")
+
+  from pump_variables import PV
+  pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
+  pv().chip = chip
+
+  motor.init_motors(chip)
+  (a, b, c) = motor.get_all_motors(chip, pv())
+  print(f"After init: get_all_motors:({a}, {b}, {c})")
+  logger.info("After init: get_all_motors:(%d, %d, %d)", a, b, c)
+  time.sleep(0.5)
+  motor.set_all_motors(chip, (0, 0, 0)) # 모터 구동 중 시작하면 모터 off로 인식하는 문제로 인해 초기화
+
   try:
     i2c_bus = 1  # 라즈베리파이 개발용 IO 보드에서는 1
     lcd_instance = Lcd(addr=0x27, bus=i2c_bus)
@@ -106,34 +147,38 @@ def main():
   #i2c_rtc = lgpio.i2c_open(10, I2C_RTC) # 10 for RTC bus both on pump & CM4IO board
 
   try:
+#    for c in range(5):
+#      try:
+#        lgpio.gpiochip_close(c)
+#      except:
+#        pass
+
+
     lcd.instance = lcd_instance
 
-    pv(PV())  # 전역변수를 PV라는 한개의 구조체로 관리한다.
-    config.init_setting(pv())
 
+    config.init_setting(pv()) # motor port 초기화한 후에 콜해야함
+
+    if not pv().device_role:
+      pv().device_role = 'controller'
+
+    pv().mqtt_on = config.read_config('MQTT', 'MQTT_ON')
     pv().mqtt_timeout = config.read_config('MQTT', 'TIMEOUT')
     pv().mqtt_port = config.read_config('MQTT', 'PORT')
     pv().mqtt_broker = config.read_config('MQTT', 'BROKER')
     pv().mqtt_topic = config.read_config('MQTT', 'TOPIC')
     pv().mqtt_client_name = config.read_config('MQTT', 'CLIENT_NAME')
 
-    client = mqtt_pub.mqtt_init(client_name=pv().mqtt_client_name, broker=pv().mqtt_broker, port=pv().mqtt_port)
-    pv().mqtt_client = client
-
-    chip = lgpio.gpiochip_open(0)  # get GPIO chip handle
-    pv().chip = chip
-    spi = pump_monitor.init_spi_rw(chip, pv(),
-                                   speed=9600)  # get SPI device handle
+    #client = mqtt_pub.mqtt_init(client_name=pv().mqtt_client_name, broker=pv().mqtt_broker, port=pv().mqtt_port)
+    #pv().mqtt_client = client
 
     pump_screen.scr_init_msg(pv())
 
     #lgpio.gpio_claim_output(chip, FAN, 1)
 
-    #import ml
-    #if Path("./model/pump_model.json").exists():
-    #  pv().model = ml.read_model("pump_model.json")
-
     # state machine 초기화
+    logging.getLogger('transitions').setLevel(logging.CRITICAL)
+
     sm_lcd = LCDStateMachine(name='LCDStateMachine', pv=pv())
     sm_level = SetLevelStateMachine(name='SetLevelStateMachine', pv=pv())
     sm_time = SetTimeStateMachine(name='SetTimeStateMachine', pv=pv())
@@ -162,9 +207,20 @@ def main():
     #   * Modbus 서버 프로세스
     #   * args={p_req}
 
+    spi = ADC.init_spi_rw(chip, pv(),
+                                   speed=9600)  # get SPI device handle
+
+    pv().simulation = False
+    if pv().simulation:
+      pv().adc_start_time = time.perf_counter()
+
     # 수위 모니터링을 위한 스레드
+    monitor_func = pump_monitor.tank_monitor
+    if pv().device_role == "water-sensor":
+      monitor_func = pump_monitor.water_sensor_monitor
+
     monitor = pump_thread.RepeatThread(interval=pv().setting_monitor_interval,
-                                       execute=pump_monitor.tank_monitor,
+                                       execute=monitor_func,
                                        kwargs={
                                            'chip': chip,
                                            'spi': spi,
@@ -177,7 +233,7 @@ def main():
     logger.info(f"datapath: {pv().data_path}")
     Path(pv().data_path).mkdir(parents=True, exist_ok=True)
     saver = pump_thread.RepeatThread(interval=pv().setting_save_interval,
-                                     execute=pump_variables.save_data,
+                                     execute=util.save_data,
                                      kwargs={'pv': pv()})
     saver.start()
 
@@ -185,7 +241,6 @@ def main():
     p_respond, p_req = mp.Pipe()
     responder = pump_thread.RespondThread(execute=modbus_respond.respond,
                                           kwargs={
-                                              'chip': chip,
                                               'pipe': p_respond,
                                               'pv': pv()
                                           })
@@ -194,12 +249,36 @@ def main():
     logger.info("modbus_id:%d", pv().modbus_id)
     # Modbus 통신을 위한 프로세스
     comm_proc = mp.Process(name="Modbus Server",
+                           #target=modbus_server_serial_sync.rtu_server_proc,
                            target=modbus_server_serial.rtu_server_proc,
                            kwargs={
                                'pipe_request': p_req,
                                'modbus_id': pv().modbus_id
                            })
     comm_proc.start()
+    logger.info(f"@@@@@@@ comm_proc: {comm_proc.pid}")
+
+    pipe_mqtt_sensor, pipe_mqtt_pub = mp.Pipe()
+    mqtt_thread = pump_thread.RepeatThread(
+                          interval=5,
+                          execute=mqtt_thread_func,
+                          kwargs={
+                              'pipe': pipe_mqtt_sensor,
+                              'pv': pv()
+                          })
+    mqtt_thread.start()
+
+    mqtt_pub_proc = mp.Process(name="MQTT PUBLISHER",
+                               target=mqtt_pub.mqtt_pub_proc,
+                               kwargs={
+                                   'pipe_pub': pipe_mqtt_pub,
+                                   'mqtt_broker': pv().mqtt_broker,
+                                   'mqtt_port': int(pv().mqtt_port),
+                                   'mqtt_client_name': pv().mqtt_client_name, 
+                                   'mqtt_topic': pv().mqtt_topic,
+                               })
+    mqtt_pub_proc.start()
+    logger.info(f"@@@@@@ mqtt_proc: {mqtt_pub_proc.pid}")
 
     logger.info("Starting fan control")
     # fan control process
@@ -209,17 +288,43 @@ def main():
                            kwargs = {'logger': fan_logger})
     fan_proc.start()
 
+    logger.info(f"@@@@@@ fan_proc: {fan_proc.pid}")
+
     while not is_shutdown:
       pass
 
+    logger.info("################### out of main loop ##################")
+    logger.info(f"lcd():{lcd()}")
+    lcd().clear()
+
+    p_respond.close()
+    p_req.close()
+    pipe_mqtt_pub.close()
+    pipe_mqtt_sensor.close()
+
     # 스레드와 프로세스 정리
     monitor.stop()
+    # 모터 동작 중 종료 후 다시 시작하면 모터가 off 되어 있는 것으로 인식하는 
+    # 문제로 인해 종료 시 모터를 off 시킴
+    motor.set_all_motors(chip, 0)  
+
     responder.stop()
     saver.stop()
+    
+    comm_proc.terminate()
     comm_proc.join()
 
-    pump_variables.save_data(pv=pv())
-    lcd().clear()
+    mqtt_thread.stop()
+    mqtt_pub_proc.terminate()
+    mqtt_pub_proc.join()
+
+    fan_proc.terminate()
+    fan_proc.join()
+    #fan_proc.kill()
+
+    util.save_data(pv=pv())
+    lgpio.gpiochip_close(chip)
+
 
   except KeyboardInterrupt:
     pass
@@ -228,21 +333,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-'''
-#==============================================================================
-# Communication
-#==============================================================================
-PORT = 5999
-def comm():
-  address = ('localhost', port)     # family is deduced to be 'AF_INET'
-  listener = Listener(address)
-  conn = listener.accept()
-  print('connection accepted from', listener.last_accepted)
-  while True:
-    msg = conn.recv()
-    print("msg:",msg)
-    if msg == 'close':
-      conn.close()
-      break
-  listener.close()
-'''

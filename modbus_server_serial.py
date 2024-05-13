@@ -5,12 +5,13 @@ Pymodbus Asyncio Server - asyncio_server_serial.py을 기반으로 작성
 # --------------------------------------------------------------------------- #
 # import the various server implementations
 # --------------------------------------------------------------------------- #
-import picologging as logging
+#import picologging as logging
+import logging
 import pathlib
 import asyncio
 
 from pymodbus.version import version
-from pymodbus.server.async_io import StartSerialServer
+from pymodbus.server.async_io import StartAsyncSerialServer
 from pymodbus.device import ModbusDeviceIdentification
 
 from pymodbus.datastore import ModbusSlaveContext
@@ -22,93 +23,18 @@ import pymodbus.datastore as ds
 #from pymodbus.framer.rtu_framer import ModbusRtuFramer
 from pymodbus.transaction import ModbusRtuFramer
 
-
-
 import modbus_address as ma
 import pump_util as util
-
-logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME)
 
 # --------------------------------------------------------------------------- #
 # configure the service logging
 # --------------------------------------------------------------------------- #
-#MODBUS_LOGFILE_NAME = "./logs/modbus_comm.log"
-#pathlib.Path("./logs").mkdir(parents=True, exist_ok=True)
-#modbus_logfile = pathlib.Path(MODBUS_LOGFILE_NAME)
-#modbus_logfile.touch(exist_ok=True)
+#PORT = "/dev/serial2"
+PORT = "/dev/ttyAMA1"
 
-#MODBUS_LOG_FORMAT = ("%(asctime)-15s %(threadName)-15s"
-#                     " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
-#logging.basicConfig(filename=MODBUS_LOGFILE_NAME,
-#                    filemode="a",
-#                    format=MODBUS_LOG_FORMAT,
-#                    level=logger.debug,
-#                    datefmt='%Y-%m-%d %H:%M:%S')
-
-#modbus_logger = logging.getLogger('modbus_logger')
-
-PORT = "/dev/serial1"
-
-
-class PumpDataBlock(ds.ModbusSequentialDataBlock):
-  """Creates a sequential modbus datastore."""
-
-  def __init__(self, address, pipe_req):
-    """Initialize the datastore.
-        """
-    self.address = address.copy()
-    self.values = {}
-    self.default_value = 0
-    self.pipe_req = pipe_req
-
-  def validate(self, address, count=1):
-    """Check to see if the request is in range.
-
-        :param address: The starting address
-        :param count: The number of values to test for
-        :returns: True if the request in within range, False otherwise
-        """
-    #address += 40000
-    logger.info(f"validate: address({address}) in {self.address}")
-    return address in self.address
-
-  def getValues(self, address, count=1):
-    """Return the requested values of the datastore.
-
-        :param address: The starting address
-        :param count: The number of values to retrieve
-        :returns: The requested values from a:a+c
-        """
-    msg = (False, address, count, [])
-    logger.info(f"MODBUS SERVER: sending request to getValues(address:{address}, count:{count}, msg:{msg})")
-    self.pipe_req.send(msg)
-    response = self.pipe_req.recv()
-    logger.info(
-        f"MODBUS SERVER: received response:{response} for getValues(address:{address} msg:{msg})"
-    )
-    return response[1]
-
-  def setValues(self, address, values):
-    """Set the requested values of the datastore.
-
-        :param address: The starting address
-        :param values: The new values to be set
-        """
-    msg = (True, address, 0, values)
-    logger.info(
-        f"MODBUS SERVER: sending {msg} to setValues(address:{address}, values:{values})"
-    )
-    self.pipe_req.send(msg)
-    response = self.pipe_req.recv()
-    logger.info(
-        f"MODBUS SERVER: received response:{response} for setValues(address:{address}, values:{values})"
-    )
-
-    #if not isinstance(values, list):
-    #    values = [values]
-    #start = address - self.address
-    #self.values[start : start + len(values)] = values
-
+#logging.basicConfig()
+#logger = logging.getLogger()
+#logger.setLevel(logging.DEBUG)
 
 def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
   """Modbus 서버 프로세스
@@ -116,14 +42,19 @@ def rtu_server_proc(**kwargs):  #pipe_req, modbus_id):
   pipe_req = kwargs['pipe_request']
   modbus_id = kwargs['modbus_id']
 
+  logger = util.make_logger(name=util.MODBUS_SERVER_LOGGER_NAME, filename=util.MODBUS_SERVER_LOGFILE_NAME, level=logging.DEBUG)
+
   logger.info(
-      f"Starting rtu_server_proc(pipe_req:{pipe_req}, modbus_id:{modbus_id})")
-  asyncio.run(run_server(pipe_req, modbus_id))
+      f"Starting rtu_server_proc(modbus_id:{modbus_id})")
+
+#  global logger
+
+  asyncio.run(run_server(pipe_req, modbus_id, logger))
 
 
-async def run_server(pipe_req, modbus_id):
+async def run_server(pipe_req, modbus_id, logger):
   """Run server."""
-  holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req)
+  holding_reg = PumpDataBlock(ma.modbus_address_list, pipe_req, logger)
   store = ModbusSlaveContext(hr=holding_reg)
   context = ModbusServerContext(slaves={modbus_id: store}, single=False)
 
@@ -141,14 +72,75 @@ async def run_server(pipe_req, modbus_id):
           "MajorMinorRevision": version.short(),
       })
 
-  server = await StartSerialServer(context,
-                          framer=ModbusRtuFramer,
+  server = await StartAsyncSerialServer(context=context,
                           identity=identity,
+                          framer=ModbusRtuFramer,
                           port=PORT,
-                          timeout=.005,
+                          timeout=3.0,
                           baudrate=9600,
-                          autoreconnect=True)
+                          autoreconnect=False)
   return server
+
+
+
+class PumpDataBlock(ds.ModbusSequentialDataBlock):
+  """Creates a sequential modbus datastore."""
+
+  def __init__(self, address, pipe_req, logger):
+    """Initialize the datastore.
+        """
+    self.address = address.copy()
+    self.values = {}
+    self.default_value = 0
+    self.pipe_req = pipe_req
+    self.logger = logger
+
+  def validate(self, address, count=1):
+    """Check to see if the request is in range.
+
+        :param address: The starting address
+        :param count: The number of values to test for
+        :returns: True if the request in within range, False otherwise
+        """
+    #address += 40000
+    self.logger.info(f"validate: address({address}) in {self.address}")
+    return address in self.address
+
+  def getValues(self, address, count=1):
+    """Return the requested values of the datastore.
+        :param address: The starting address
+        :param count: The number of values to retrieve
+        :returns: The requested values from a:a+c
+        """
+    msg = (False, address, count, [])
+    self.logger.info(f"MODBUS SERVER: sending request to getValues(address:{address}, count:{count}, msg:{msg})")
+    self.pipe_req.send(msg)
+    response = self.pipe_req.recv()
+    self.logger.info(
+        f"MODBUS SERVER: received response:{response} for getValues(address:{address} msg:{msg})"
+    )
+    return response[1]
+
+  def setValues(self, address, values):
+    """Set the requested values of the datastore.
+        :param address: The starting address
+        :param values: The new values to be set
+        """
+    msg = (True, address, 0, values)
+    self.logger.info(
+        f"MODBUS SERVER: sending {msg} to setValues(address:{address}, values:{values})"
+    )
+    self.pipe_req.send(msg)
+    response = self.pipe_req.recv()
+    self.logger.info(
+        f"MODBUS SERVER: received response:{response} for setValues(address:{address}, values:{values})"
+    )
+
+    #if not isinstance(values, list):
+    #    values = [values]
+    #start = address - self.address
+    #self.values[start : start + len(values)] = values
+
 
 
 if __name__ == "__main__":

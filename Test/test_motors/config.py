@@ -16,7 +16,6 @@ def init_setting(pv: PV):
     co['CONTROLLER'] = {
         'MODBUS_ID': '1',
         'SOLO_MODE': 'MODE_PLC',
-        'OP_MODE': 'OP_AUTO',
         'MOTOR_COUNT': '2',
         'AUTO_H': '800',
         'AUTO_HH': '900',
@@ -65,16 +64,6 @@ def config_to_pv(co: configparser.ConfigParser, pv: PV):
     pv.solo_mode = pump_variables.MODE_SOLO
   else:
     pv.solo_mode = pump_variables.MODE_PLC
-
-  if co['CONTROLLER']['OP_MODE'] == 'OP_AUTO':
-    pv.op_mode = pump_variables.OP_AUTO
-  else:
-    pv.op_mode = pump_variables.OP_MANUAL
-
-  if co['CONTROLLER']['MOTOR_COUNT'].isdigit():
-    pv.motor_count = int(co['CONTROLLER']['MOTOR_COUNT'])
-  else:
-    pv.motor_count = 2
 
   if co['CONTROLLER']['AUTO_H'].isdigit():
     pv.setting_high = int(co['CONTROLLER']['AUTO_H'])

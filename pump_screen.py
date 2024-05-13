@@ -1,17 +1,16 @@
 import time
 import datetime
 
-import picologging as logging
+#import picologging as logging
+import logging
 
 import lgpio
 from pump_lcd import lcd
 from pump_variables import PV
-from pump_variables import SOURCE_SENSOR
-from pump_variables import SOURCE_AI
+import constant
 from pump_util import get_time, get_my_ipwlan, list_to_number
 from pump_btn import buttons
-import pump_monitor
-from pump_monitor import water_level_rate
+import motor
 
 import pump_util as util
 
@@ -65,13 +64,19 @@ def scr_init_msg(pv):
   lcd().string(s1, L1)
 
 def scr_idle_1(pv):
-  logger.debug("scr_idle_1:level:{}".format(pv.water_level))
-  if pv.source == SOURCE_AI:
-    s1 = f"AI PWL:{int(pv.water_level)} "
+  logger.info("scr_idle_1:level:{} pv.source:{}".format(pv.water_level, pv.source))
+  if pv.source == constant.SOURCE_AI:
+    if pv.device_role!='control':
+      s1 = f"SEN PWL:{int(pv.water_level)} "
+    else:
+      s1 = f"AI PWL:{int(pv.water_level)} "
   else:
-    s1 = f"PLC WL:{int(pv.water_level)} "
+    if pv.device_role!='control':
+      s1 = f"SEN PWL:{int(pv.water_level)} "
+    else:
+      s1 = f"PLC WL:{int(pv.water_level)} "
 
-  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
+  (m3,m2,m1) = motor.get_all_motors(pv.chip, pv)
 
   # O : 펌프 가동 중
   # - : 펌프 중지 중
@@ -97,7 +102,6 @@ def scr_idle_1(pv):
   else:
     s1 = 'X'
 
-  #rate = water_level_rate(pv)
   rate = pv.water_level
 
   lcd().string(s1, L1)
@@ -105,12 +109,13 @@ def scr_idle_1(pv):
 
 
 def scr_idle_2(pv):
-  if pv.source == SOURCE_AI:
+  logger.info("scr_idle_2:level:{} pv.source:{}".format(pv.water_level, pv.source))
+  if pv.source == constant.SOURCE_AI:
     s1 = f"AI PWL:{pv.water_level:.1f}"
   else:
     s1 = f"PLC WL:{pv.water_level:.1f}"
 
-  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
+  (m3,m2,m1) = motor.get_all_motors(pv.chip, pv)
   mt1 = ""
   mt2 = ""
   mt3 = ""
@@ -143,12 +148,13 @@ def scr_idle_2(pv):
 
 
 def scr_idle_3(pv):
-  if pv.source == SOURCE_AI:
+  logger.info("scr_idle_3:level:{} pv.source:{}".format(pv.water_level, pv.source))
+  if pv.source == constant.SOURCE_AI:
     s1 = f"AI PWL:{pv.water_level:.1f} "
   else:
     s1 = f"PLC WL:{pv.water_level:.1f} "
 
-  (m3,m2,m1) = pump_monitor.get_all_motors(pv.chip)
+  (m3,m2,m1) = motor.get_all_motors(pv.chip, pv)
 
   # O : 펌프 가동 중
   # - : 펌프 중지 중

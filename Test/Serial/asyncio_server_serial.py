@@ -39,7 +39,7 @@ FORMAT = ("%(asctime)-15s %(threadName)-15s"
           " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s")
 logging.basicConfig(format=FORMAT)
 log = logging.getLogger()
-log.setLevel(logger.DEBUG)
+log.setLevel(logging.DEBUG)
 
 
 async def run_server():

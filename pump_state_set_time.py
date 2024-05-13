@@ -2,7 +2,8 @@ import transitions
 from transitions import *
 from transitions.extensions import MachineFactory
 
-import picologging as logging
+#import picologging as logging
+import logging
 
 import calendar
 import pexpect
